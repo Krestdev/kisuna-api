@@ -32,12 +32,13 @@ async function main() {
       email: 'admin@krest.com',
       passwordHash: hashedPassword,
       employeeId: adminEmployee.uuid,
+      role: "SUPER_ADMIN"
     },
   });
 
-  console.log('✅ Super admin created successfully');
-  console.log('📧 Email: admin@krest.com');
-  console.log('🔑 Password: admin123');
+  console.log('Super admin created successfully');
+  console.log('Email: admin@krest.com');
+  console.log('Password: admin123');
 }
 
 main()

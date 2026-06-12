@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -6,10 +7,7 @@ import { SystemRole } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 
-// Assuming there is a JwtAuthGuard elsewhere that populates req.user.
-// If you have a custom JWT guard, replace 'JwtAuthGuard' import as needed.
-// For now, we apply the RolesGuard which expects user.role.
-
+@ApiTags('Companies')
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
@@ -17,16 +15,26 @@ export class CompaniesController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create a new company (SUPER_ADMIN only)' })
+  @ApiResponse({ status: 201, description: 'Company created successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all companies' })
+  @ApiResponse({ status: 200, description: 'List of companies' })
   findAll() {
     return this.companiesService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get company by ID' })
+  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiResponse({ status: 200, description: 'Company details' })
+  @ApiResponse({ status: 404, description: 'Company not found' })
   findOne(@Param('id') id: string) {
     return this.companiesService.findOne(+id);
   }
@@ -34,6 +42,11 @@ export class CompaniesController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update company (SUPER_ADMIN only)' })
+  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiResponse({ status: 200, description: 'Company updated successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
     return this.companiesService.update(+id, updateCompanyDto);
   }
@@ -41,6 +54,11 @@ export class CompaniesController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete company (SUPER_ADMIN only)' })
+  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiResponse({ status: 200, description: 'Company deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
   remove(@Param('id') id: string) {
     return this.companiesService.remove(+id);
   }
