@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreatePositionDto } from './dto/create-position.dto';
 import { UpdatePositionDto } from './dto/update-position.dto';
@@ -7,32 +7,171 @@ import { UpdatePositionDto } from './dto/update-position.dto';
 export class PositionsService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  create(createPositionDto: CreatePositionDto) {
-    return this.databaseService.position.create({
-      data: createPositionDto,
+  async validateEmployeeBelongsToCompany(departmentId: number, employeeUuid: number) {
+    const department = await this.databaseService.department.findUnique({
+      where: { uuid: departmentId },
+      select: { companyId: true },
+    });
+    if (!department) throw new NotFoundException('Department not found');
+
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid: employeeUuid },
+      include: {
+        positions: { include: { department: true } },
+        managedDepartments: true,
+      },
+    });
+    if (!employee) throw new NotFoundException('Employee not found');
+
+    const belongsViaPosition = employee.positions.some(p => p.department?.companyId === department.companyId);
+    const belongsViaManagement = employee.managedDepartments.some(d => d.companyId === department.companyId);
+
+    if (!belongsViaPosition && !belongsViaManagement) {
+      throw new BadRequestException(`Employee does not belong to the same company as the department`);
+    }
+  }
+
+  async create(createPositionDto: CreatePositionDto) {
+    const { departmentId, employeeUuid, permissionUuids, ...rest } = createPositionDto;
+
+    const department = await this.databaseService.department.findUnique({ where: { uuid: departmentId } });
+    if (!department) {
+      throw new NotFoundException(`Department with ID ${departmentId} not found`);
+    }
+
+    if (employeeUuid) {
+      await this.validateEmployeeBelongsToCompany(departmentId, employeeUuid);
+    }
+
+    return this.databaseService.$transaction(async (prisma) => {
+      const position = await prisma.position.create({
+        data: {
+          ...rest,
+          department: { connect: { uuid: departmentId } },
+          ...(employeeUuid ? { employee: { connect: { uuid: employeeUuid } } } : {}),
+        },
+      });
+
+      if (permissionUuids && permissionUuids.length > 0) {
+        const permissionData = permissionUuids.map(permUuid => ({
+          positionUuid: position.uuid,
+          permissionUuid: permUuid,
+        }));
+        await prisma.positionPermission.createMany({
+          data: permissionData,
+          skipDuplicates: true,
+        });
+      }
+
+      return position;
     });
   }
 
-  findAll() {
-    return this.databaseService.position.findMany();
+  async findAll(departmentId?: number, companyId?: number) {
+    return this.databaseService.position.findMany({
+      where: {
+        isActive: true,
+        ...(departmentId ? { departmentId } : {}),
+        ...(companyId ? { department: { companyId } } : {}),
+      },
+      include: {
+        department: { include: { company: true } },
+        employee: true,
+        permissions: { include: { permission: true } },
+      },
+    });
   }
 
-  findOne(uuid: string) {
-    return this.databaseService.position.findUnique({
+  async findOne(uuid: number) {
+    const position = await this.databaseService.position.findUnique({
       where: { uuid },
+      include: {
+        department: { include: { company: true } },
+        employee: true,
+        permissions: { include: { permission: true } },
+      },
+    });
+
+    if (!position || !position.isActive) {
+      throw new NotFoundException(`Active Position with ID ${uuid} not found`);
+    }
+
+    return position;
+  }
+
+  async update(uuid: number, updatePositionDto: UpdatePositionDto) {
+    const position = await this.findOne(uuid);
+    const { permissionUuids, departmentId, employeeUuid, ...rest } = updatePositionDto;
+
+    const targetDepartmentId = departmentId ?? position.departmentId;
+
+    if (employeeUuid) {
+      await this.validateEmployeeBelongsToCompany(targetDepartmentId, employeeUuid);
+    }
+
+    return this.databaseService.$transaction(async (prisma) => {
+      const updatedPosition = await prisma.position.update({
+        where: { uuid },
+        data: {
+          ...rest,
+          ...(departmentId ? { department: { connect: { uuid: departmentId } } } : {}),
+          ...(employeeUuid ? { employee: { connect: { uuid: employeeUuid } } } : {}),
+        },
+      });
+
+      if (permissionUuids !== undefined) {
+        await prisma.positionPermission.deleteMany({
+          where: { positionUuid: uuid },
+        });
+
+        if (permissionUuids.length > 0) {
+          const permissionData = permissionUuids.map(permUuid => ({
+            positionUuid: uuid,
+            permissionUuid: permUuid,
+          }));
+          await prisma.positionPermission.createMany({
+            data: permissionData,
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      return updatedPosition;
     });
   }
 
-  update(uuid: string, updatePositionDto: UpdatePositionDto) {
+  async assignEmployee(uuid: number, employeeUuid: number) {
+    const position = await this.findOne(uuid);
+    await this.validateEmployeeBelongsToCompany(position.departmentId, employeeUuid);
+
     return this.databaseService.position.update({
       where: { uuid },
-      data: updatePositionDto,
+      data: { employee: { connect: { uuid: employeeUuid } } },
     });
   }
 
-  remove(uuid: string) {
-    return this.databaseService.position.delete({
+  async removePermission(uuid: number, permissionUuid: number) {
+    await this.findOne(uuid);
+    return this.databaseService.positionPermission.delete({
+      where: {
+        positionUuid_permissionUuid: {
+          positionUuid: uuid,
+          permissionUuid,
+        },
+      },
+    });
+  }
+
+  async remove(uuid: number) {
+    const position = await this.findOne(uuid);
+
+    if (position.employeeUuid) {
+      throw new BadRequestException('Cannot delete position. An employee is currently assigned to it.');
+    }
+
+    return this.databaseService.position.update({
       where: { uuid },
+      data: { isActive: false },
     });
   }
 }

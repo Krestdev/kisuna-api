@@ -50,9 +50,21 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Krest Holding HR API')
-    .setDescription('The Krest Holding HR API description')
+    .setDescription('HR Management System API for Krest Holding - Manage employees, departments, positions, and authentication')
     .setVersion('1.0')
-    .addTag('hr')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    }, 'JWT-auth')
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Users', 'User management')
+    .addTag('Employees', 'Employee management')
+    .addTag('Departments', 'Department management')
+    .addTag('Positions', 'Position management')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

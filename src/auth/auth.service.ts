@@ -25,12 +25,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const user = await this.databaseService.user.create({
       data: {
-        ...registerDto,
-        password: hashedPassword,
+        email: registerDto.email,
+        passwordHash: hashedPassword,
       },
     });
 
-    const { password, ...result } = user;
+    const { passwordHash, ...result } = user;
     return result;
   }
 
@@ -42,21 +42,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, roles: user.roles };
+    const payload = { sub: user.uuid, email: user.email, role: user.role };
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
-        id: user.id,
+        uuid: user.uuid,
         email: user.email,
-        name: user.name,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles,
+        role: user.role,
       }
     };
   }

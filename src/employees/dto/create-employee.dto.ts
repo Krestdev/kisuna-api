@@ -1,35 +1,77 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsBoolean, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsInt, IsEnum, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Gender } from '@prisma/client';
 
 export class CreateEmployeeDto {
-  @ApiProperty({ description: 'The user ID this employee profile belongs to' })
-  @IsNumber()
-  userId!: number;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  firstName: string;
 
-  @ApiProperty({ required: false }) @IsOptional() @IsString() address?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() phoneNumber?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() birthday?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() gender?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() maritalStatus?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() nationality?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsNumber() NumberOfChildren?: number;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() CNPSNumber?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() identityDocument?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() identityDocumentDelivaryDate?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() identityDocumentExpiryDate?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() identityDocumentDeliveryLocation?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() identityDocumentPath?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() contractStartDate?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() contractEndDate?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() contractPath?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsDateString() hireDate?: Date;
-  @ApiProperty({ required: false }) @IsOptional() @IsBoolean() isActive?: boolean;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() status?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() employmentType?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsNumber() baseSalary?: number;
-  @ApiProperty({ required: false }) @IsOptional() @IsNumber() bonusAmount?: number;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() emergencyContactName?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() emergencyContactPhone?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() departmentId?: string;
-  @ApiProperty({ required: false }) @IsOptional() @IsString() positionId?: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  lastName: string;
+
+  @IsEnum(Gender)
+  @IsNotEmpty()
+  gender: Gender;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  address?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  phoneNumber?: number;
+
+  @IsOptional()
+  @IsDateString()
+  birthday?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  matrimonial_status?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  number_of_children?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  CNPSNumber?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  emergencyContactName?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  EmergencyContactPhone?: number;
+
+  @IsOptional()
+  @IsDateString()
+  hireDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  status?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  companyId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  positionUuid?: number;
 }
