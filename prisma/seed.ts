@@ -14,10 +14,9 @@ async function main() {
   const hashedPassword = await bcrypt.hash('admin123', 10);
 
   const adminEmployee = await prisma.employee.upsert({
-    where: { uuid: 1 },
+    where: { uuid: '00000000-0000-0000-0000-000000000001' },
     update: {},
     create: {
-      uuid: 1,
       firstName: 'Super',
       lastName: 'Admin',
       gender: Gender.MALE,

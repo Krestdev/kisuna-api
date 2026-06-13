@@ -16,9 +16,11 @@ export class CompaniesController {
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Create a new company (SUPER_ADMIN only)' })
+  @ApiOperation({ summary: 'Create a new company' })
   @ApiResponse({ status: 201, description: 'Company created successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Super Admin only' })
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
@@ -32,34 +34,34 @@ export class CompaniesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get company by ID' })
-  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company details' })
   @ApiResponse({ status: 404, description: 'Company not found' })
   findOne(@Param('id') id: string) {
-    return this.companiesService.findOne(+id);
+    return this.companiesService.findOne(id);
   }
 
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Update company (SUPER_ADMIN only)' })
-  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiOperation({ summary: 'Update company' })
+  @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company updated successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
+  @ApiResponse({ status: 404, description: 'Company not found' })
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companiesService.update(+id, updateCompanyDto);
+    return this.companiesService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Delete company (SUPER_ADMIN only)' })
-  @ApiParam({ name: 'id', description: 'Company ID' })
+  @ApiOperation({ summary: 'Delete company' })
+  @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company deleted successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden - requires SUPER_ADMIN role' })
+  @ApiResponse({ status: 400, description: 'Cannot delete: active departments or contracts exist' })
   remove(@Param('id') id: string) {
-    return this.companiesService.remove(+id);
+    return this.companiesService.remove(id);
   }
 }

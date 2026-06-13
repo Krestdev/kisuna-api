@@ -26,19 +26,19 @@ export class DepartmentsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all departments' })
-  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company UUID' })
   @ApiResponse({ status: 200, description: 'List of departments' })
   findAll(@Query('companyId') companyId?: string) {
-    return this.departmentsService.findAll(companyId ? +companyId : undefined);
+    return this.departmentsService.findAll(companyId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get department by ID' })
-  @ApiParam({ name: 'id', description: 'Department ID' })
+  @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({ status: 200, description: 'Department details' })
   @ApiResponse({ status: 404, description: 'Department not found' })
   findOne(@Param('id') id: string) {
-    return this.departmentsService.findOne(+id);
+    return this.departmentsService.findOne(id);
   }
 
   @Patch(':id')
@@ -46,33 +46,34 @@ export class DepartmentsController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update department' })
-  @ApiParam({ name: 'id', description: 'Department ID' })
+  @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({ status: 200, description: 'Department updated successfully' })
   @ApiResponse({ status: 404, description: 'Department not found' })
   update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
-    return this.departmentsService.update(+id, updateDepartmentDto);
+    return this.departmentsService.update(id, updateDepartmentDto);
   }
 
   @Patch(':id/manager/:employeeId')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Assign manager to department' })
-  @ApiParam({ name: 'id', description: 'Department ID' })
-  @ApiParam({ name: 'employeeId', description: 'Employee ID to assign as manager' })
+  @ApiOperation({ summary: 'Assign a manager to a department' })
+  @ApiParam({ name: 'id', description: 'Department UUID' })
+  @ApiParam({ name: 'employeeId', description: 'Employee UUID to assign as manager' })
   @ApiResponse({ status: 200, description: 'Manager assigned successfully' })
   assignManager(@Param('id') id: string, @Param('employeeId') employeeId: string) {
-    return this.departmentsService.assignManager(+id, +employeeId);
+    return this.departmentsService.assignManager(id, employeeId);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Delete department' })
-  @ApiParam({ name: 'id', description: 'Department ID' })
-  @ApiResponse({ status: 200, description: 'Department deleted successfully' })
+  @ApiOperation({ summary: 'Soft-delete department' })
+  @ApiParam({ name: 'id', description: 'Department UUID' })
+  @ApiResponse({ status: 200, description: 'Department deactivated successfully' })
+  @ApiResponse({ status: 400, description: 'Cannot delete: active positions exist' })
   remove(@Param('id') id: string) {
-    return this.departmentsService.remove(+id);
+    return this.departmentsService.remove(id);
   }
 }

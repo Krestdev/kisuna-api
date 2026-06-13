@@ -19,32 +19,30 @@ export class PositionsController {
   @ApiOperation({ summary: 'Create a new position' })
   @ApiResponse({ status: 201, description: 'Position created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createPositionDto: CreatePositionDto) {
     return this.positionsService.create(createPositionDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all positions' })
-  @ApiQuery({ name: 'departmentId', required: false, description: 'Filter by department ID' })
-  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'departmentId', required: false, description: 'Filter by department UUID' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company UUID' })
   @ApiResponse({ status: 200, description: 'List of positions' })
   findAll(
     @Query('departmentId') departmentId?: string,
     @Query('companyId') companyId?: string
   ) {
-    return this.positionsService.findAll(
-      departmentId ? +departmentId : undefined,
-      companyId ? +companyId : undefined
-    );
+    return this.positionsService.findAll(departmentId, companyId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get position by ID' })
-  @ApiParam({ name: 'id', description: 'Position ID' })
+  @ApiParam({ name: 'id', description: 'Position UUID' })
   @ApiResponse({ status: 200, description: 'Position details' })
   @ApiResponse({ status: 404, description: 'Position not found' })
   findOne(@Param('id') id: string) {
-    return this.positionsService.findOne(+id);
+    return this.positionsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,44 +50,46 @@ export class PositionsController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update position' })
-  @ApiParam({ name: 'id', description: 'Position ID' })
+  @ApiParam({ name: 'id', description: 'Position UUID' })
   @ApiResponse({ status: 200, description: 'Position updated successfully' })
+  @ApiResponse({ status: 404, description: 'Position not found' })
   update(@Param('id') id: string, @Body() updatePositionDto: UpdatePositionDto) {
-    return this.positionsService.update(+id, updatePositionDto);
+    return this.positionsService.update(id, updatePositionDto);
   }
 
   @Patch(':id/employee/:employeeId')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Assign employee to position' })
-  @ApiParam({ name: 'id', description: 'Position ID' })
-  @ApiParam({ name: 'employeeId', description: 'Employee ID' })
+  @ApiOperation({ summary: 'Assign an employee to a position' })
+  @ApiParam({ name: 'id', description: 'Position UUID' })
+  @ApiParam({ name: 'employeeId', description: 'Employee UUID to assign' })
   @ApiResponse({ status: 200, description: 'Employee assigned successfully' })
   assignEmployee(@Param('id') id: string, @Param('employeeId') employeeId: string) {
-    return this.positionsService.assignEmployee(+id, +employeeId);
+    return this.positionsService.assignEmployee(id, employeeId);
   }
 
   @Delete(':id/permissions/:permissionId')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Remove permission from position' })
-  @ApiParam({ name: 'id', description: 'Position ID' })
-  @ApiParam({ name: 'permissionId', description: 'Permission ID' })
+  @ApiOperation({ summary: 'Remove a single permission from a position' })
+  @ApiParam({ name: 'id', description: 'Position UUID' })
+  @ApiParam({ name: 'permissionId', description: 'Permission UUID to remove' })
   @ApiResponse({ status: 200, description: 'Permission removed successfully' })
   removePermission(@Param('id') id: string, @Param('permissionId') permissionId: string) {
-    return this.positionsService.removePermission(+id, +permissionId);
+    return this.positionsService.removePermission(id, permissionId);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Delete position' })
-  @ApiParam({ name: 'id', description: 'Position ID' })
-  @ApiResponse({ status: 200, description: 'Position deleted successfully' })
+  @ApiOperation({ summary: 'Soft-delete position' })
+  @ApiParam({ name: 'id', description: 'Position UUID' })
+  @ApiResponse({ status: 200, description: 'Position deactivated successfully' })
+  @ApiResponse({ status: 400, description: 'Cannot delete: employee currently assigned' })
   remove(@Param('id') id: string) {
-    return this.positionsService.remove(+id);
+    return this.positionsService.remove(id);
   }
 }

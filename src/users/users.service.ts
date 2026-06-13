@@ -18,7 +18,7 @@ export class UsersService {
     });
   }
 
-  async findById(uuid: number): Promise<User | null> {
+  async findById(uuid: string): Promise<User | null> {
     return this.databaseService.user.findUnique({
       where: { uuid },
     });

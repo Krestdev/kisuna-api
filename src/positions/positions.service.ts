@@ -7,7 +7,7 @@ import { UpdatePositionDto } from './dto/update-position.dto';
 export class PositionsService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async validateEmployeeBelongsToCompany(departmentId: number, employeeUuid: number) {
+  async validateEmployeeBelongsToCompany(departmentId: string, employeeUuid: string) {
     const department = await this.databaseService.department.findUnique({
       where: { uuid: departmentId },
       select: { companyId: true },
@@ -16,17 +16,10 @@ export class PositionsService {
 
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: employeeUuid },
-      include: {
-        positions: { include: { department: true } },
-        managedDepartments: true,
-      },
     });
     if (!employee) throw new NotFoundException('Employee not found');
 
-    const belongsViaPosition = employee.positions.some(p => p.department?.companyId === department.companyId);
-    const belongsViaManagement = employee.managedDepartments.some(d => d.companyId === department.companyId);
-
-    if (!belongsViaPosition && !belongsViaManagement) {
+    if (employee.companyId !== department.companyId) {
       throw new BadRequestException(`Employee does not belong to the same company as the department`);
     }
   }
@@ -35,9 +28,7 @@ export class PositionsService {
     const { departmentId, employeeUuid, permissionUuids, ...rest } = createPositionDto;
 
     const department = await this.databaseService.department.findUnique({ where: { uuid: departmentId } });
-    if (!department) {
-      throw new NotFoundException(`Department with ID ${departmentId} not found`);
-    }
+    if (!department) throw new NotFoundException(`Department with ID ${departmentId} not found`);
 
     if (employeeUuid) {
       await this.validateEmployeeBelongsToCompany(departmentId, employeeUuid);
@@ -53,12 +44,11 @@ export class PositionsService {
       });
 
       if (permissionUuids && permissionUuids.length > 0) {
-        const permissionData = permissionUuids.map(permUuid => ({
-          positionUuid: position.uuid,
-          permissionUuid: permUuid,
-        }));
         await prisma.positionPermission.createMany({
-          data: permissionData,
+          data: permissionUuids.map(permUuid => ({
+            positionUuid: position.uuid,
+            permissionUuid: permUuid,
+          })),
           skipDuplicates: true,
         });
       }
@@ -67,7 +57,7 @@ export class PositionsService {
     });
   }
 
-  async findAll(departmentId?: number, companyId?: number) {
+  async findAll(departmentId?: string, companyId?: string) {
     return this.databaseService.position.findMany({
       where: {
         isActive: true,
@@ -82,7 +72,7 @@ export class PositionsService {
     });
   }
 
-  async findOne(uuid: number) {
+  async findOne(uuid: string) {
     const position = await this.databaseService.position.findUnique({
       where: { uuid },
       include: {
@@ -91,15 +81,12 @@ export class PositionsService {
         permissions: { include: { permission: true } },
       },
     });
-
-    if (!position || !position.isActive) {
+    if (!position || !position.isActive)
       throw new NotFoundException(`Active Position with ID ${uuid} not found`);
-    }
-
     return position;
   }
 
-  async update(uuid: number, updatePositionDto: UpdatePositionDto) {
+  async update(uuid: string, updatePositionDto: UpdatePositionDto) {
     const position = await this.findOne(uuid);
     const { permissionUuids, departmentId, employeeUuid, ...rest } = updatePositionDto;
 
@@ -120,17 +107,13 @@ export class PositionsService {
       });
 
       if (permissionUuids !== undefined) {
-        await prisma.positionPermission.deleteMany({
-          where: { positionUuid: uuid },
-        });
-
+        await prisma.positionPermission.deleteMany({ where: { positionUuid: uuid } });
         if (permissionUuids.length > 0) {
-          const permissionData = permissionUuids.map(permUuid => ({
-            positionUuid: uuid,
-            permissionUuid: permUuid,
-          }));
           await prisma.positionPermission.createMany({
-            data: permissionData,
+            data: permissionUuids.map(permUuid => ({
+              positionUuid: uuid,
+              permissionUuid: permUuid,
+            })),
             skipDuplicates: true,
           });
         }
@@ -140,35 +123,28 @@ export class PositionsService {
     });
   }
 
-  async assignEmployee(uuid: number, employeeUuid: number) {
+  async assignEmployee(uuid: string, employeeUuid: string) {
     const position = await this.findOne(uuid);
     await this.validateEmployeeBelongsToCompany(position.departmentId, employeeUuid);
-
     return this.databaseService.position.update({
       where: { uuid },
       data: { employee: { connect: { uuid: employeeUuid } } },
     });
   }
 
-  async removePermission(uuid: number, permissionUuid: number) {
+  async removePermission(uuid: string, permissionUuid: string) {
     await this.findOne(uuid);
     return this.databaseService.positionPermission.delete({
       where: {
-        positionUuid_permissionUuid: {
-          positionUuid: uuid,
-          permissionUuid,
-        },
+        positionUuid_permissionUuid: { positionUuid: uuid, permissionUuid },
       },
     });
   }
 
-  async remove(uuid: number) {
+  async remove(uuid: string) {
     const position = await this.findOne(uuid);
-
-    if (position.employeeUuid) {
+    if (position.employeeUuid)
       throw new BadRequestException('Cannot delete position. An employee is currently assigned to it.');
-    }
-
     return this.databaseService.position.update({
       where: { uuid },
       data: { isActive: false },

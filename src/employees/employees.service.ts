@@ -8,15 +8,18 @@ export class EmployeesService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {
-    const { positionUuid, ...employeeData } = createEmployeeDto;
+    const { positionUuid, birthday, hireDate, companyId, ...rest } = createEmployeeDto;
 
     return this.databaseService.$transaction(async (prisma) => {
-      // 1. Create the employee
       const employee = await prisma.employee.create({
-        data: employeeData,
+        data: {
+          ...rest,
+          birthday: birthday ? new Date(birthday) : undefined,
+          hireDate: hireDate ? new Date(hireDate) : undefined,
+          ...(companyId ? { company: { connect: { uuid: companyId } } } : {}),
+        },
       });
 
-      // 2. If a position was provided, assign the employee to it
       if (positionUuid) {
         await prisma.position.update({
           where: { uuid: positionUuid },
@@ -28,7 +31,7 @@ export class EmployeesService {
     });
   }
 
-  async findAll(companyId?: number, includeInactive?: boolean) {
+  async findAll(companyId?: string, includeInactive?: boolean) {
     return this.databaseService.employee.findMany({
       where: {
         ...(includeInactive ? {} : { isActive: true }),
@@ -42,7 +45,7 @@ export class EmployeesService {
     });
   }
 
-  async findOne(uuid: number) {
+  async findOne(uuid: string) {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid },
       select: {
@@ -57,17 +60,14 @@ export class EmployeesService {
         positions: { include: { department: true } },
         managedDepartments: true,
         user: { select: { uuid: true, email: true, role: true } },
-      }
+      },
     });
-
-    if (!employee || !employee.isActive) {
+    if (!employee || !employee.isActive)
       throw new NotFoundException(`Active Employee with ID ${uuid} not found`);
-    }
-
     return employee;
   }
 
-  async findPersonal(uuid: number) {
+  async findPersonal(uuid: string) {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid },
       include: {
@@ -76,25 +76,26 @@ export class EmployeesService {
         user: { select: { uuid: true, email: true, role: true } },
       },
     });
-
-    if (!employee || !employee.isActive) {
+    if (!employee || !employee.isActive)
       throw new NotFoundException(`Active Employee with ID ${uuid} not found`);
-    }
-
     return employee;
   }
 
-  async update(uuid: number, updateEmployeeDto: UpdateEmployeeDto) {
-    // Ensure exists and active
+  async update(uuid: string, updateEmployeeDto: UpdateEmployeeDto) {
     const existing = await this.databaseService.employee.findUnique({ where: { uuid } });
     if (!existing || !existing.isActive) throw new NotFoundException('Active employee not found');
 
-    const { positionUuid, ...employeeData } = updateEmployeeDto;
+    const { positionUuid, birthday, hireDate, companyId, ...rest } = updateEmployeeDto;
 
     return this.databaseService.$transaction(async (prisma) => {
       const updatedEmployee = await prisma.employee.update({
         where: { uuid },
-        data: employeeData,
+        data: {
+          ...rest,
+          birthday: birthday ? new Date(birthday) : undefined,
+          hireDate: hireDate ? new Date(hireDate) : undefined,
+          ...(companyId ? { company: { connect: { uuid: companyId } } } : {}),
+        },
       });
 
       if (positionUuid !== undefined) {
@@ -108,37 +109,30 @@ export class EmployeesService {
     });
   }
 
-  async deactivate(uuid: number) {
+  async deactivate(uuid: string) {
     const existing = await this.databaseService.employee.findUnique({ where: { uuid } });
     if (!existing) throw new NotFoundException('Employee not found');
 
     return this.databaseService.$transaction(async (prisma) => {
-      // 1. Soft delete the employee
       const deactivated = await prisma.employee.update({
         where: { uuid },
         data: { isActive: false },
       });
-
-      // 2. Free up any positions they currently hold
       await prisma.position.updateMany({
         where: { employeeUuid: uuid },
         data: { employeeUuid: null },
       });
-
-      // 3. Remove them as department managers
       await prisma.department.updateMany({
         where: { employeeUuid: uuid },
         data: { employeeUuid: null },
       });
-
       return deactivated;
     });
   }
 
-  async reactivate(uuid: number) {
+  async reactivate(uuid: string) {
     const employee = await this.databaseService.employee.findUnique({ where: { uuid } });
     if (!employee) throw new NotFoundException('Employee not found');
-
     return this.databaseService.employee.update({
       where: { uuid },
       data: { isActive: true },

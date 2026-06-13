@@ -6,6 +6,9 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
+// Fix BigInt serialization
+BigInt.prototype['toJSON'] = function() { return this.toString(); };
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger({
