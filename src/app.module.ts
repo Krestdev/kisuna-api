@@ -9,10 +9,13 @@ import { PositionsModule } from './positions/positions.module';
 import { EmployeesModule } from './employees/employees.module';
 import { CompaniesModule } from './companies/companies.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { ContractsModule } from './contracts/contracts.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     UsersModule,
     AuthModule,
     DepartmentsModule,
@@ -20,6 +23,7 @@ import { PermissionsModule } from './permissions/permissions.module';
     EmployeesModule,
     CompaniesModule,
     PermissionsModule,
+    ContractsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

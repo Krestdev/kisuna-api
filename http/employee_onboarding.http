@@ -1,0 +1,460 @@
+@baseUrl = http://localhost:3000
+
+### Login to get token for onboarding flow
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@krest.com",
+  "password": "Password123!"
+}
+
+# the below is the possible response of the login
+# {
+#     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzFjY2Y0NC1iMzAwLTRhNmYtYTRhNS0zYWQ4YWI2ZjFjY2IiLCJlbWFpbCI6ImFkbWluQGtyZXN0LmNvbSIsInJvbGUiOiJTVVBFUkF ETUluIiwiaWF0IjoxNzUzMzc3OTcyLCJleHAiOjE3NTQ1ODc1NzJ9.p64V4n4gXQ6C8J9Y6n5Z6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2",
+#     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzFjY2Y0NC1iMzAwLTRhNmYtYTRhNS0zYWQ4YWI2ZjFjY2IiLCJlbWFpbCI6ImFkbWluQGtyZXN0LmNvbSIsInJvbGUiOiJTVVBFUkF ETUluIiwiaWF0IjoxNzUzMzc3OTcyLCJleHAiOjE3NTQ1ODc1NzJ9.p64V4n4gXQ6C8J9Y6n5Z6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2",
+#     "expires_in": 86400
+# }
+# in case of error in login
+# {
+#     "statusCode": 401,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Invalid credentials"
+#         }
+#     ]
+# }
+# in case the user doesnot have the appropriate role
+# {
+#     "statusCode": 403,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Forbidden - Admin only"
+#         }
+#     ]
+# }
+
+### Store Token
+@authToken = {{login.response.body.access_token}}
+
+### 1. Create a Company (or use an existing one)
+# @name createCompany
+POST {{baseUrl}}/companies
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Krest Holding",
+  "description": "Krest HQ"
+}
+
+# response of company creation
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "company": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "name": "Krest Holding",
+#                 "description": "Krest HQ"
+#             }
+#         }
+#     ]
+# }
+# in case of error in company creation
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Company with name Krest Holding already exists"
+#         }
+#     ]
+# }
+# in case request body is invalid
+# {
+#     "statusCode": 400,
+#     "message": [
+#         {
+#             "property": "name",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Name must not be empty"
+#             }
+#         },
+#         {
+#             "property": "description",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Description must not be empty"
+#             }
+#         }
+#     ]
+# }
+
+
+
+### Store Company ID
+@companyId = {{createCompany.response.body.uuid}}
+
+### 1.1 Create a Department
+# @name createDepartment
+POST {{baseUrl}}/departments
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Engineering",
+  "description": "Software Engineering Department",
+  "companyId": "{{companyId}}"
+}
+
+### Store Department ID
+@departmentId = {{createDepartment.response.body.uuid}}
+
+### 1.2 Create a Position
+# @name createPosition
+POST {{baseUrl}}/positions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Senior Software Engineer",
+  "description": "Lead frontend and backend development",
+  "level": 3,
+  "departmentId": "{{departmentId}}"
+}
+
+### Store Position ID
+@positionId = {{createPosition.response.body.uuid}}
+
+### 2. Create the Employee
+# @name createEmployee
+POST {{baseUrl}}/employees
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "gender": "MALE",
+  "companyId": "{{companyId}}",
+  "phoneNumber": 1234567890,
+  "hireDate": "2024-01-01T00:00:00Z"
+}
+
+# response of employee creation
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "employee": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "firstName": "John",
+#                 "lastName": "Doe",
+#                 "gender": "MALE",
+#                 "companyId": "{{companyId}}",
+#                 "phoneNumber": 1234567890,
+#                 "hireDate": "2024-01-01T00:00:00Z"
+#             }
+#         }
+#     ]
+# }
+# in case of error in employee creation
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Employee with name John Doe already exists"
+#         }
+#     ]
+# }
+# in case request body is invalid
+# {
+#     "statusCode": 400,
+#     "message": [
+#         {
+#             "property": "firstName",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "First name must not be empty"
+#             }
+#         },
+#         {
+#             "property": "lastName",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Last name must not be empty"
+#             }
+#         }
+#     ]
+# }
+
+### Store Employee ID
+@employeeId = {{createEmployee.response.body.uuid}}
+
+### 2.1 Assign Employee to the Position
+# @name assignPosition
+PATCH {{baseUrl}}/positions/{{positionId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "employeeUuid": "{{employeeId}}"
+}
+
+### 3. Upload ID Document for the Employee
+POST {{baseUrl}}/employees/{{employeeId}}/documents
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "file_name": "john_doe_id.pdf",
+  "document_type": "ID_CARD",
+  "path": "s3://krest-hr/docs/john_doe_id.pdf",
+  "expired_date": "2028-01-01T00:00:00Z"
+}
+
+# response of document upload
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "document": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "file_name": "john_doe_id.pdf",
+#                 "document_type": "ID_CARD",
+#                 "path": "s3://krest-hr/docs/john_doe_id.pdf",
+#                 "expired_date": "2028-01-01T00:00:00Z"
+#             }
+#         }
+#     ]
+# }
+# in case of error in document upload
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Document with name john_doe_id.pdf already exists"
+#         }
+#     ]
+# }
+# in case request body is invalid
+# {
+#     "statusCode": 400,
+#     "message": [
+#         {
+#             "property": "file_name",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "File name must not be empty"
+#             }
+#         },
+#         {
+#             "property": "document_type",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Document type must not be empty"
+#             }
+#         }
+#     ]
+# }
+
+### 4. Create an Active Contract for the Employee
+# @name createContract
+POST {{baseUrl}}/employees/{{employeeId}}/contracts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2025-01-01T00:00:00Z",
+  "contract_type": "FULL_TIME",
+  "baseSalary": 500000,
+  "currency": "XAF",
+  "companyId": "{{companyId}}"
+}
+
+# response of contract creation
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "contract": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "startDate": "2024-01-01T00:00:00Z",
+#                 "endDate": "2025-01-01T00:00:00Z",
+#                 "contract_type": "FULL_TIME",
+#                 "baseSalary": 500000,
+#                 "currency": "XAF",
+#                 "companyId": "{{companyId}}"
+#             }
+#         }
+#     ]
+# }
+# in case of error in contract creation
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Contract with name John Doe already exists"
+#         }
+#     ]
+# }
+# in case request body is invalid
+# {
+#     "statusCode": 400,
+#     "message": [
+#         {
+#             "property": "startDate",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Start date must not be empty"
+#             }
+#         },
+#         {
+#             "property": "endDate",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "End date must not be empty"
+#             }
+#         }
+#     ]
+# }
+# in case of error in contract creation
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Contract with name John Doe already exists"
+#         }
+#     ]
+# }
+# in case request body is invalid
+# {
+#     "statusCode": 400,
+#     "message": [
+#         {
+#             "property": "startDate",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "Start date must not be empty"
+#             }
+#         },
+#         {
+#             "property": "endDate",
+#             "value": "",
+#             "constraints": {
+#                 "isNotEmpty": "End date must not be empty"
+#             }
+#         }
+#     ]
+# }
+
+### 5. Verify Employee Details with Documents & Contracts
+GET {{baseUrl}}/employees/{{employeeId}}
+Authorization: Bearer {{authToken}}
+# response of employee details with documents & contracts
+# {
+#     "statusCode": 200,
+#     "message": [
+#         {
+#             "success": true,
+#             "employee": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "firstName": "John",
+#                 "lastName": "Doe",
+#                 "gender": "MALE",
+#                 "companyId": "{{companyId}}",
+#                 "phoneNumber": 1234567890,
+#                 "hireDate": "2024-01-01T00:00:00Z",
+#                 "documents": [
+#                     {
+#                         "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                         "file_name": "john_doe_id.pdf",
+#                         "document_type": "ID_CARD",
+#                         "path": "s3://krest-hr/docs/john_doe_id.pdf",
+#                         "expired_date": "2028-01-01T00:00:00Z"
+#                     }
+#                 ],
+#                 "contracts": [
+#                     {
+#                         "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                         "startDate": "2024-01-01T00:00:00Z",
+#                         "endDate": "2025-01-01T00:00:00Z",
+#                         "contract_type": "FULL_TIME",
+#                         "baseSalary": 500000,
+#                         "currency": "XAF",
+#                         "companyId": "{{companyId}}"
+#                     }
+#                 ]
+#             }
+#         }
+#     ]
+# }
+# in case of error in employee details with documents & contracts
+# {
+#     "statusCode": 404,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Employee with id {{employeeId}} not found"
+#         }
+#     ]
+# }
+
+# in case of error in employee details with documents & contracts
+# {
+#     "statusCode": 404,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Employee with id {{employeeId}} not found"
+#         }
+#     ]
+# }
+
+### 6. Verify Contract List for the Employee
+GET {{baseUrl}}/contracts?employeeId={{employeeId}}
+Authorization: Bearer {{authToken}}
+# response of contract list for the employee
+# {
+#     "statusCode": 200,
+#     "message": [
+#         {
+#             "success": true,
+#             "contracts": [
+#                 {
+#                     "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                     "startDate": "2024-01-01T00:00:00Z",
+#                     "endDate": "2025-01-01T00:00:00Z",
+#                     "contract_type": "FULL_TIME",
+#                     "baseSalary": 500000,
+#                     "currency": "XAF",
+#                     "companyId": "{{companyId}}"
+#                 }
+#             ]
+#         }
+#     ]
+# }
+# in case of error in contract list for the employee
+# {
+#     "statusCode": 404,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Contracts with employee id {{employeeId}} not found"
+#         }
+#     ]
+# }

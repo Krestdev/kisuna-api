@@ -75,13 +75,35 @@ model PositionPermission {
   @@id([positionUuid, permissionUuid])
 }
 
+enum ContractType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  FREELANCE
+  TEMPORARY
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
 model Contract {
-  uuid          String   @id @default(uuid())
-  endDate       DateTime
-  contract_type Int
-  startDate     DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  uuid              String         @id @default(uuid())
+  startDate         DateTime
+  endDate           DateTime
+  contract_type     ContractType
+  status            ContractStatus @default(ACTIVE)
+  baseSalary        Int
+  currency          String         @default("XAF")
+  terminationReason String?
+  expiryAlertSent   Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
 
   companyId String
   company   Company @relation(fields: [companyId], references: [uuid])
@@ -114,6 +136,7 @@ model Employee {
   attendances        Attendance[]
   files              File[]
   payslips           Payslip[]
+  contracts          Contract[]
   schedules          EmployeeSchedule[]
   managedDepartments Department[]       @relation("DepartmentManager")
   positions          Position[]         @relation("PositionEmployee")
@@ -148,13 +171,21 @@ model Attendance {
   payroll     Payroll? @relation(fields: [payrollUuid], references: [uuid])
 }
 
+enum DocumentType {
+  ID_CARD
+  RESUME
+  CONTRACT
+  OTHER
+}
+
 model File {
-  uuid          String   @id @default(uuid())
-  file_name     String   @db.VarChar(100)
-  document_type String?  @db.VarChar(10)
-  path          String?  @db.VarChar(255)
-  createAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  uuid          String        @id @default(uuid())
+  file_name     String        @db.VarChar(100)
+  document_type DocumentType? @default(OTHER)
+  path          String?       @db.VarChar(255)
+  expired_date  DateTime?
+  createAt      DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])

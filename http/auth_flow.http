@@ -1,0 +1,89 @@
+@baseUrl = http://localhost:3004
+
+### 1. Register a new Super Admin
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@krest.com",
+  "password": "Password123!"
+}
+
+
+# the below is the possible response of the registration
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "role": {
+#                 "uuid": "35d2641e-b682-4af5-b33a-a4117222d1bf",
+#                 "name": "SUPER_ADMIN"
+#             }
+#         }
+#     ]
+# }
+# the above response is from a super admin registration,
+#  the below response is from an employee registration
+# {
+#     "statusCode": 201,
+#     "message": [
+#         {
+#             "success": true,
+#             "user": {
+#                 "uuid": "c1dfa3d2-f137-49e3-81cc-1150e78c277e",
+#                 "email": "[EMAIL_ADDRESS]",
+#                 "role": {
+#                     "uuid": "189e71a6-25eb-49a6-9a77-47634b7801ad",
+#                     "name": "EMPLOYEE"
+#                 }
+#             }
+#         }
+#     ],
+# }
+#  in case of error in registration
+# {
+#     "statusCode": 409,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "User with email admin@krest.com already exists"
+#         }
+#     ],
+# }
+
+
+### 2. Login to get Access Token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@krest.com",
+  "password": "Password123!"
+}
+
+# the below is the possible response of the login
+# {
+#     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzFjY2Y0NC1iMzAwLTRhNmYtYTRhNS0zYWQ4YWI2ZjFjY2IiLCJlbWFpbCI6ImFkbWluQGtyZXN0LmNvbSIsInJvbGUiOiJTVVBFUkF ETUluIiwiaWF0IjoxNzUzMzc3OTcyLCJleHAiOjE3NTQ1ODc1NzJ9.p64V4n4gXQ6C8J9Y6n5Z6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2",
+#     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzFjY2Y0NC1iMzAwLTRhNmYtYTRhNS0zYWQ4YWI2ZjFjY2IiLCJlbWFpbCI6ImFkbWluQGtyZXN0LmNvbSIsInJvbGUiOiJTVVBFUkF ETUluIiwiaWF0IjoxNzUzMzc3OTcyLCJleHAiOjE3NTQ1ODc1NzJ9.p64V4n4gXQ6C8J9Y6n5Z6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2n5Y6Z2",
+#     "expires_in": 86400
+# }
+# in case of error in login
+# {
+#     "statusCode": 401,
+#     "message": [
+#         {
+#             "success": false,
+#             "error": "Invalid credentials"
+#         }
+#     ]
+# }
+
+### Store Token
+@authToken = {{login.response.body.access_token}}
+
+### 3. Verify Authentication (Get all companies)
+GET {{baseUrl}}/companies
+Authorization: Bearer {{authToken}}
