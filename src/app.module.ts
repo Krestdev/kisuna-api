@@ -13,6 +13,7 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RustfsModule } from './rustfs/rustfs.module';
 import { FilesModule } from './files/files.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { FilesModule } from './files/files.module';
     ContractsModule,
     RustfsModule,
     FilesModule,
+    AttendanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

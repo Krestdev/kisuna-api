@@ -154,15 +154,25 @@ enum SystemRole {
   USER
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
 model Attendance {
-  uuid       String   @id @default(uuid())
-  checkin    String?  @db.VarChar(10)
-  checkOut   String?  @db.VarChar(10)
-  workedHour Int?
-  overtimes  Int?
-  status     String?  @db.VarChar(10)
-  createdAt  DateTime @default(now())
-  updateAt   DateTime @updatedAt
+  uuid       String           @id @default(uuid())
+  checkIn    DateTime
+  checkOut   DateTime?
+  latitude   Float
+  longitude  Float
+  workedHour Float?
+  overtimes  Float?
+  status     AttendanceStatus @default(PRESENT)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
