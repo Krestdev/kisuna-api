@@ -11,6 +11,8 @@ import { CompaniesModule } from './companies/companies.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RustfsModule } from './rustfs/rustfs.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     CompaniesModule,
     PermissionsModule,
     ContractsModule,
+    RustfsModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

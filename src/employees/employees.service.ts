@@ -3,7 +3,6 @@ import { DatabaseService } from '../database/database.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
-import { UploadDocumentDto } from './dto/upload-document.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -188,51 +187,6 @@ export class EmployeesService {
     return this.databaseService.employee.update({
       where: { uuid },
       data: { isActive: true },
-    });
-  }
-
-  async uploadDocument(employeeId: string, uploadDto: UploadDocumentDto) {
-    const employee = await this.databaseService.employee.findUnique({ where: { uuid: employeeId } });
-    if (!employee) throw new NotFoundException('Employee not found');
-
-    const { file_name, document_type, path, expired_date } = uploadDto;
-    return this.databaseService.file.create({
-      data: {
-        file_name,
-        document_type,
-        path,
-        expired_date: expired_date ? new Date(expired_date) : undefined,
-        employeeId,
-      },
-    });
-  }
-
-  async getDocuments(employeeId: string) {
-    const employee = await this.databaseService.employee.findUnique({ where: { uuid: employeeId } });
-    if (!employee) throw new NotFoundException('Employee not found');
-
-    return this.databaseService.file.findMany({
-      where: { employeeId },
-      orderBy: { createAt: 'desc' },
-    });
-  }
-
-  async getDocument(employeeId: string, docId: string) {
-    const document = await this.databaseService.file.findFirst({
-      where: { uuid: docId, employeeId },
-    });
-    if (!document) throw new NotFoundException('Document not found');
-    return document;
-  }
-
-  async deleteDocument(employeeId: string, docId: string) {
-    const document = await this.databaseService.file.findFirst({
-      where: { uuid: docId, employeeId },
-    });
-    if (!document) throw new NotFoundException('Document not found');
-
-    return this.databaseService.file.delete({
-      where: { uuid: docId },
     });
   }
 }

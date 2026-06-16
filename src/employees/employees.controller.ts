@@ -4,7 +4,6 @@ import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
-import { UploadDocumentDto } from './dto/upload-document.dto';
 import { SystemRole } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -93,55 +92,6 @@ export class EmployeesController {
   @ApiResponse({ status: 404, description: 'Employee not found' })
   reactivate(@Param('id') id: string) {
     return this.employeesService.reactivate(id);
-  }
-
-  @Post(':id/documents')
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Upload a document for an employee' })
-  @ApiParam({ name: 'id', description: 'Employee UUID' })
-  @ApiResponse({ status: 201, description: 'Document uploaded successfully' })
-  @ApiResponse({ status: 404, description: 'Employee not found' })
-  uploadDocument(@Param('id') id: string, @Body() uploadDto: UploadDocumentDto) {
-    return this.employeesService.uploadDocument(id, uploadDto);
-  }
-
-  @Get(':id/documents')
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get all documents for an employee' })
-  @ApiParam({ name: 'id', description: 'Employee UUID' })
-  @ApiResponse({ status: 200, description: 'List of documents' })
-  getDocuments(@Param('id') id: string) {
-    return this.employeesService.getDocuments(id);
-  }
-
-  @Get(':id/documents/:docId')
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get a specific document for an employee' })
-  @ApiParam({ name: 'id', description: 'Employee UUID' })
-  @ApiParam({ name: 'docId', description: 'Document UUID' })
-  @ApiResponse({ status: 200, description: 'Document details' })
-  @ApiResponse({ status: 404, description: 'Document not found' })
-  getDocument(@Param('id') id: string, @Param('docId') docId: string) {
-    return this.employeesService.getDocument(id, docId);
-  }
-
-  @Delete(':id/documents/:docId')
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Delete a document for an employee' })
-  @ApiParam({ name: 'id', description: 'Employee UUID' })
-  @ApiParam({ name: 'docId', description: 'Document UUID' })
-  @ApiResponse({ status: 200, description: 'Document deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Document not found' })
-  deleteDocument(@Param('id') id: string, @Param('docId') docId: string) {
-    return this.employeesService.deleteDocument(id, docId);
   }
 
   @Post(':id/contracts')
