@@ -64,6 +64,28 @@ export class RustfsService implements OnModuleInit {
     return fullPath;
   }
 
+  async uploadBuffer(
+    buffer: Buffer,
+    filePath: string,
+    contentType: string
+  ): Promise<string> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: filePath,
+        Body: buffer,
+        ContentType: contentType,
+        Metadata: {
+          size: String(buffer.length),
+        },
+      }),
+    );
+
+    const fullPath = `${this.endpoint}/${this.bucket}/${filePath}`;
+    this.logger.log(`Uploaded buffer: ${fullPath}`);
+    return fullPath;
+  }
+
   async getFileUrl(
     fullPath: string,
     expiresIn = 3600,

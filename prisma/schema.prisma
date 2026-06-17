@@ -136,6 +136,7 @@ model Employee {
   attendances        Attendance[]
   files              File[]
   payslips           Payslip[]
+  payrolls           Payroll[]
   contracts          Contract[]
   schedules          EmployeeSchedule[]
   managedDepartments Department[]       @relation("DepartmentManager")
@@ -199,49 +200,79 @@ model File {
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
+}
 
-  payslips Payslip[]
+enum ScheduleStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
 }
 
 model EmployeeSchedule {
-  uuid      String   @id @default(uuid())
-  schedule  Int?
-  startDate DateTime
-  endDate   DateTime
+  uuid       String         @id @default(uuid())
+  startDate  DateTime
+  endDate    DateTime
+  shiftStart String         @db.VarChar(5)  // e.g. "08:00"
+  shiftEnd   String         @db.VarChar(5)  // e.g. "17:00"
+  workDays   String         @db.VarChar(50) // e.g. "MON,TUE,WED,THU,FRI"
+  status     ScheduleStatus @default(ACTIVE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
 }
 
+enum PayrollStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
 model Payroll {
-  uuid      String   @id @default(uuid())
-  startDate DateTime
-  endDate   DateTime
-  status    Int?
-  createdAt DateTime @default(now())
-  updateAt  DateTime @updatedAt
+  uuid          String        @id @default(uuid())
+  startDate     DateTime
+  endDate       DateTime
+  status        PayrollStatus @default(DRAFT)
+  
+  // Salary breakdown
+  baseSalary    Float
+  overtimePay   Float         @default(0)
+  bonus         Float         @default(0)
+  deductions    Float         @default(0)
+  netSalary     Float
+  
+  // Work summary
+  workedDays    Int
+  absentDays    Int           @default(0)
+  overtimeHours Float         @default(0)
 
-  contractId String
-  contract   Contract @relation(fields: [contractId], references: [uuid])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  payslipId String?
-  payslip   Payslip? @relation(fields: [payslipId], references: [uuid])
+  employeeId    String
+  employee      Employee      @relation(fields: [employeeId], references: [uuid])
 
-  attendances Attendance[]
+  contractId    String
+  contract      Contract      @relation(fields: [contractId], references: [uuid])
+
+  attendances   Attendance[]
+  payslip       Payslip?
 }
 
 model Payslip {
   uuid        String    @id @default(uuid())
-  totalAmount Int?
-  issueDate   DateTime?
+  totalAmount Float
+  issueDate   DateTime  @default(now())
+  filePath    String?
 
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [uuid])
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [uuid])
 
-  filesId String?
-  file    File? @relation(fields: [filesId], references: [uuid])
-
-  payrolls Payroll[]
+  payrollId   String   @unique
+  payroll     Payroll  @relation(fields: [payrollId], references: [uuid])
 }
 
 model User {

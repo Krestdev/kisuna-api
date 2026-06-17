@@ -14,6 +14,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RustfsModule } from './rustfs/rustfs.module';
 import { FilesModule } from './files/files.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { PayrollsModule } from './payrolls/payrolls.module';
+import { PayslipsModule } from './payslips/payslips.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { AttendanceModule } from './attendance/attendance.module';
     RustfsModule,
     FilesModule,
     AttendanceModule,
+    PayrollsModule,
+    PayslipsModule,
+    SchedulesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

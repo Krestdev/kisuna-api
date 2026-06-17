@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { SchedulesService } from '../schedules/schedules.service';
 import {
   startOfDay,
   endOfDay,
@@ -11,26 +12,45 @@ import {
   startOfMonth,
   endOfMonth,
 } from 'date-fns';
+import { format } from 'date-fns';
 import { CheckInDto } from './dto/checkin.dto';
 import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
+import { AttendanceStatus } from '@prisma/client';
 
 const STANDARD_HOURS = 8;
-const LATE_THRESHOLD_MINUTES = 15;
+const GRACE_PERIOD_MINUTES = 15;
 
 @Injectable()
 export class AttendanceService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private schedulesService: SchedulesService,
+  ) {}
 
   async checkIn(dto: CheckInDto) {
     const employee = await this.prisma.employee.findUnique({
       where: { uuid: dto.employeeId },
-      include: { schedules: true },
     });
 
     if (!employee || !employee.isActive) {
       throw new NotFoundException('Employee not found or inactive');
+    }
+
+    // Get active schedule
+    const schedule = await this.schedulesService.getActiveSchedule(dto.employeeId);
+    if (!schedule) {
+      throw new BadRequestException('No active schedule found for this employee');
+    }
+
+    // Check if today is a valid work day
+    const todayAbbr = format(new Date(), 'EEE').toUpperCase(); // MON, TUE...
+    const workDays = schedule.workDays.split(',');
+    if (!workDays.includes(todayAbbr)) {
+      throw new BadRequestException(
+        `Today (${todayAbbr}) is not a working day for this employee`,
+      );
     }
 
     const today = new Date();
@@ -48,7 +68,7 @@ export class AttendanceService {
       throw new BadRequestException('Already checked in today');
     }
 
-    const status = this.determineStatus(today, employee.schedules[0]);
+    const status = this.determineStatus(today, schedule.shiftStart);
 
     return this.prisma.attendance.create({
       data: {
@@ -224,19 +244,14 @@ export class AttendanceService {
     return parseFloat((ms / (1000 * 60 * 60)).toFixed(2));
   }
 
-  private determineStatus(checkInTime: Date, schedule: any): 'PRESENT' | 'LATE' {
-    if (!schedule) return 'PRESENT';
-
-    const scheduledStart = new Date(schedule.startDate);
-    scheduledStart.setFullYear(
-      checkInTime.getFullYear(),
-      checkInTime.getMonth(),
-      checkInTime.getDate(),
-    );
+  private determineStatus(checkInTime: Date, shiftStart: string): AttendanceStatus {
+    const [hours, minutes] = shiftStart.split(':').map(Number);
+    const scheduledStart = new Date(checkInTime);
+    scheduledStart.setHours(hours, minutes, 0, 0);
 
     const diffMinutes = differenceInMinutes(checkInTime, scheduledStart);
 
-    if (diffMinutes > LATE_THRESHOLD_MINUTES) return 'LATE';
-    return 'PRESENT';
+    if (diffMinutes > GRACE_PERIOD_MINUTES) return AttendanceStatus.LATE;
+    return AttendanceStatus.PRESENT;
   }
 }
