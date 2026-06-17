@@ -163,19 +163,23 @@ enum AttendanceStatus {
   LATE
   HALF_DAY
   ON_LEAVE
+  FIELD
 }
 
 model Attendance {
-  uuid       String           @id @default(uuid())
-  checkIn    DateTime
-  checkOut   DateTime?
-  latitude   Float
-  longitude  Float
-  workedHour Float?
-  overtimes  Float?
-  status     AttendanceStatus @default(PRESENT)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  uuid        String           @id @default(uuid())
+  checkIn     DateTime
+  checkOut    DateTime?
+  latitude    Float
+  longitude   Float
+  workedHour  Float?
+  overtimes   Float?
+  status      AttendanceStatus @default(PRESENT)
+  location    String?          @db.VarChar(255)
+  mission     String?          @db.VarChar(255)
+  observations String?         @db.VarChar(500)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
@@ -291,16 +295,17 @@ model User {
 }
 
 model Leave {
-  uuid         Int         @id @default(autoincrement())
-  type         LeaveType
-  startDate    DateTime
-  endDate      DateTime
-  reason       String?     @db.VarChar(255)
-  status       LeaveStatus @default(PENDING)
-  approvedBy   String?
-  rejectReason String?     @db.VarChar(255)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  uuid            Int         @id @default(autoincrement())
+  type            LeaveType
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?     @db.VarChar(255)
+  status          LeaveStatus @default(PENDING)
+  approvedBy      String?
+  rejectReason    String?     @db.VarChar(255)
+  justificatifUrl String?     @db.VarChar(500)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])

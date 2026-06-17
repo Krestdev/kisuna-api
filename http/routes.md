@@ -10,6 +10,11 @@ This document maps each screens to the backend endpoints required to power it, a
 
 ### `POST /auth/login`
 
+
+![Login screen](./screenshots/login.png)
+
+
+
 **Request**
 ```json
 {
@@ -49,6 +54,9 @@ This document maps each screens to the backend endpoints required to power it, a
 **Widgets shown:** Demande de congés (count), Total employés (count + delta), Dernier bulletin disponible, Historique des congés (table)
 
 ### `GET /dashboard/summary`
+
+![Dashboard screen](./screenshots/dashboard-admin.png)
+
 
 **Response 200**
 ```json
@@ -116,6 +124,9 @@ Powers the "Historique des congés" table on the dashboard.
 **Filters shown:** Département, Rechercher par nom, Ancienneté inférieure à, Valeur
 **Table columns:** Employé, Poste, Département, Ancienneté, Date d'entrée, Fin Contrat (with status dot), Actions
 
+![Employee List screen](./screenshots/employee-list.png)
+
+
 ### `GET /employees`
 
 **Query params**
@@ -178,6 +189,11 @@ Status dot color mapping for `contract.status`:
 **Fields shown:** Nom, Prénom, Adresse complète, Téléphone, Date de Naissance, Adresse email, Sexe, Situation matrimoniale, Nationalité, Nombre d'enfant(s), Pays de résidence, Personne à contacter
 
 This is a 3-step wizard (Informations Personnelles → Informations Administratives → Informations Professionnelles). The frontend should hold state across steps and submit once at the end, OR create a draft progressively. Recommended: **submit once at the final step**.
+
+![Add Employee screen](./screenshots/add-employee.png)
+![Add Employee screen](./screenshots/add-employee-2.png)
+![Add Employee screen](./screenshots/add-employee-3.png)
+
 
 ### `POST /employees`
 
@@ -252,6 +268,9 @@ Same as section 3 — included here for cross-reference since image 5 is the sam
 
 ## 6. Leave Management (`Gestion des congés`)
 
+![Leave Management screen](./screenshots/leave-management.png)
+![Leave Management screen](./screenshots/leave-management-2.png)
+
 **Filters:** Employé, Statut de la demande
 **Buttons:** Historique, Demander une absence
 **Table columns:** Employés, Congés total, Congés consommés, Congés restant, Demande (Oui/Non)
@@ -287,6 +306,8 @@ Same as section 3 — included here for cross-reference since image 5 is the sam
 
 Powers the "Historique" button.
 
+![Leave Management screen](./screenshots/leave-history-3.png)
+
 **Response 200**
 ```json
 {
@@ -305,6 +326,8 @@ Powers the "Historique" button.
 ```
 
 ### `POST /leaves` (Demander une absence)
+
+![Leave Management screen](./screenshots/leave-request-3.png)
 
 **Request**
 ```json
@@ -379,6 +402,8 @@ Handling employee attendance (check-in/check-out) and absentees
 
 ### `/attendance` List all attendance records
 
+![Employee Attendance Management](./screenshots/employee-attendance.png)
+
 **Response 200**
 ```json
  [
@@ -403,7 +428,12 @@ Handling employee attendance (check-in/check-out) and absentees
 
 ## 7. Employee Payroll Management
 
+
+
 Handling employee payroll (generate, view, edit, approve, mark as paid, delete)
+
+
+![Employee Payroll Management](./screenshots/employee-payroll.png)
 
 ---
 

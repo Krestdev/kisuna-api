@@ -19,6 +19,7 @@ import { PayslipsModule } from './payslips/payslips.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { LeavesModule } from './leaves/leaves.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { MeModule } from './me/me.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     SchedulesModule,
     LeavesModule,
     DashboardModule,
+    MeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
