@@ -17,7 +17,7 @@ import { CheckInDto } from './dto/checkin.dto';
 import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
-import { AttendanceStatus } from '@prisma/client';
+import { AttendanceStatus, LeaveStatus } from '@prisma/client';
 
 const STANDARD_HOURS = 8;
 const GRACE_PERIOD_MINUTES = 15;
@@ -38,6 +38,21 @@ export class AttendanceService {
       throw new NotFoundException('Employee not found or inactive');
     }
 
+    // Check if employee is on approved leave today
+    const today = new Date();
+    const onLeave = await this.prisma.leave.findFirst({
+      where: {
+        employeeId: dto.employeeId,
+        status: LeaveStatus.APPROVED,
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+    });
+
+    if (onLeave) {
+      throw new BadRequestException('You are on approved leave today, check-in not required');
+    }
+
     // Get active schedule
     const schedule = await this.schedulesService.getActiveSchedule(dto.employeeId);
     if (!schedule) {
@@ -53,7 +68,6 @@ export class AttendanceService {
       );
     }
 
-    const today = new Date();
     const existing = await this.prisma.attendance.findFirst({
       where: {
         employeeId: dto.employeeId,

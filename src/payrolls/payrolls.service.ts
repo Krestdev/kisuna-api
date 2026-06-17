@@ -4,6 +4,7 @@ import { AttendanceService } from '../attendance/attendance.service';
 import { SchedulesService } from '../schedules/schedules.service';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { AdjustPayrollDto } from './dto/adjust-payroll.dto';
+import { LeaveStatus, LeaveType } from '@prisma/client';
 
 const DAY_MAP: Record<string, number> = {
   SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
@@ -50,6 +51,32 @@ export class PayrollsService {
     // 4. Get attendance summary for the month
     const summary = await this.attendanceService.getMonthlySummary(employeeId, month, year);
 
+    // 4.5. Get approved leaves for this period
+    const leaves = await this.prisma.leave.findMany({
+      where: {
+        employeeId,
+        status: LeaveStatus.APPROVED,
+        startDate: { gte: startDate },
+        endDate: { lte: endDate },
+      },
+    });
+
+    // Calculate leave days by type
+    let paidLeaveDays = 0;
+    let unpaidLeaveDays = 0;
+
+    for (const leave of leaves) {
+      const leaveDays = Math.ceil(
+        (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+
+      if (leave.type === LeaveType.UNPAID) {
+        unpaidLeaveDays += leaveDays;
+      } else {
+        paidLeaveDays += leaveDays;
+      }
+    }
+
     // 5. Calculate pay using schedule-aware daily/hourly rates
     const OVERTIME_RATE = 1.5;
     const expectedDays = this.countWorkingDays(startDate, endDate, workDaysList);
@@ -57,7 +84,8 @@ export class PayrollsService {
     const HOURLY_RATE = DAILY_RATE / 8;
 
     const overtimePay = summary.totalOvertime * HOURLY_RATE * OVERTIME_RATE;
-    const deductions = summary.absentDays * DAILY_RATE;
+    // Deduct only absent days + unpaid leave days (paid leave = no deduction)
+    const deductions = (summary.absentDays + unpaidLeaveDays) * DAILY_RATE;
     const netSalary = contract.baseSalary + overtimePay - deductions;
 
     // 5. Create payroll record

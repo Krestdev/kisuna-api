@@ -9,6 +9,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { ContractsService } from '../contracts/contracts.service';
 import { CreateContractDto } from '../contracts/dto/create-contract.dto';
+import { LeavesService } from '../leaves/leaves.service';
 
 @ApiTags('Employees')
 @Controller('employees')
@@ -16,6 +17,7 @@ export class EmployeesController {
   constructor(
     private readonly employeesService: EmployeesService,
     private readonly contractsService: ContractsService,
+    private readonly leavesService: LeavesService,
   ) {}
 
   @Post()
@@ -104,5 +106,36 @@ export class EmployeesController {
   @ApiResponse({ status: 400, description: 'Bad request (e.g., already has active contract)' })
   createContract(@Param('id') id: string, @Body() createContractDto: CreateContractDto) {
     return this.contractsService.create(id, createContractDto);
+  }
+
+  @Get(':id/leaves')
+  @ApiOperation({ summary: 'Get all leave requests for an employee' })
+  @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiResponse({ status: 200, description: 'List of leave requests' })
+  getEmployeeLeaves(@Param('id') id: string) {
+    return this.leavesService.findByEmployee(id);
+  }
+
+  @Get(':id/leaves/balance')
+  @ApiOperation({ summary: 'Get leave balance for an employee' })
+  @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiResponse({ status: 200, description: 'Leave balance details' })
+  getLeaveBalance(@Param('id') id: string) {
+    return this.leavesService.getLeaveBalance(id);
+  }
+
+  @Patch(':id/leaves/balance/:year')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update leave balance quota for an employee (admin only)' })
+  @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiParam({ name: 'year', description: 'Year' })
+  updateLeaveQuota(
+    @Param('id') id: string,
+    @Param('year') year: string,
+    @Body() dto: { totalDays: number },
+  ) {
+    return this.leavesService.updateBalanceQuota(id, parseInt(year), dto.totalDays);
   }
 }

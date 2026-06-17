@@ -32,7 +32,7 @@ model Department {
   companyId String
   company   Company @relation(fields: [companyId], references: [uuid])
 
-  employeeUuid String?  @unique
+  employeeUuid String?   @unique
   employee     Employee? @relation("DepartmentManager", fields: [employeeUuid], references: [uuid])
 
   positions Position[]
@@ -50,7 +50,7 @@ model Position {
   departmentId String
   department   Department @relation(fields: [departmentId], references: [uuid])
 
-  employeeUuid String?  @unique
+  employeeUuid String?   @unique
   employee     Employee? @relation("PositionEmployee", fields: [employeeUuid], references: [uuid])
 
   permissions PositionPermission[]
@@ -138,6 +138,8 @@ model Employee {
   payslips           Payslip[]
   payrolls           Payroll[]
   contracts          Contract[]
+  leaves             Leave[]
+  leaveBalances      LeaveBalance[]
   schedules          EmployeeSchedule[]
   managedDepartments Department[]       @relation("DepartmentManager")
   positions          Position[]         @relation("PositionEmployee")
@@ -212,8 +214,8 @@ model EmployeeSchedule {
   uuid       String         @id @default(uuid())
   startDate  DateTime
   endDate    DateTime
-  shiftStart String         @db.VarChar(5)  // e.g. "08:00"
-  shiftEnd   String         @db.VarChar(5)  // e.g. "17:00"
+  shiftStart String         @db.VarChar(5) // e.g. "08:00"
+  shiftEnd   String         @db.VarChar(5) // e.g. "17:00"
   workDays   String         @db.VarChar(50) // e.g. "MON,TUE,WED,THU,FRI"
   status     ScheduleStatus @default(ACTIVE)
   createdAt  DateTime       @default(now())
@@ -232,47 +234,47 @@ enum PayrollStatus {
 }
 
 model Payroll {
-  uuid          String        @id @default(uuid())
-  startDate     DateTime
-  endDate       DateTime
-  status        PayrollStatus @default(DRAFT)
-  
+  uuid      String        @id @default(uuid())
+  startDate DateTime
+  endDate   DateTime
+  status    PayrollStatus @default(DRAFT)
+
   // Salary breakdown
-  baseSalary    Float
-  overtimePay   Float         @default(0)
-  bonus         Float         @default(0)
-  deductions    Float         @default(0)
-  netSalary     Float
-  
+  baseSalary  Float
+  overtimePay Float @default(0)
+  bonus       Float @default(0)
+  deductions  Float @default(0)
+  netSalary   Float
+
   // Work summary
   workedDays    Int
-  absentDays    Int           @default(0)
-  overtimeHours Float         @default(0)
+  absentDays    Int   @default(0)
+  overtimeHours Float @default(0)
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  employeeId    String
-  employee      Employee      @relation(fields: [employeeId], references: [uuid])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
 
-  contractId    String
-  contract      Contract      @relation(fields: [contractId], references: [uuid])
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [uuid])
 
-  attendances   Attendance[]
-  payslip       Payslip?
+  attendances Attendance[]
+  payslip     Payslip?
 }
 
 model Payslip {
-  uuid        String    @id @default(uuid())
+  uuid        String   @id @default(uuid())
   totalAmount Float
-  issueDate   DateTime  @default(now())
+  issueDate   DateTime @default(now())
   filePath    String?
 
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [uuid])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
 
-  payrollId   String   @unique
-  payroll     Payroll  @relation(fields: [payrollId], references: [uuid])
+  payrollId String  @unique
+  payroll   Payroll @relation(fields: [payrollId], references: [uuid])
 }
 
 model User {
@@ -284,6 +286,51 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  employeeId   String?   @unique
-  employee     Employee? @relation(fields: [employeeId], references: [uuid])
+  employeeId String?   @unique
+  employee   Employee? @relation(fields: [employeeId], references: [uuid])
+}
+
+model Leave {
+  uuid         Int         @id @default(autoincrement())
+  type         LeaveType
+  startDate    DateTime
+  endDate      DateTime
+  reason       String?     @db.VarChar(255)
+  status       LeaveStatus @default(PENDING)
+  approvedBy   String?
+  rejectReason String?     @db.VarChar(255)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
+}
+
+enum LeaveType {
+  ANNUAL // paid vacation
+  SICK // sick leave
+  MATERNITY
+  PATERNITY
+  UNPAID
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model LeaveBalance {
+  uuid          Int      @id @default(autoincrement())
+  year          Int
+  totalDays     Int      @default(21)
+  usedDays      Int      @default(0)
+  remainingDays Int      @default(21)
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
+
+  @@unique([employeeId, year])
 }

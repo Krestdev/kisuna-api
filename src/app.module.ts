@@ -17,6 +17,8 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { PayrollsModule } from './payrolls/payrolls.module';
 import { PayslipsModule } from './payslips/payslips.module';
 import { SchedulesModule } from './schedules/schedules.module';
+import { LeavesModule } from './leaves/leaves.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { SchedulesModule } from './schedules/schedules.module';
     PayrollsModule,
     PayslipsModule,
     SchedulesModule,
+    LeavesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

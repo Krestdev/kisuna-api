@@ -3,9 +3,10 @@ import { EmployeesService } from './employees.service';
 import { EmployeesController } from './employees.controller';
 import { DatabaseModule } from '../database/database.module';
 import { ContractsModule } from '../contracts/contracts.module';
+import { LeavesModule } from '../leaves/leaves.module';
 
 @Module({
-  imports: [DatabaseModule, ContractsModule],
+  imports: [DatabaseModule, ContractsModule, LeavesModule],
   controllers: [EmployeesController],
   providers: [EmployeesService],
 })
