@@ -271,6 +271,7 @@ Same as section 3 — included here for cross-reference since image 5 is the sam
 ![Leave Management screen](./screenshots/leave-management.png)
 ![Leave Management screen](./screenshots/leave-management-2.png)
 
+
 **Filters:** Employé, Statut de la demande
 **Buttons:** Historique, Demander une absence
 **Table columns:** Employés, Congés total, Congés consommés, Congés restant, Demande (Oui/Non)
