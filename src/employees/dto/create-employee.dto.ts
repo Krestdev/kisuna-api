@@ -1,6 +1,34 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength, IsEnum, IsDateString, IsUUID } from 'class-validator';
-import { Gender } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsEnum, IsDateString, IsUUID, IsInt, ValidateNested, IsNumber } from 'class-validator';
+import { Gender, ContractType } from '@prisma/client';
+import { Type } from 'class-transformer';
+
+class ContractInfoDto {
+  @ApiProperty({ example: '2024-01-01', description: 'Contract start date' })
+  @IsDateString()
+  @IsNotEmpty()
+  startDate: string;
+
+  @ApiProperty({ example: '2026-12-31', description: 'Contract end date' })
+  @IsDateString()
+  @IsNotEmpty()
+  endDate: string;
+
+  @ApiProperty({ enum: ContractType, example: 'CDD', description: 'Contract type' })
+  @IsEnum(ContractType)
+  @IsNotEmpty()
+  contract_type: ContractType;
+
+  @ApiProperty({ example: 500000, description: 'Base salary amount' })
+  @IsNumber()
+  @IsNotEmpty()
+  baseSalary: number;
+
+  @ApiPropertyOptional({ example: 'XAF', description: 'Currency', default: 'XAF' })
+  @IsOptional()
+  @IsString()
+  currency?: string;
+}
 
 export class CreateEmployeeDto {
   @ApiProperty({ example: 'John', description: 'Employee first name' })
@@ -20,61 +48,130 @@ export class CreateEmployeeDto {
   @IsNotEmpty()
   gender: Gender;
 
-  @ApiProperty({ example: '123 Main St, Springfield', description: 'Employee address', required: false })
+  @ApiProperty({ example: 'john.doe@company.com', description: 'Employee email address' })
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiPropertyOptional({ example: '123 Main St, Springfield', description: 'Employee address' })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   address?: string;
 
-  @ApiProperty({ example: 1234567890, description: 'Employee phone number', required: false })
+  @ApiPropertyOptional({ example: 1234567890, description: 'Employee phone number' })
   @IsOptional()
   phoneNumber?: number;
 
-  @ApiProperty({ example: '1990-01-01', description: 'Employee birthday (ISO date string)', required: false })
+  @ApiPropertyOptional({ example: '1990-01-01', description: 'Employee birthday (ISO date string)' })
   @IsOptional()
   @IsDateString()
   birthday?: string;
 
-  @ApiProperty({ example: 1, description: 'Matrimonial status code (e.g., 1 for Single, 2 for Married)', required: false })
+  @ApiPropertyOptional({ example: 'Camerounaise', description: 'Nationality' })
+  @IsOptional()
+  @IsString()
+  nationality?: string;
+
+  @ApiPropertyOptional({ example: 'Cameroun', description: 'Country of residence' })
+  @IsOptional()
+  @IsString()
+  countryOfResidence?: string;
+
+  @ApiPropertyOptional({ example: 1, description: 'Matrimonial status code' })
   @IsOptional()
   matrimonial_status?: number;
 
-  @ApiProperty({ example: 0, description: 'Number of children', required: false })
+  @ApiPropertyOptional({ example: 0, description: 'Number of children' })
   @IsOptional()
   number_of_children?: number;
 
-  @ApiProperty({ example: 987654321, description: 'CNPS (Social Security) Number', required: false })
+  @ApiPropertyOptional({ example: 987654321, description: 'CNPS Number' })
   @IsOptional()
   CNPSNumber?: number;
 
-  @ApiProperty({ example: 'Jane Doe', description: 'Emergency contact name', required: false })
+  @ApiPropertyOptional({ example: 'Jane Doe', description: 'Emergency contact name' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
   emergencyContactName?: string;
 
-  @ApiProperty({ example: 9876543210, description: 'Emergency contact phone number', required: false })
+  @ApiPropertyOptional({ example: 9876543210, description: 'Emergency contact phone' })
   @IsOptional()
   EmergencyContactPhone?: number;
 
-  @ApiProperty({ example: '2023-01-15', description: 'Hire date (ISO date string)', required: false })
+  @ApiPropertyOptional({ example: 'CNI', description: 'ID document type' })
+  @IsOptional()
+  @IsString()
+  idDocumentType?: string;
+
+  @ApiPropertyOptional({ example: '123456789', description: 'ID document number' })
+  @IsOptional()
+  @IsString()
+  idDocumentNumber?: string;
+
+  @ApiPropertyOptional({ example: '2020-01-01', description: 'ID issue date' })
+  @IsOptional()
+  @IsDateString()
+  idDocumentIssueDate?: string;
+
+  @ApiPropertyOptional({ example: '2030-01-01', description: 'ID expiry date' })
+  @IsOptional()
+  @IsDateString()
+  idDocumentExpiryDate?: string;
+
+  @ApiPropertyOptional({ example: 'Yaoundé', description: 'ID issue place' })
+  @IsOptional()
+  @IsString()
+  idDocumentIssuePlace?: string;
+
+  @ApiPropertyOptional({ example: 'Cadre', description: 'Employee category' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ example: 'Grade 5', description: 'Employee grade' })
+  @IsOptional()
+  @IsString()
+  grade?: string;
+
+  @ApiPropertyOptional({ example: 'Virement bancaire', description: 'Payment mode' })
+  @IsOptional()
+  @IsString()
+  paymentMode?: string;
+
+  @ApiPropertyOptional({ example: 'Onsite', description: 'Work location' })
+  @IsOptional()
+  @IsString()
+  workLocation?: string;
+
+  @ApiPropertyOptional({ example: 'Bastos Office', description: 'Work location details' })
+  @IsOptional()
+  @IsString()
+  workLocationDetails?: string;
+
+  @ApiPropertyOptional({ example: '2023-01-15', description: 'Hire date' })
   @IsOptional()
   @IsDateString()
   hireDate?: string;
 
-  @ApiProperty({ example: 'ACTIVE', description: 'Employee status', required: false })
+  @ApiPropertyOptional({ example: 'ACTIVE', description: 'Employee status' })
   @IsOptional()
   @IsString()
-  @MaxLength(10)
   status?: string;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Company UUID', required: false })
+  @ApiPropertyOptional({ description: 'Company UUID' })
   @IsOptional()
   @IsUUID()
   companyId?: string;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174001', description: 'Position UUID to assign upon creation', required: false })
+  @ApiPropertyOptional({ description: 'Position UUID' })
   @IsOptional()
   @IsUUID()
   positionUuid?: string;
+
+  @ApiPropertyOptional({ description: 'Contract information (optional)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ContractInfoDto)
+  contract?: ContractInfoDto;
 }

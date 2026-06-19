@@ -3,13 +3,17 @@ import { DatabaseService } from '../database/database.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class EmployeesService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(createEmployeeDto: CreateEmployeeDto) {
-    const { positionUuid, birthday, hireDate, companyId, ...rest } = createEmployeeDto;
+  async create(createEmployeeDto: CreateEmployeeDto, userCompanyId?: string) {
+    const { positionUuid, birthday, hireDate, companyId, contract, idDocumentIssueDate, idDocumentExpiryDate, email, ...rest } = createEmployeeDto;
+
+    // For COMPANY_ADMIN, force their company ID
+    const finalCompanyId = userCompanyId || companyId;
 
     return this.databaseService.$transaction(async (prisma) => {
       const employee = await prisma.employee.create({
@@ -17,10 +21,26 @@ export class EmployeesService {
           ...rest,
           birthday: birthday ? new Date(birthday) : undefined,
           hireDate: hireDate ? new Date(hireDate) : undefined,
-          ...(companyId ? { company: { connect: { uuid: companyId } } } : {}),
+          idDocumentIssueDate: idDocumentIssueDate ? new Date(idDocumentIssueDate) : undefined,
+          idDocumentExpiryDate: idDocumentExpiryDate ? new Date(idDocumentExpiryDate) : undefined,
+          ...(finalCompanyId ? { company: { connect: { uuid: finalCompanyId } } } : {}),
         },
       });
 
+      // Auto-create user account with default password
+      const defaultPassword = 'Employee@123';
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      
+      await prisma.user.create({
+        data: {
+          email,
+          passwordHash: hashedPassword,
+          employeeId: employee.uuid,
+          role: 'EMPLOYEE',
+        },
+      });
+
+      // Assign position if provided
       if (positionUuid) {
         await prisma.position.update({
           where: { uuid: positionUuid },
@@ -28,14 +48,29 @@ export class EmployeesService {
         });
       }
 
+      // Create contract if provided
+      if (contract && finalCompanyId) {
+        await prisma.contract.create({
+          data: {
+            employeeId: employee.uuid,
+            companyId: finalCompanyId,
+            startDate: new Date(contract.startDate),
+            endDate: new Date(contract.endDate),
+            contract_type: contract.contract_type,
+            baseSalary: contract.baseSalary,
+            currency: contract.currency || 'XAF',
+          },
+        });
+      }
+
       return employee;
     });
   }
 
-  async findAll(query: FindAllEmployeesDto) {
+  async findAll(query: FindAllEmployeesDto, userCompanyId?: string) {
     const {
-      page = 1,
-      limit = 10,
+      page,
+      limit,
       companyId,
       departmentId,
       positionUuid,
@@ -44,27 +79,36 @@ export class EmployeesService {
       includeInactive,
     } = query;
 
-    const skip = (page - 1) * limit;
+    // For COMPANY_ADMIN, filter by their company
+    const finalCompanyId = userCompanyId || (companyId?.trim() || undefined);
+
+    // Check if any valid params provided (ignore empty strings)
+    const hasParams = !!(page || limit || departmentId?.trim() || positionUuid?.trim() || status?.trim() || search?.trim() || includeInactive);
+    const returnAll = userCompanyId && !hasParams;
+
+    const actualPage = page || 1;
+    const actualLimit = returnAll ? undefined : (limit || 10);
+    const skip = returnAll ? undefined : (actualPage - 1) * (actualLimit || 10);
 
     const where: any = {
       ...(includeInactive === 'true' ? {} : { isActive: true }),
-      ...(companyId ? { companyId } : {}),
-      ...(status ? { status } : {}),
+      ...(finalCompanyId && { companyId: finalCompanyId }),
+      ...(status?.trim() && { status }),
     };
 
-    if (departmentId) {
+    if (departmentId?.trim()) {
       where.positions = {
         some: { departmentId },
       };
     }
 
-    if (positionUuid) {
+    if (positionUuid?.trim()) {
       where.positions = {
         some: { uuid: positionUuid },
       };
     }
 
-    if (search) {
+    if (search?.trim()) {
       where.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } },
@@ -74,8 +118,8 @@ export class EmployeesService {
     const [data, total] = await Promise.all([
       this.databaseService.employee.findMany({
         where,
-        skip,
-        take: limit,
+        ...(skip !== undefined && { skip }),
+        ...(actualLimit !== undefined && { take: actualLimit }),
         include: {
           positions: { include: { department: true } },
           managedDepartments: true,
@@ -86,19 +130,27 @@ export class EmployeesService {
     ]);
 
     return {
-      data,
+      data: data.map(emp => ({
+        ...emp,
+        role: emp.user?.role || null,
+      })),
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: actualPage,
+        limit: actualLimit || total,
+        totalPages: actualLimit ? Math.ceil(total / actualLimit) : 1,
       },
     };
   }
 
-  async findOne(uuid: string) {
-    const employee = await this.databaseService.employee.findUnique({
-      where: { uuid },
+  async findOne(uuid: string, userCompanyId?: string) {
+    const where: any = { uuid, isActive: true };
+    if (userCompanyId) {
+      where.companyId = userCompanyId;
+    }
+
+    const employee = await this.databaseService.employee.findFirst({
+      where,
       select: {
         uuid: true,
         firstName: true,
@@ -113,23 +165,36 @@ export class EmployeesService {
         user: { select: { uuid: true, email: true, role: true } },
       },
     });
-    if (!employee || !employee.isActive)
+    if (!employee)
       throw new NotFoundException(`Active Employee with ID ${uuid} not found`);
-    return employee;
+    
+    return {
+      ...employee,
+      role: employee.user?.role || null,
+    };
   }
 
-  async findPersonal(uuid: string) {
-    const employee = await this.databaseService.employee.findUnique({
-      where: { uuid },
+  async findPersonal(uuid: string, userCompanyId?: string) {
+    const where: any = { uuid, isActive: true };
+    if (userCompanyId) {
+      where.companyId = userCompanyId;
+    }
+
+    const employee = await this.databaseService.employee.findFirst({
+      where,
       include: {
         positions: { include: { department: true } },
         managedDepartments: true,
         user: { select: { uuid: true, email: true, role: true } },
       },
     });
-    if (!employee || !employee.isActive)
+    if (!employee)
       throw new NotFoundException(`Active Employee with ID ${uuid} not found`);
-    return employee;
+    
+    return {
+      ...employee,
+      role: employee.user?.role || null,
+    };
   }
 
   async update(uuid: string, updateEmployeeDto: UpdateEmployeeDto) {
@@ -187,6 +252,32 @@ export class EmployeesService {
     return this.databaseService.employee.update({
       where: { uuid },
       data: { isActive: true },
+    });
+  }
+
+  async setRole(uuid: string, role: string) {
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid },
+      include: { user: true },
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    if (!employee.user) {
+      throw new NotFoundException('Employee does not have a user account');
+    }
+
+    return this.databaseService.user.update({
+      where: { uuid: employee.user.uuid },
+      data: { role: role as any },
+      select: {
+        uuid: true,
+        email: true,
+        role: true,
+        employeeId: true,
+      },
     });
   }
 }

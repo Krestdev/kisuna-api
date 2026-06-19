@@ -30,14 +30,14 @@ export class LeavesController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async findAll() {
     return this.leavesService.findAll();
   }
 
   @Get('recent')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async getRecent(@Query('limit') limit?: string) {
     return this.leavesService.getRecent(limit ? parseInt(limit) : 5);
   }
@@ -54,14 +54,14 @@ export class LeavesController {
 
   @Patch(':id/approve')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async approve(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.leavesService.approve(id, req.user.employeeId);
+    return this.leavesService.approve(id, req.user.employeeId, req.user.role);
   }
 
   @Patch(':id/reject')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async reject(
     @Param('id', ParseIntPipe) id: number,
     @Request() req,

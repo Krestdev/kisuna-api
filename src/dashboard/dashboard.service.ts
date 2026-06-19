@@ -19,7 +19,11 @@ export class DashboardService {
       lastPayslip,
     ] = await Promise.all([
       this.prisma.leave.count({
-        where: { status: LeaveStatus.PENDING },
+        where: { 
+          status: { 
+            in: [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR] 
+          } 
+        },
       }),
       this.prisma.employee.count({
         where: { isActive: true },

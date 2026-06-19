@@ -14,7 +14,7 @@ export class DepartmentsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new department' })
   @ApiResponse({ status: 201, description: 'Department created successfully' })
@@ -43,7 +43,7 @@ export class DepartmentsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
@@ -55,7 +55,7 @@ export class DepartmentsController {
 
   @Patch(':id/manager/:employeeId')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Assign a manager to a department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
@@ -67,7 +67,7 @@ export class DepartmentsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Soft-delete department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })

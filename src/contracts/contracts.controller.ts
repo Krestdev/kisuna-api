@@ -32,7 +32,7 @@ export class ContractsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update contract terms' })
   @ApiParam({ name: 'id', description: 'Contract UUID' })
@@ -44,7 +44,7 @@ export class ContractsController {
 
   @Patch(':id/terminate')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Terminate a contract' })
   @ApiParam({ name: 'id', description: 'Contract UUID' })
@@ -56,7 +56,7 @@ export class ContractsController {
 
   @Post(':id/renew')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Renew a contract (expires old, creates new)' })
   @ApiParam({ name: 'id', description: 'Old Contract UUID' })

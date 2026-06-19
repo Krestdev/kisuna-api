@@ -10,7 +10,7 @@ import { SystemRole } from '@prisma/client';
 @UseGuards(RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class PayslipsController {
-  constructor(private readonly payslipsService: PayslipsService) {}
+  constructor(private readonly payslipsService: PayslipsService) { }
 
   @Post('generate/:payrollId')
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
@@ -27,14 +27,14 @@ export class PayslipsController {
   }
 
   @Get(':id/download')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN, SystemRole.USER)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN, SystemRole.EMPLOYEE)
   @ApiOperation({ summary: 'Get a presigned URL to download/view the payslip PDF' })
   download(@Param('id') id: string) {
     return this.payslipsService.download(id);
   }
 
   @Get('employee/:employeeId')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN, SystemRole.USER)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN, SystemRole.EMPLOYEE)
   @ApiOperation({ summary: 'Get payslips by employee' })
   findByEmployee(@Param('employeeId') employeeId: string) {
     return this.payslipsService.findByEmployee(employeeId);

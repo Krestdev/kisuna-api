@@ -263,7 +263,7 @@ export class MeService {
         endDate: new Date(dto.endDate),
         reason: dto.observation,
         justificatifUrl,
-        status: LeaveStatus.PENDING,
+        status: LeaveStatus.PENDING_MANAGER,
       },
     });
 
@@ -321,7 +321,7 @@ export class MeService {
     return {
       uuid: employee.uuid,
       fullName: `${employee.lastName} ${employee.firstName}`,
-      grade: 'N/A',
+      grade: employee.grade || 'N/A',
       position: position?.title || 'N/A',
       avatarUrl: '',
 
@@ -330,8 +330,8 @@ export class MeService {
         firstName: employee.firstName,
         birthday: employee.birthday?.toISOString().split('T')[0],
         gender: employee.gender,
-        nationality: null,
-        countryOfResidence: null,
+        nationality: employee.nationality,
+        countryOfResidence: employee.countryOfResidence,
         address: employee.address,
         phoneNumber: employee.phoneNumber?.toString(),
         email: employee.user?.email || '',
@@ -342,19 +342,24 @@ export class MeService {
 
       administrativeInfo: {
         cnpsNumber: employee.CNPSNumber?.toString(),
-        idDocumentType: null,
-        idDocumentNumber: null,
-        idDocumentIssueDate: null,
-        idDocumentExpiryDate: null,
-        idDocumentIssuePlace: null,
-        idDocumentFileUrl: '',
+        idDocumentType: employee.idDocumentType,
+        idDocumentNumber: employee.idDocumentNumber,
+        idDocumentIssueDate: employee.idDocumentIssueDate?.toISOString().split('T')[0],
+        idDocumentExpiryDate: employee.idDocumentExpiryDate?.toISOString().split('T')[0],
+        idDocumentIssuePlace: employee.idDocumentIssuePlace,
+        idDocumentFileUrl: employee.idDocumentFileUrl || '',
       },
 
       professionalInfo: {
         position: position?.title || 'N/A',
         department: position?.department?.name || 'N/A',
         manager: manager ? `${manager.firstName} ${manager.lastName}` : 'N/A',
-        category: 'N/A',
+        category: employee.category || 'N/A',
+        grade: employee.grade || 'N/A',
+        paymentMode: employee.paymentMode,
+        workLocation: employee.workLocation,
+        workLocationDetails: employee.workLocationDetails,
+        hireDate: employee.hireDate?.toISOString().split('T')[0],
       },
     };
   }

@@ -1,12 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
+import { SetRoleDto } from './dto/set-role.dto';
 import { SystemRole } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { CompanyScope } from '../common/decorators/company-scope.decorator';
+import { CompanyScopeGuard } from '../common/guards/company-scope.guard';
 import { ContractsService } from '../contracts/contracts.service';
 import { CreateContractDto } from '../contracts/dto/create-contract.dto';
 import { LeavesService } from '../leaves/leaves.service';
@@ -21,48 +25,56 @@ export class EmployeesController {
   ) {}
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @UseGuards(RolesGuard, CompanyScopeGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @CompanyScope()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new employee' })
   @ApiResponse({ status: 201, description: 'Employee created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  create(@Body() createEmployeeDto: CreateEmployeeDto) {
-    return this.employeesService.create(createEmployeeDto);
+  create(@Body() createEmployeeDto: CreateEmployeeDto, @Request() req) {
+    return this.employeesService.create(createEmployeeDto, req.userCompanyId);
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'), CompanyScopeGuard)
+  @CompanyScope()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all employees with pagination and filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of employees' })
-  findAll(@Query() query: FindAllEmployeesDto) {
-    return this.employeesService.findAll(query);
+  findAll(@Query() query: FindAllEmployeesDto, @Request() req) {
+    return this.employeesService.findAll(query, req.userCompanyId);
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'), CompanyScopeGuard)
+  @CompanyScope()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get employee by ID' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 200, description: 'Employee details' })
   @ApiResponse({ status: 404, description: 'Employee not found' })
-  findOne(@Param('id') id: string) {
-    return this.employeesService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.employeesService.findOne(id, req.userCompanyId);
   }
 
   @Get(':id/personal')
-  @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @UseGuards(RolesGuard, CompanyScopeGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @CompanyScope()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get employee personal information (sensitive data)' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 200, description: 'Employee personal details' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  findPersonal(@Param('id') id: string) {
-    return this.employeesService.findPersonal(id);
+  findPersonal(@Param('id') id: string, @Request() req) {
+    return this.employeesService.findPersonal(id, req.userCompanyId);
   }
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update employee information' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -74,7 +86,7 @@ export class EmployeesController {
 
   @Delete(':id/deactivate')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Deactivate employee (soft delete + free up positions)' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -86,7 +98,7 @@ export class EmployeesController {
 
   @Patch(':id/reactivate')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Reactivate a deactivated employee' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -96,9 +108,21 @@ export class EmployeesController {
     return this.employeesService.reactivate(id);
   }
 
+  @Patch(':id/role')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Set employee role (SUPER_ADMIN only)' })
+  @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiResponse({ status: 200, description: 'Role updated successfully' })
+  @ApiResponse({ status: 404, description: 'Employee or user account not found' })
+  setRole(@Param('id') id: string, @Body() dto: SetRoleDto) {
+    return this.employeesService.setRole(id, dto.role);
+  }
+
   @Post(':id/contracts')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new contract for an employee' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -126,7 +150,7 @@ export class EmployeesController {
 
   @Patch(':id/leaves/balance/:year')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update leave balance quota for an employee (admin only)' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })

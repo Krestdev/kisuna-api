@@ -15,7 +15,7 @@ export class FilesController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Upload a file for an employee' })
   @ApiConsumes('multipart/form-data')
@@ -49,7 +49,7 @@ export class FilesController {
 
   @Delete(':fileId')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a file' })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })

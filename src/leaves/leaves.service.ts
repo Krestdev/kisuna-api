@@ -112,43 +112,57 @@ export class LeavesService {
     return leave;
   }
 
-  async approve(id: number, approvedBy: string) {
+  async approve(id: number, approvedBy: string, userRole: string) {
     const leave = await this.findOne(id);
 
-    if (leave.status !== LeaveStatus.PENDING) {
-      throw new BadRequestException('Only pending leave requests can be approved');
-    }
-
-    const leaveDays = Math.ceil(
-      (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-    const year = leave.startDate.getFullYear();
-    const balance = await this.prisma.leaveBalance.findUnique({
-      where: { employeeId_year: { employeeId: leave.employeeId, year } },
-    });
-
-    if (balance) {
-      await this.prisma.leaveBalance.update({
-        where: { uuid: balance.uuid },
-        data: {
-          usedDays: { increment: leaveDays },
-          remainingDays: { decrement: leaveDays },
+    // Manager (SUPER_ADMIN) approves first
+    if (userRole === 'SUPER_ADMIN' && leave.status === LeaveStatus.PENDING_MANAGER) {
+      return this.prisma.leave.update({
+        where: { uuid: id },
+        data: { 
+          status: LeaveStatus.PENDING_HR,
+          approvedBy 
         },
+        include: { employee: true },
       });
     }
 
-    return this.prisma.leave.update({
-      where: { uuid: id },
-      data: { status: LeaveStatus.APPROVED, approvedBy },
-      include: { employee: true },
-    });
+    // HR (ADMIN) approves second and finalizes
+    if (userRole === 'ADMIN' && leave.status === LeaveStatus.PENDING_HR) {
+      const leaveDays = Math.ceil(
+        (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+
+      const year = leave.startDate.getFullYear();
+      const balance = await this.prisma.leaveBalance.findUnique({
+        where: { employeeId_year: { employeeId: leave.employeeId, year } },
+      });
+
+      if (balance) {
+        await this.prisma.leaveBalance.update({
+          where: { uuid: balance.uuid },
+          data: {
+            usedDays: { increment: leaveDays },
+            remainingDays: { decrement: leaveDays },
+          },
+        });
+      }
+
+      return this.prisma.leave.update({
+        where: { uuid: id },
+        data: { status: LeaveStatus.APPROVED, approvedBy },
+        include: { employee: true },
+      });
+    }
+
+    throw new BadRequestException('Invalid approval workflow or insufficient permissions');
   }
 
   async reject(id: number, approvedBy: string, dto: RejectLeaveDto) {
     const leave = await this.findOne(id);
 
-    if (leave.status !== LeaveStatus.PENDING) {
+    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    if (!validStatuses.includes(leave.status)) {
       throw new BadRequestException('Only pending leave requests can be rejected');
     }
 
@@ -170,7 +184,8 @@ export class LeavesService {
       throw new ForbiddenException('You can only cancel your own leave requests');
     }
 
-    if (leave.status !== LeaveStatus.PENDING) {
+    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    if (!validStatuses.includes(leave.status)) {
       throw new BadRequestException('Only pending leave requests can be cancelled');
     }
 

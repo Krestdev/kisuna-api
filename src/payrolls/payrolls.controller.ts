@@ -14,7 +14,7 @@ export class PayrollsController {
   constructor(private readonly payrollsService: PayrollsService) { }
 
   @Post('generate')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Generate payroll for an employee' })
   generatePayroll(
     @Body('employeeId') employeeId: string,
@@ -25,7 +25,7 @@ export class PayrollsController {
   }
 
   @Get()
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'List all payrolls or filter by period' })
   findAll(
     @Query('month') month?: number,
@@ -38,42 +38,42 @@ export class PayrollsController {
   }
 
   @Get('employee/:employeeId')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Get payrolls by employee' })
   findByEmployee(@Param('employeeId') employeeId: string) {
     return this.payrollsService.findByEmployee(employeeId);
   }
 
   @Get(':id')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Get one payroll' })
   findOne(@Param('id') id: string) {
     return this.payrollsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Manual adjustment (bonus, deduction)' })
   adjustPayroll(@Param('id') id: string, @Body() dto: AdjustPayrollDto) {
     return this.payrollsService.adjustPayroll(id, dto);
   }
 
   @Patch(':id/approve')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Approve payroll' })
   approvePayroll(@Param('id') id: string) {
     return this.payrollsService.approvePayroll(id);
   }
 
   @Patch(':id/mark-paid')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Mark as paid' })
   markPaid(@Param('id') id: string) {
     return this.payrollsService.markPaid(id);
   }
 
   @Delete(':id')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Delete DRAFT payroll' })
   remove(@Param('id') id: string) {
     return this.payrollsService.remove(id);

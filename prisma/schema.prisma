@@ -119,19 +119,37 @@ model Employee {
   phoneNumber           Int?
   gender                Gender
   birthday              DateTime?
+  nationality           String?   @db.VarChar(100)
+  countryOfResidence    String?   @db.VarChar(100)
   matrimonial_status    Int?
   number_of_children    Int?
   CNPSNumber            BigInt?
   emergencyContactName  String?   @db.VarChar(100)
   EmergencyContactPhone BigInt?
+  
+  // ID Document Information
+  idDocumentType        String?   @db.VarChar(50)
+  idDocumentNumber      String?   @db.VarChar(100)
+  idDocumentIssueDate   DateTime?
+  idDocumentExpiryDate  DateTime?
+  idDocumentIssuePlace  String?   @db.VarChar(100)
+  idDocumentFileUrl     String?   @db.VarChar(500)
+  
+  // Professional Information
   hireDate              DateTime?
+  category              String?   @db.VarChar(100)
+  grade                 String?   @db.VarChar(100)
+  paymentMode           String?   @db.VarChar(50)
+  workLocation          String?   @db.VarChar(50)
+  workLocationDetails   String?   @db.VarChar(255)
+  
   status                String?   @db.VarChar(10)
   isActive              Boolean   @default(true)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [uuid])
+  companyId             String?
+  company               Company?  @relation(fields: [companyId], references: [uuid])
 
   attendances        Attendance[]
   files              File[]
@@ -152,9 +170,10 @@ enum Gender {
 }
 
 enum SystemRole {
-  SUPER_ADMIN
-  ADMIN
-  USER
+  SUPER_ADMIN // System-wide admin (all companies)
+  COMPANY_ADMIN // Company admin (manages one company)
+  ADMIN // HR role
+  EMPLOYEE // Regular employee
 }
 
 enum AttendanceStatus {
@@ -167,19 +186,19 @@ enum AttendanceStatus {
 }
 
 model Attendance {
-  uuid        String           @id @default(uuid())
-  checkIn     DateTime
-  checkOut    DateTime?
-  latitude    Float
-  longitude   Float
-  workedHour  Float?
-  overtimes   Float?
-  status      AttendanceStatus @default(PRESENT)
-  location    String?          @db.VarChar(255)
-  mission     String?          @db.VarChar(255)
-  observations String?         @db.VarChar(500)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  uuid         String           @id @default(uuid())
+  checkIn      DateTime
+  checkOut     DateTime?
+  latitude     Float
+  longitude    Float
+  workedHour   Float?
+  overtimes    Float?
+  status       AttendanceStatus @default(PRESENT)
+  location     String?          @db.VarChar(255)
+  mission      String?          @db.VarChar(255)
+  observations String?          @db.VarChar(500)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
@@ -286,7 +305,7 @@ model User {
   email        String     @unique @db.VarChar(100)
   passwordHash String     @db.VarChar(255)
   refreshToken String?    @db.VarChar(255)
-  role         SystemRole @default(USER)
+  role         SystemRole @default(EMPLOYEE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -300,7 +319,7 @@ model Leave {
   startDate       DateTime
   endDate         DateTime
   reason          String?     @db.VarChar(255)
-  status          LeaveStatus @default(PENDING)
+  status          LeaveStatus @default(PENDING_MANAGER)
   approvedBy      String?
   rejectReason    String?     @db.VarChar(255)
   justificatifUrl String?     @db.VarChar(500)
@@ -321,18 +340,19 @@ enum LeaveType {
 }
 
 enum LeaveStatus {
-  PENDING
+  PENDING_MANAGER
+  PENDING_HR
   APPROVED
   REJECTED
   CANCELLED
 }
 
 model LeaveBalance {
-  uuid          Int      @id @default(autoincrement())
+  uuid          Int @id @default(autoincrement())
   year          Int
-  totalDays     Int      @default(21)
-  usedDays      Int      @default(0)
-  remainingDays Int      @default(21)
+  totalDays     Int @default(21)
+  usedDays      Int @default(0)
+  remainingDays Int @default(21)
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])

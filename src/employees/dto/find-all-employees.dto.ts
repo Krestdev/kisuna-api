@@ -19,17 +19,17 @@ export class FindAllEmployeesDto {
 
   @ApiPropertyOptional({ description: 'Filter by Company UUID' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   companyId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Department UUID' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   departmentId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Position UUID' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   positionUuid?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Status' })

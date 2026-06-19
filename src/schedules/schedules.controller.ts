@@ -15,7 +15,7 @@ import { SystemRole } from '@prisma/client';
 @UseGuards(RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class SchedulesController {
-  constructor(private readonly schedulesService: SchedulesService) {}
+  constructor(private readonly schedulesService: SchedulesService) { }
 
   @Post()
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
@@ -32,7 +32,7 @@ export class SchedulesController {
   }
 
   @Get(':id')
-  @Roles(SystemRole.USER, SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.EMPLOYEE, SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get one schedule' })
   findOne(@Param('id') id: string) {
     return this.schedulesService.findOne(id);

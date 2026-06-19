@@ -14,7 +14,7 @@ export class PositionsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new position' })
   @ApiResponse({ status: 201, description: 'Position created successfully' })
@@ -47,7 +47,7 @@ export class PositionsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update position' })
   @ApiParam({ name: 'id', description: 'Position UUID' })
@@ -59,7 +59,7 @@ export class PositionsController {
 
   @Patch(':id/employee/:employeeId')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Assign an employee to a position' })
   @ApiParam({ name: 'id', description: 'Position UUID' })
@@ -71,7 +71,7 @@ export class PositionsController {
 
   @Delete(':id/permissions/:permissionId')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Remove a single permission from a position' })
   @ApiParam({ name: 'id', description: 'Position UUID' })
@@ -83,7 +83,7 @@ export class PositionsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Soft-delete position' })
   @ApiParam({ name: 'id', description: 'Position UUID' })

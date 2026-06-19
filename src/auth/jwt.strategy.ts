@@ -8,11 +8,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'your-secret-key',
+      secretOrKey: process.env.JWT_SECRET || 'super-secret-key-for-dev',
     });
+    console.log('JwtStrategy initialized with secret:', process.env.JWT_SECRET || 'super-secret-key-for-dev');
   }
 
   async validate(payload: any) {
-    return { uuid: payload.sub, email: payload.email, role: payload.role };
+    console.log('JWT validate called with payload:', payload);
+    const user = { uuid: payload.sub, email: payload.email, role: payload.role, employeeId: payload.employeeId };
+    console.log('Returning user:', user);
+    return user;
   }
 }
