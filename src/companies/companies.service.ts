@@ -5,7 +5,7 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async create(createCompanyDto: CreateCompanyDto) {
     return this.databaseService.company.create({ data: createCompanyDto });
@@ -13,16 +13,11 @@ export class CompaniesService {
 
   async findAll() {
     return this.databaseService.company.findMany({
-      include: { 
-        departments: true, 
+      include: {
+        departments: true,
         contracts: true,
-        employees: { 
+        employees: {
           where: { isActive: true },
-          include: {
-            positions: {
-              include: { department: true }
-            }
-          }
         }
       },
     });
@@ -31,16 +26,11 @@ export class CompaniesService {
   async findOne(uuid: string) {
     const company = await this.databaseService.company.findUnique({
       where: { uuid },
-      include: { 
-        departments: true, 
+      include: {
+        departments: true,
         contracts: true,
-        employees: { 
+        employees: {
           where: { isActive: true },
-          include: {
-            positions: {
-              include: { department: true }
-            }
-          }
         }
       },
     });

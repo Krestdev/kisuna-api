@@ -5,10 +5,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DepartmentsModule } from './departments/departments.module';
-import { PositionsModule } from './positions/positions.module';
 import { EmployeesModule } from './employees/employees.module';
 import { CompaniesModule } from './companies/companies.module';
-import { PermissionsModule } from './permissions/permissions.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RustfsModule } from './rustfs/rustfs.module';
@@ -20,6 +18,7 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { LeavesModule } from './leaves/leaves.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MeModule } from './me/me.module';
+import { DeclarationsModule } from './declarations/declarations.module';
 
 @Module({
   imports: [
@@ -28,10 +27,8 @@ import { MeModule } from './me/me.module';
     UsersModule,
     AuthModule,
     DepartmentsModule,
-    PositionsModule,
     EmployeesModule,
     CompaniesModule,
-    PermissionsModule,
     ContractsModule,
     RustfsModule,
     FilesModule,
@@ -42,8 +39,9 @@ import { MeModule } from './me/me.module';
     LeavesModule,
     DashboardModule,
     MeModule,
+    DeclarationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

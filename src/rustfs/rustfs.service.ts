@@ -18,7 +18,7 @@ export class RustfsService implements OnModuleInit {
 
   constructor() {
     this.bucket = process.env.RUSTFS_BUCKET ?? 'hr-files';
-    this.endpoint = process.env.RUSTFS_ENDPOINT ?? 'http://localhost:9000';
+    this.endpoint = process.env.RUSTFS_ENDPOINT ?? 'http://localhost:9001';
 
     this.client = new S3Client({
       endpoint: this.endpoint,
@@ -46,7 +46,7 @@ export class RustfsService implements OnModuleInit {
     folder: string = 'general'
   ): Promise<string> {
     const objectKey = `${folder}/${Date.now()}-${file.originalname}`;
-    
+
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,

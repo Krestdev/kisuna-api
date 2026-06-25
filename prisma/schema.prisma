@@ -9,6 +9,26 @@ datasource db {
   provider = "postgresql"
 }
 
+enum EarningCategory {
+  PRIME
+  INDEMNITE
+  AVANTAGE_NATURE
+}
+
+enum DeclarationType {
+  MONTHLY
+  START_OF_YEAR
+  END_OF_YEAR
+}
+
+enum DeclarationStatus {
+  DRAFT
+  READY
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+}
+
 model Company {
   uuid        String   @id @default(uuid())
   name        String   @db.VarChar(100)
@@ -16,9 +36,12 @@ model Company {
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
 
-  departments Department[]
-  contracts   Contract[]
-  employees   Employee[]
+  departments  Department[]
+  contracts    Contract[]
+  employees    Employee[]
+  positions    Position[]
+  earningItems EarningItem[]
+  declarations Declaration[]
 }
 
 model Department {
@@ -36,6 +59,7 @@ model Department {
   employee     Employee? @relation("DepartmentManager", fields: [employeeUuid], references: [uuid])
 
   positions Position[]
+  employees Employee[] @relation("EmployeeDepartment")
 }
 
 model Position {
@@ -47,11 +71,11 @@ model Position {
   createdAt   DateTime @default(now())
   level       Int?
 
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [uuid])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [uuid])
 
-  employeeUuid String?   @unique
-  employee     Employee? @relation("PositionEmployee", fields: [employeeUuid], references: [uuid])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [uuid])
 
   permissions PositionPermission[]
 }
@@ -76,11 +100,11 @@ model PositionPermission {
 }
 
 enum ContractType {
-  FULL_TIME
-  PART_TIME
-  INTERNSHIP
-  FREELANCE
-  TEMPORARY
+  CDI
+  CDD
+  Stage
+  Prestation
+  Essai
 }
 
 enum ContractStatus {
@@ -108,7 +132,8 @@ model Contract {
   companyId String
   company   Company @relation(fields: [companyId], references: [uuid])
 
-  payrolls Payroll[]
+  payrolls         Payroll[]
+  declarationLines DeclarationLine[]
 }
 
 model Employee {
@@ -126,30 +151,39 @@ model Employee {
   CNPSNumber            BigInt?
   emergencyContactName  String?   @db.VarChar(100)
   EmergencyContactPhone BigInt?
-  
-  // ID Document Information
-  idDocumentType        String?   @db.VarChar(50)
-  idDocumentNumber      String?   @db.VarChar(100)
-  idDocumentIssueDate   DateTime?
-  idDocumentExpiryDate  DateTime?
-  idDocumentIssuePlace  String?   @db.VarChar(100)
-  idDocumentFileUrl     String?   @db.VarChar(500)
-  
-  // Professional Information
-  hireDate              DateTime?
-  category              String?   @db.VarChar(100)
-  grade                 String?   @db.VarChar(100)
-  paymentMode           String?   @db.VarChar(50)
-  workLocation          String?   @db.VarChar(50)
-  workLocationDetails   String?   @db.VarChar(255)
-  
-  status                String?   @db.VarChar(10)
-  isActive              Boolean   @default(true)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
 
-  companyId             String?
-  company               Company?  @relation(fields: [companyId], references: [uuid])
+  // ID Document Information
+  idDocumentType       String?   @db.VarChar(50)
+  idDocumentNumber     String?   @db.VarChar(100)
+  idDocumentIssueDate  DateTime?
+  idDocumentExpiryDate DateTime?
+  idDocumentIssuePlace String?   @db.VarChar(100)
+  idDocumentFileUrl    String?   @db.VarChar(500)
+
+  // Professional Information
+  hireDate            DateTime?
+  endDate             DateTime?
+  position            String?   @db.VarChar(100)
+  category            String?   @db.VarChar(100)
+  grade               String?   @db.VarChar(100)
+  paymentMode         String?   @db.VarChar(50)
+  workLocation        String?   @db.VarChar(50)
+  workLocationDetails String?   @db.VarChar(255)
+
+  status    String?  @db.VarChar(10)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [uuid])
+
+  departmentId String?
+  department   Department? @relation("EmployeeDepartment", fields: [departmentId], references: [uuid])
+
+  supervisorId String?
+  supervisor   Employee?  @relation("EmployeeSupervisor", fields: [supervisorId], references: [uuid])
+  subordinates Employee[] @relation("EmployeeSupervisor")
 
   attendances        Attendance[]
   files              File[]
@@ -160,7 +194,7 @@ model Employee {
   leaveBalances      LeaveBalance[]
   schedules          EmployeeSchedule[]
   managedDepartments Department[]       @relation("DepartmentManager")
-  positions          Position[]         @relation("PositionEmployee")
+  declarationLines   DeclarationLine[]
   user               User?
 }
 
@@ -358,4 +392,79 @@ model LeaveBalance {
   employee   Employee @relation(fields: [employeeId], references: [uuid])
 
   @@unique([employeeId, year])
+}
+
+model EarningItem {
+  uuid      String          @id @default(uuid())
+  name      String          @db.VarChar(100)
+  category  EarningCategory
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [uuid])
+
+  earnings DeclarationEarning[]
+
+  @@unique([companyId, name])
+}
+
+model Declaration {
+  uuid        String            @id @default(uuid())
+  type        DeclarationType   @default(MONTHLY)
+  status      DeclarationStatus @default(DRAFT)
+  periodStart DateTime
+  periodEnd   DateTime
+  submittedAt DateTime?
+  submittedBy String?           @db.VarChar(100)
+  notes       String?           @db.VarChar(500)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [uuid])
+
+  lines DeclarationLine[]
+
+  @@unique([companyId, periodStart, periodEnd, type])
+}
+
+model DeclarationLine {
+  uuid                String   @id @default(uuid())
+  baseSalary          Float
+  baseSalaryTaxable   Boolean  @default(true)
+  baseSalaryCotisable Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  declarationId String
+  declaration   Declaration @relation(fields: [declarationId], references: [uuid])
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [uuid])
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [uuid])
+
+  earnings DeclarationEarning[]
+
+  @@unique([declarationId, employeeId, contractId])
+}
+
+model DeclarationEarning {
+  uuid      String   @id @default(uuid())
+  amount    Float
+  taxable   Boolean  @default(false)
+  cotisable Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  declarationLineId String
+  declarationLine   DeclarationLine @relation(fields: [declarationLineId], references: [uuid])
+
+  earningItemId String
+  earningItem   EarningItem @relation(fields: [earningItemId], references: [uuid])
+
+  @@unique([declarationLineId, earningItemId])
 }

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, MaxLength, IsEnum, IsDateString, IsUUID, IsInt, ValidateNested, IsNumber } from 'class-validator';
 import { Gender, ContractType } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 class ContractInfoDto {
   @ApiProperty({ example: '2024-01-01', description: 'Contract start date' })
@@ -61,6 +61,7 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ example: 1234567890, description: 'Employee phone number' })
   @IsOptional()
+  @Type(() => Number)
   phoneNumber?: number;
 
   @ApiPropertyOptional({ example: '1990-01-01', description: 'Employee birthday (ISO date string)' })
@@ -80,14 +81,17 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ example: 1, description: 'Matrimonial status code' })
   @IsOptional()
+  @Type(() => Number)
   matrimonial_status?: number;
 
   @ApiPropertyOptional({ example: 0, description: 'Number of children' })
   @IsOptional()
+  @Type(() => Number)
   number_of_children?: number;
 
   @ApiPropertyOptional({ example: 987654321, description: 'CNPS Number' })
   @IsOptional()
+  @Type(() => Number)
   CNPSNumber?: number;
 
   @ApiPropertyOptional({ example: 'Jane Doe', description: 'Emergency contact name' })
@@ -97,6 +101,7 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ example: 9876543210, description: 'Emergency contact phone' })
   @IsOptional()
+  @Type(() => Number)
   EmergencyContactPhone?: number;
 
   @ApiPropertyOptional({ example: 'CNI', description: 'ID document type' })
@@ -123,6 +128,11 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsString()
   idDocumentIssuePlace?: string;
+
+  @ApiPropertyOptional({ description: 'ID document file URL' })
+  @IsOptional()
+  @IsString()
+  idDocumentFileUrl?: string;
 
   @ApiPropertyOptional({ example: 'Cadre', description: 'Employee category' })
   @IsOptional()
@@ -161,17 +171,70 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ description: 'Company UUID' })
   @IsOptional()
+  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
   @IsUUID()
   companyId?: string;
 
-  @ApiPropertyOptional({ description: 'Position UUID' })
+  @ApiPropertyOptional({ example: 'Software Engineer', description: 'Job position title' })
   @IsOptional()
-  @IsUUID()
-  positionUuid?: string;
+  @IsString()
+  position?: string;
 
   @ApiPropertyOptional({ description: 'Contract information (optional)' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === 'null' || value === 'undefined') return undefined;
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return value;
+      }
+    }
+    return value;
+  })
   @ValidateNested()
   @Type(() => ContractInfoDto)
   contract?: ContractInfoDto;
+
+  @ApiPropertyOptional({ description: 'Contract information alias (optional)' })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === 'null' || value === 'undefined') return undefined;
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return value;
+      }
+    }
+    return value;
+  })
+  @ValidateNested()
+  @Type(() => ContractInfoDto)
+  contracts?: ContractInfoDto;
+
+
+  @ApiPropertyOptional({ description: 'Department UUID' })
+  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string;
+
+  @ApiPropertyOptional({ description: 'Supervisor UUID' })
+  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
+  @IsOptional()
+  @IsUUID()
+  supervisorId?: string;
+
+  @ApiPropertyOptional({ example: '2023-12-31', description: 'End date / Termination date' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiPropertyOptional({ example: 21, description: 'Number of leave days available' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  leaveDays?: number;
 }

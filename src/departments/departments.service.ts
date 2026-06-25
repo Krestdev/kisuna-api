@@ -5,7 +5,7 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @Injectable()
 export class DepartmentsService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async validateManagerBelongsToCompany(companyId: string, employeeUuid: string) {
     const employee = await this.databaseService.employee.findUnique({

@@ -13,7 +13,7 @@ export class MeService {
   constructor(
     private prisma: DatabaseService,
     private rustfs: RustfsService,
-  ) {}
+  ) { }
 
   async getDashboard(employeeId: string) {
     const [leaveBalance, leaveConsumed, lastPayslip] = await Promise.all([
@@ -57,7 +57,7 @@ export class MeService {
       return { usedDays: 0, percentageUsed: 0 };
     }
 
-    const percentageUsed = balance.totalDays > 0 
+    const percentageUsed = balance.totalDays > 0
       ? Math.round((balance.usedDays / balance.totalDays) * 100)
       : 0;
 
@@ -97,7 +97,7 @@ export class MeService {
     });
 
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
     return {
       period,
@@ -301,7 +301,6 @@ export class MeService {
     const employee = await this.prisma.employee.findUnique({
       where: { uuid: employeeId },
       include: {
-        positions: { include: { department: true } },
         user: { select: { email: true } },
       },
     });
@@ -310,19 +309,19 @@ export class MeService {
       throw new BadRequestException('Employee not found');
     }
 
-    const position = employee.positions[0];
-    const manager = position?.department?.employeeUuid
-      ? await this.prisma.employee.findUnique({
-          where: { uuid: position.department.employeeUuid },
-          select: { firstName: true, lastName: true },
-        })
-      : null;
+    const position = employee.position;
+    // const manager = position?.department?.employeeUuid
+    //   ? await this.prisma.employee.findUnique({
+    //     where: { uuid: position.department.employeeUuid },
+    //     select: { firstName: true, lastName: true },
+    //   })
+    //   : null;
 
     return {
       uuid: employee.uuid,
       fullName: `${employee.lastName} ${employee.firstName}`,
       grade: employee.grade || 'N/A',
-      position: position?.title || 'N/A',
+      position: position || 'N/A',
       avatarUrl: '',
 
       personalInfo: {
@@ -351,9 +350,8 @@ export class MeService {
       },
 
       professionalInfo: {
-        position: position?.title || 'N/A',
-        department: position?.department?.name || 'N/A',
-        manager: manager ? `${manager.firstName} ${manager.lastName}` : 'N/A',
+        position: position || 'N/A',
+        // department: position?.department?.name || 'N/A',
         category: employee.category || 'N/A',
         grade: employee.grade || 'N/A',
         paymentMode: employee.paymentMode,

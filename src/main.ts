@@ -7,7 +7,7 @@ import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
 // Fix BigInt serialization
-BigInt.prototype['toJSON'] = function() { return this.toString(); };
+BigInt.prototype['toJSON'] = function () { return this.toString(); };
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -46,14 +46,17 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Krest Holding HR API')
-    .setDescription('HR Management System API for Krest Holding - Manage employees, departments, positions, and authentication')
+    .setTitle('KIZUNA API')
+    .setDescription('HR Management System API for Krest Holding - Manage employees, departments, and authentication')
     .setVersion('1.0')
     .addBearerAuth({
       type: 'http',
@@ -67,7 +70,6 @@ async function bootstrap() {
     .addTag('Users', 'User management')
     .addTag('Employees', 'Employee management')
     .addTag('Departments', 'Department management')
-    .addTag('Positions', 'Position management')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

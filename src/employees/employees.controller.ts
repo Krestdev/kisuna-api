@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request, UploadedFile, UseInterceptors, Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -18,23 +19,35 @@ import { LeavesService } from '../leaves/leaves.service';
 @ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {
+  private readonly logger = new Logger(EmployeesController.name);
+
   constructor(
     private readonly employeesService: EmployeesService,
     private readonly contractsService: ContractsService,
     private readonly leavesService: LeavesService,
-  ) {}
+  ) { }
 
   @Post()
   @UseGuards(RolesGuard, CompanyScopeGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @CompanyScope()
   @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Create a new employee' })
   @ApiResponse({ status: 201, description: 'Employee created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  create(@Body() createEmployeeDto: CreateEmployeeDto, @Request() req) {
-    return this.employeesService.create(createEmployeeDto, req.userCompanyId);
+  create(
+    @Body() createEmployeeDto: CreateEmployeeDto,
+    @Request() req,
+    @UploadedFile() document?: Express.Multer.File,
+  ) {
+    this.logger.log('=== CREATE EMPLOYEE REQUEST ===');
+    this.logger.log('Body:', JSON.stringify(createEmployeeDto, null, 2));
+    this.logger.log('Department ID:', createEmployeeDto.departmentId);
+    this.logger.log('Document:', document ? `${document.originalname} (${document.size} bytes)` : 'No file');
+    return this.employeesService.create(createEmployeeDto, req.userCompanyId, document);
   }
 
   @Get()

@@ -46,4 +46,14 @@ export class FindAllEmployeesDto {
   @IsOptional()
   @IsString()
   includeInactive?: string;
+
+  @ApiPropertyOptional({ description: 'Include sensitive data (true/false)' })
+  @IsOptional()
+  @IsString()
+  includeSensitive?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by contract type (CDI, CDD, Stage, Prestation, Essai)' })
+  @IsOptional()
+  @IsString()
+  contractType?: string;
 }
