@@ -53,6 +53,28 @@ export class CompaniesController {
     return this.companiesService.update(id, updateCompanyDto);
   }
 
+  @Patch(':id/activate')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Activate a company' })
+  @ApiParam({ name: 'id', description: 'Company UUID' })
+  @ApiResponse({ status: 200, description: 'Company activated successfully' })
+  activate(@Param('id') id: string) {
+    return this.companiesService.activate(id);
+  }
+
+  @Patch(':id/deactivate')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Deactivate a company' })
+  @ApiParam({ name: 'id', description: 'Company UUID' })
+  @ApiResponse({ status: 200, description: 'Company deactivated successfully' })
+  deactivate(@Param('id') id: string) {
+    return this.companiesService.deactivate(id);
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN)

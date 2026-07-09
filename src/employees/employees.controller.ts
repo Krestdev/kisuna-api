@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { EmployeesService } from './employees.service';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { changeEmployeePassword, CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
 import { SetRoleDto } from './dto/set-role.dto';
@@ -89,17 +89,24 @@ export class EmployeesController {
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Update employee information' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 200, description: 'Employee updated successfully' })
   @ApiResponse({ status: 404, description: 'Employee not found' })
-  update(@Param('id') id: string, @Body() updateEmployeeDto: UpdateEmployeeDto) {
-    return this.employeesService.update(id, updateEmployeeDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+    @UploadedFile() document?: Express.Multer.File,
+  ) {
+    console.log('updateEmployeeDto controller : ', updateEmployeeDto)
+    return this.employeesService.update(id, updateEmployeeDto, document);
   }
 
   @Delete(':id/deactivate')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Deactivate employee (soft delete + free up positions)' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -111,7 +118,7 @@ export class EmployeesController {
 
   @Patch(':id/reactivate')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Reactivate a deactivated employee' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
@@ -119,6 +126,18 @@ export class EmployeesController {
   @ApiResponse({ status: 404, description: 'Employee not found' })
   reactivate(@Param('id') id: string) {
     return this.employeesService.reactivate(id);
+  }
+
+  @Patch(':id/password')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'change employee password' })
+  @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiResponse({ status: 200, description: 'Employee password changed successfully successfully' })
+  @ApiResponse({ status: 404, description: 'Employee not found' })
+  changeEmployeePassword(@Param('id') id: string, @Body() dto: changeEmployeePassword) {
+    return this.employeesService.changeEmployeePassword(id, dto.newPassword);
   }
 
   @Patch(':id/role')
@@ -163,7 +182,7 @@ export class EmployeesController {
 
   @Patch(':id/leaves/balance/:year')
   @UseGuards(RolesGuard)
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update leave balance quota for an employee (admin only)' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })

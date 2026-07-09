@@ -15,7 +15,7 @@ export class PayrollsController {
 
   @Post('generate')
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  @ApiOperation({ summary: 'Generate payroll for an employee' })
+  @ApiOperation({ summary: 'Generate payroll for an employee (draft)' })
   generatePayroll(
     @Body('employeeId') employeeId: string,
     @Body('month') month: number,
@@ -59,21 +59,21 @@ export class PayrollsController {
   }
 
   @Patch(':id/approve')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Approve payroll' })
   approvePayroll(@Param('id') id: string) {
     return this.payrollsService.approvePayroll(id);
   }
 
   @Patch(':id/mark-paid')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Mark as paid' })
   markPaid(@Param('id') id: string) {
     return this.payrollsService.markPaid(id);
   }
 
   @Delete(':id')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Delete DRAFT payroll' })
   remove(@Param('id') id: string) {
     return this.payrollsService.remove(id);

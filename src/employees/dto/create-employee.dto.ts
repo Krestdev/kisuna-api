@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength, IsEnum, IsDateString, IsUUID, IsInt, ValidateNested, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MinLength, MaxLength, IsEnum, IsDateString, IsUUID, IsInt, ValidateNested, IsNumber } from 'class-validator';
 import { Gender, ContractType } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
@@ -171,8 +171,8 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ description: 'Company UUID' })
   @IsOptional()
-  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
-  @IsUUID()
+  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
+  @IsString()
   companyId?: string;
 
   @ApiPropertyOptional({ example: 'Software Engineer', description: 'Job position title' })
@@ -216,15 +216,15 @@ export class CreateEmployeeDto {
 
 
   @ApiPropertyOptional({ description: 'Department UUID' })
-  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
+  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
   @IsOptional()
-  @IsUUID()
+  @IsString()
   departmentId?: string;
 
   @ApiPropertyOptional({ description: 'Supervisor UUID' })
-  @Transform(({ value }) => value?.trim() === '' ? undefined : value)
+  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
   @IsOptional()
-  @IsUUID()
+  @IsString()
   supervisorId?: string;
 
   @ApiPropertyOptional({ example: '2023-12-31', description: 'End date / Termination date' })
@@ -237,4 +237,13 @@ export class CreateEmployeeDto {
   @Type(() => Number)
   @IsNumber()
   leaveDays?: number;
+}
+
+
+export class changeEmployeePassword {
+  @ApiProperty({ description: 'New password', example: '********' })
+  @IsString()
+  @IsNotEmpty({ message: 'Nouveau mot de passe requis' })
+  @MinLength(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
+  newPassword: string;
 }

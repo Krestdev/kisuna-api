@@ -47,7 +47,7 @@ export class DepartmentsService {
   async findOne(uuid: string) {
     const department = await this.databaseService.department.findUnique({
       where: { uuid },
-      include: { company: true, employee: true, positions: true },
+      include: { company: true, employee: true },
     });
     if (!department || !department.isActive)
       throw new NotFoundException(`Active Department with ID ${uuid} not found`);
@@ -83,9 +83,7 @@ export class DepartmentsService {
   }
 
   async remove(uuid: string) {
-    const department = await this.findOne(uuid);
-    if (department.positions.length > 0)
-      throw new BadRequestException('Cannot delete department. It still has active positions.');
+    await this.findOne(uuid);
     return this.databaseService.department.update({
       where: { uuid },
       data: { isActive: false },

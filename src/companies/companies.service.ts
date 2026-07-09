@@ -43,6 +43,16 @@ export class CompaniesService {
     return this.databaseService.company.update({ where: { uuid }, data: updateCompanyDto });
   }
 
+  async activate(uuid: string) {
+    await this.findOne(uuid);
+    return this.databaseService.company.update({ where: { uuid }, data: { isActive: true } });
+  }
+
+  async deactivate(uuid: string) {
+    await this.findOne(uuid);
+    return this.databaseService.company.update({ where: { uuid }, data: { isActive: false } });
+  }
+
   async remove(uuid: string) {
     const company = await this.databaseService.company.findUnique({
       where: { uuid },

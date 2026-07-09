@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
 import * as bcrypt from 'bcrypt';
 import { RustfsService } from '../rustfs/rustfs.service';
+import { log } from 'console';
+import e from 'express';
 
 @Injectable()
 export class EmployeesService {
@@ -95,6 +97,15 @@ export class EmployeesService {
           where: { uuid: employee.uuid },
           data: { idDocumentFileUrl: path },
         });
+        await prisma.file.create({
+          data: {
+            file_name: document.originalname,
+            document_type: (rest.idDocumentType as any) ?? 'CNI',
+            path,
+            expired_date: createEmployeeDto.idDocumentExpiryDate ? new Date(createEmployeeDto.idDocumentExpiryDate) : null,
+            employeeId: employee.uuid,
+          },
+        });
         employee.idDocumentFileUrl = path;
       }
 
@@ -178,13 +189,18 @@ export class EmployeesService {
         companyId: true,
         managedDepartments: true,
         contracts: { select: { uuid: true, contract_type: true, startDate: true, endDate: true, status: true } },
-        user: { select: { uuid: true, email: true, role: true } },
+        user: { select: { uuid: true, email: true, role: true, createdAt: true, updatedAt: true } },
       };
     }
 
-    const [data, total] = await Promise.all([
+    const companyWhere = finalCompanyId
+      ? { ...(includeInactive === 'true' ? {} : { isActive: true }), companyId: finalCompanyId }
+      : null;
+
+    const [data, total, totalInCompany] = await Promise.all([
       this.databaseService.employee.findMany(queryOptions),
       this.databaseService.employee.count({ where }),
+      companyWhere ? this.databaseService.employee.count({ where: companyWhere }) : Promise.resolve(undefined),
     ]);
 
     return {
@@ -194,6 +210,7 @@ export class EmployeesService {
       })),
       meta: {
         total,
+        ...(totalInCompany !== undefined && { totalAssigned: totalInCompany }),
         page: actualPage,
         limit: actualLimit || total,
         totalPages: actualLimit ? Math.ceil(total / actualLimit) : 1,
@@ -247,13 +264,17 @@ export class EmployeesService {
     };
   }
 
-  async update(uuid: string, updateEmployeeDto: UpdateEmployeeDto) {
+  async update(uuid: string, updateEmployeeDto: UpdateEmployeeDto, document?: Express.Multer.File) {
     const existing = await this.databaseService.employee.findUnique({ where: { uuid } });
     if (!existing || !existing.isActive) throw new NotFoundException('Active employee not found');
 
-    const { birthday, hireDate, companyId, departmentId, supervisorId, endDate, leaveDays, contract, contracts, idDocumentIssueDate, idDocumentExpiryDate, ...rest } = updateEmployeeDto;
+    const { birthday, hireDate, companyId, departmentId, supervisorId, endDate, leaveDays, contract, contracts, idDocumentIssueDate, idDocumentExpiryDate, email, ...rest } = updateEmployeeDto;
 
-    // Use contracts if provided, otherwise fall back to contract
+
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const validCompanyId = companyId && UUID_REGEX.test(companyId) ? companyId : undefined;
+    const validDepartmentId = departmentId && UUID_REGEX.test(departmentId) ? departmentId : undefined;
+    const validSupervisorId = supervisorId && UUID_REGEX.test(supervisorId) ? supervisorId : undefined;
     const contractData = contracts || contract;
 
     return this.databaseService.$transaction(async (prisma) => {
@@ -266,11 +287,12 @@ export class EmployeesService {
           endDate: endDate ? new Date(endDate) : undefined,
           idDocumentIssueDate: idDocumentIssueDate ? new Date(idDocumentIssueDate) : undefined,
           idDocumentExpiryDate: idDocumentExpiryDate ? new Date(idDocumentExpiryDate) : undefined,
-          ...(companyId ? { company: { connect: { uuid: companyId } } } : {}),
-          ...(departmentId ? { department: { connect: { uuid: departmentId } } } : {}),
-          ...(supervisorId ? { supervisor: { connect: { uuid: supervisorId } } } : {}),
+          ...(validCompanyId ? { company: { connect: { uuid: validCompanyId } } } : {}),
+          ...(validDepartmentId ? { department: { connect: { uuid: validDepartmentId } } } : {}),
+          ...(validSupervisorId ? { supervisor: { connect: { uuid: validSupervisorId } } } : {}),
         },
       });
+
 
       // Create contract if provided
       if (contractData) {
@@ -292,8 +314,51 @@ export class EmployeesService {
         });
       }
 
+      if (document) {
+        const path = await this.rustfs.uploadFile(document, `employees/${updatedEmployee.uuid}`);
+        return prisma.employee.update({
+          where: { uuid },
+          data: { idDocumentFileUrl: path },
+        });
+      }
+
       return updatedEmployee;
     });
+  }
+
+  async changeEmployeePassword(userUuid: string, newPassword: string) {
+
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid: userUuid },
+      include: {
+        user: {},
+      },
+    });
+
+    console.log(employee?.user?.passwordHash)
+
+
+    if (!employee)
+      throw new BadRequestException('Employee not not found');
+
+
+    if (!employee?.user?.passwordHash)
+      return
+
+    // const isPasswordValid = await bcrypt.compare(newPassword, employee?.user?.passwordHash);
+    // if (!isPasswordValid) {
+    //   throw new BadRequestException('Mot de passe actuel incorrect');
+    // }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.databaseService.user.update({
+      where: { uuid: employee?.user?.uuid },
+      data: { passwordHash: hashedPassword },
+    });
+
+    return {
+      message: 'Mot de passe mis à jour avec succès',
+    };
   }
 
   async deactivate(uuid: string) {

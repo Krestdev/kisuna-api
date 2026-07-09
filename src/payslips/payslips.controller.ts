@@ -13,14 +13,14 @@ export class PayslipsController {
   constructor(private readonly payslipsService: PayslipsService) { }
 
   @Post('generate/:payrollId')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Generate payslip from approved payroll' })
   generatePayslip(@Param('payrollId') payrollId: string) {
     return this.payslipsService.generatePayslip(payrollId);
   }
 
   @Get(':id')
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Get one payslip' })
   findOne(@Param('id') id: string) {
     return this.payslipsService.findOne(id);
