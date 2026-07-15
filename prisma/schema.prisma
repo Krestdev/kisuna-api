@@ -191,7 +191,7 @@ model Attendance {
   longitude    Float
   workedHour   Float?
   overtimes    Float?
-  status       AttendanceStatus @default(PRESENT)
+  status       String[]         @default(["PRESENT"])
   location     String?          @db.VarChar(255)
   mission      String?          @db.VarChar(255)
   observations String?          @db.VarChar(500)

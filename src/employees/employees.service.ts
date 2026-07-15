@@ -295,20 +295,27 @@ export class EmployeesService {
 
 
       // Create contract if provided
-      if (contractData) {
+      const singleContract = Array.isArray(contractData) ? contractData[0] : contractData;
+      if (singleContract?.startDate && singleContract?.endDate && singleContract?.contract_type && singleContract?.baseSalary) {
         if (!updatedEmployee.companyId) {
           throw new NotFoundException('Employee must belong to a company to create a contract');
+        }
+
+        const startDate = new Date(singleContract.startDate);
+        const endDate = new Date(singleContract.endDate);
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new BadRequestException('Invalid contract startDate or endDate');
         }
 
         await prisma.contract.create({
           data: {
             employeeId: updatedEmployee.uuid,
             companyId: updatedEmployee.companyId,
-            startDate: new Date(contractData.startDate),
-            endDate: new Date(contractData.endDate),
-            contract_type: contractData.contract_type,
-            baseSalary: contractData.baseSalary,
-            currency: contractData.currency || 'XAF',
+            startDate,
+            endDate,
+            contract_type: singleContract.contract_type,
+            baseSalary: singleContract.baseSalary,
+            currency: singleContract.currency || 'XAF',
             status: 'ACTIVE',
           },
         });

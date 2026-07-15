@@ -157,9 +157,9 @@ export class MeService {
 
         return {
           date,
-          present: attendance.status === AttendanceStatus.PRESENT,
-          late: attendance.status === AttendanceStatus.LATE,
-          absent: attendance.status === AttendanceStatus.ABSENT,
+          present: attendance.status.includes(AttendanceStatus.PRESENT),
+          late: attendance.status.includes(AttendanceStatus.LATE),
+          absent: attendance.status.includes(AttendanceStatus.ABSENT),
           exceptional: false,
           field: false,
           onLeave,
@@ -282,7 +282,7 @@ export class MeService {
         checkIn: new Date(),
         latitude: dto.latitude,
         longitude: dto.longitude,
-        status: AttendanceStatus.FIELD,
+        status: [AttendanceStatus.FIELD],
         location: dto.location,
         mission: dto.mission,
         observations: dto.observations,

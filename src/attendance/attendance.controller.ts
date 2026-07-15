@@ -15,17 +15,42 @@ import { CheckInDto } from './dto/checkin.dto';
 import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
+import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { SystemRole } from '@prisma/client';
 
 @ApiTags('Attendance')
-@ApiBearerAuth()
+// @ApiBearerAuth()
 @Controller('attendance')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(private readonly attendanceService: AttendanceService) { }
+
+  @Post('batch')
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @ApiOperation({ summary: 'Manually create multiple attendance records (admin)' })
+  @ApiResponse({ status: 201, description: 'Attendance records created' })
+  createMany(@Body() body: CreateAttendanceDto[] | { records: CreateAttendanceDto[] }) {
+    const records = Array.isArray(body) ? body : body.records;
+    return this.attendanceService.createMany(records);
+  }
+
+  @Post()
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @ApiOperation({ summary: 'Manually create an attendance record (admin)' })
+  @ApiResponse({ status: 201, description: 'Attendance record created' })
+  @ApiResponse({ status: 404, description: 'Employee not found' })
+  create(@Body() dto: CreateAttendanceDto) {
+    return this.attendanceService.create(dto);
+  }
 
   @Post('checkin')
-  @ApiOperation({ 
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN,)
+  @ApiOperation({
     summary: 'Employee check-in',
     description: 'Records employee arrival with GPS coordinates. Validates no duplicate check-in for the day and determines if late based on schedule.'
   })
@@ -37,7 +62,9 @@ export class AttendanceController {
   }
 
   @Patch('checkout')
-  @ApiOperation({ 
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  @ApiOperation({
     summary: 'Employee check-out',
     description: 'Records employee departure. Automatically calculates worked hours and overtime (hours beyond 8).'
   })
@@ -48,7 +75,9 @@ export class AttendanceController {
   }
 
   @Get()
-  @ApiOperation({ 
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN, SystemRole.EMPLOYEE)
+  @ApiOperation({
     summary: 'List all attendance records',
     description: 'Get all attendance records with optional filtering by month and year.'
   })
@@ -63,6 +92,8 @@ export class AttendanceController {
   }
 
   @Get(':id')
+  @ApiBearerAuth('JWT-auth')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN, SystemRole.EMPLOYEE)
   @ApiOperation({ summary: 'Get attendance record by ID' })
   @ApiParam({ name: 'id', description: 'Attendance UUID' })
   @ApiResponse({ status: 200, description: 'Attendance record found' })
@@ -72,7 +103,7 @@ export class AttendanceController {
   }
 
   @Patch(':id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update attendance record',
     description: 'Manual correction of attendance data. Admin only. Recalculates worked hours if both check-in and check-out are updated.'
   })
@@ -93,7 +124,7 @@ export class AttendanceController {
   }
 
   @Post('absent')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Mark employee absent',
     description: 'Admin only. Manually create an absence record for a specific date. GPS coordinates set to 0,0.'
   })
@@ -105,7 +136,7 @@ export class AttendanceController {
   }
 
   @Get('employee/:employeeId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get employee attendance history',
     description: 'Retrieve all attendance records for a specific employee with optional month/year filtering.'
   })
@@ -126,15 +157,15 @@ export class AttendanceController {
   }
 
   @Get('employee/:employeeId/summary')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get monthly attendance summary',
     description: 'Aggregated statistics for payroll: total days, present/late/absent counts, total hours worked, and overtime. Required for payroll calculations.'
   })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
   @ApiQuery({ name: 'month', required: true, description: 'Month (1-12)', example: 6 })
   @ApiQuery({ name: 'year', required: true, description: 'Year', example: 2026 })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Monthly summary statistics',
     schema: {
       example: {

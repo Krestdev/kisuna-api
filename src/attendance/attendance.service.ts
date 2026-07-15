@@ -17,6 +17,7 @@ import { CheckInDto } from './dto/checkin.dto';
 import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
+import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { AttendanceStatus, LeaveStatus } from '@prisma/client';
 
 const STANDARD_HOURS = 8;
@@ -27,7 +28,41 @@ export class AttendanceService {
   constructor(
     private prisma: DatabaseService,
     private schedulesService: SchedulesService,
-  ) {}
+  ) { }
+
+  async createMany(dtos: CreateAttendanceDto[]) {
+    return Promise.all(dtos.map((dto) => this.create(dto)));
+  }
+
+  async create(dto: CreateAttendanceDto) {
+    const employee = await this.prisma.employee.findUnique({ where: { uuid: dto.employeeId } });
+    if (!employee) throw new NotFoundException('Employee not found');
+
+    const checkIn = new Date(dto.checkIn);
+    if (isNaN(checkIn.getTime())) throw new BadRequestException('Invalid checkIn date');
+
+    const checkOut = dto.checkOut ? new Date(dto.checkOut) : undefined;
+    if (checkOut && isNaN(checkOut.getTime())) throw new BadRequestException('Invalid checkOut date');
+
+    if (!dto.status?.length) throw new BadRequestException('status is required');
+
+    const workedHour = checkOut ? this.calculateHours(checkIn, checkOut) : undefined;
+    const overtimes = workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
+
+    return this.prisma.attendance.create({
+      data: {
+        employeeId: dto.employeeId,
+        checkIn,
+        checkOut,
+        status: dto.status,
+        latitude: dto.latitude ?? 0,
+        longitude: dto.longitude ?? 0,
+        workedHour,
+        overtimes,
+      },
+      include: { employee: true },
+    });
+  }
 
   async checkIn(dto: CheckInDto) {
     const employee = await this.prisma.employee.findUnique({
@@ -182,11 +217,11 @@ export class AttendanceService {
 
     return {
       totalDays: records.length,
-      presentDays: records.filter((r) => r.status === 'PRESENT').length,
-      lateDays: records.filter((r) => r.status === 'LATE').length,
-      absentDays: records.filter((r) => r.status === 'ABSENT').length,
-      halfDays: records.filter((r) => r.status === 'HALF_DAY').length,
-      onLeaveDays: records.filter((r) => r.status === 'ON_LEAVE').length,
+      presentDays: records.filter((r) => r.status.includes('PRESENT')).length,
+      lateDays: records.filter((r) => r.status.includes('LATE')).length,
+      absentDays: records.filter((r) => r.status.includes('ABSENT')).length,
+      halfDays: records.filter((r) => r.status.includes('HALF_DAY')).length,
+      onLeaveDays: records.filter((r) => r.status.includes('ON_LEAVE')).length,
       totalHours: records.reduce((sum, r) => sum + (r.workedHour ?? 0), 0),
       totalOvertime: records.reduce((sum, r) => sum + (r.overtimes ?? 0), 0),
     };
@@ -242,7 +277,7 @@ export class AttendanceService {
         checkIn: startOfDay(date),
         latitude: 0,
         longitude: 0,
-        status: dto.status,
+        status: [dto.status],
       },
       include: { employee: true },
     });
@@ -258,14 +293,14 @@ export class AttendanceService {
     return parseFloat((ms / (1000 * 60 * 60)).toFixed(2));
   }
 
-  private determineStatus(checkInTime: Date, shiftStart: string): AttendanceStatus {
+  private determineStatus(checkInTime: Date, shiftStart: string): string[] {
     const [hours, minutes] = shiftStart.split(':').map(Number);
     const scheduledStart = new Date(checkInTime);
     scheduledStart.setHours(hours, minutes, 0, 0);
 
     const diffMinutes = differenceInMinutes(checkInTime, scheduledStart);
 
-    if (diffMinutes > GRACE_PERIOD_MINUTES) return AttendanceStatus.LATE;
-    return AttendanceStatus.PRESENT;
+    if (diffMinutes > GRACE_PERIOD_MINUTES) return [AttendanceStatus.LATE];
+    return [AttendanceStatus.PRESENT];
   }
 }

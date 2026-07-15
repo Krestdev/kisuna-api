@@ -43,14 +43,14 @@ export class LeaveCronService {
             checkIn: today,
             latitude: 0,
             longitude: 0,
-            status: AttendanceStatus.ON_LEAVE,
+            status: [AttendanceStatus.ON_LEAVE],
           },
         });
         this.logger.log(`Marked ON_LEAVE for employee ${leave.employeeId}`);
-      } else if (existing.status !== AttendanceStatus.ON_LEAVE) {
+      } else if (!existing.status.includes(AttendanceStatus.ON_LEAVE)) {
         await this.prisma.attendance.update({
           where: { uuid: existing.uuid },
-          data: { status: AttendanceStatus.ON_LEAVE },
+          data: { status: [AttendanceStatus.ON_LEAVE] },
         });
         this.logger.log(`Updated to ON_LEAVE for employee ${leave.employeeId}`);
       }

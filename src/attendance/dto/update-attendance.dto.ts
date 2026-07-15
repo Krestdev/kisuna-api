@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsDateString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsDateString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 enum AttendanceStatus {
@@ -7,31 +7,23 @@ enum AttendanceStatus {
   LATE = 'LATE',
   HALF_DAY = 'HALF_DAY',
   ON_LEAVE = 'ON_LEAVE',
+  FIELD = 'FIELD',
 }
 
 export class UpdateAttendanceDto {
-  @ApiPropertyOptional({ 
-    description: 'Check-in timestamp',
-    example: '2026-06-16T08:00:00Z'
-  })
+  @ApiPropertyOptional({ example: '2026-06-16T08:00:00Z' })
   @IsOptional()
   @IsDateString()
   checkIn?: string;
 
-  @ApiPropertyOptional({ 
-    description: 'Check-out timestamp',
-    example: '2026-06-16T17:00:00Z'
-  })
+  @ApiPropertyOptional({ example: '2026-06-16T17:00:00Z' })
   @IsOptional()
   @IsDateString()
   checkOut?: string;
 
-  @ApiPropertyOptional({ 
-    description: 'Attendance status',
-    enum: AttendanceStatus,
-    example: 'PRESENT'
-  })
+  @ApiPropertyOptional({ enum: AttendanceStatus, isArray: true, example: ['PRESENT', 'FIELD'] })
   @IsOptional()
-  @IsEnum(AttendanceStatus)
-  status?: AttendanceStatus;
+  @IsArray()
+  @IsEnum(AttendanceStatus, { each: true })
+  status?: AttendanceStatus[];
 }
