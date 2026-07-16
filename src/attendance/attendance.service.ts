@@ -243,23 +243,45 @@ export class AttendanceService {
   }
 
   async update(uuid: string, dto: UpdateAttendanceDto) {
-    await this.findOne(uuid);
+    const existing = await this.findOne(uuid);
 
     const data: any = {};
     if (dto.checkIn) data.checkIn = new Date(dto.checkIn);
     if (dto.checkOut) data.checkOut = new Date(dto.checkOut);
     if (dto.status) data.status = dto.status;
 
-    if (data.checkIn && data.checkOut) {
-      data.workedHour = this.calculateHours(data.checkIn, data.checkOut);
+    const checkIn = data.checkIn ?? existing.checkIn;
+    const checkOut = data.checkOut ?? existing.checkOut;
+
+    if (checkOut) {
+      data.workedHour = this.calculateHours(checkIn, checkOut);
       data.overtimes = Math.max(0, data.workedHour - STANDARD_HOURS);
+    }
+
+    // Auto-recalculate status if checkIn changed and no explicit status provided
+    if (data.checkIn && !dto.status) {
+      const schedule = await this.schedulesService.getActiveSchedule(existing.employeeId);
+      const shiftStart = schedule?.shiftStart ?? '08:00';
+      const shiftEnd = schedule?.shiftEnd ?? '17:00';
+      data.status = this.determineStatus(checkIn, shiftStart);
+
+      // Mark HALF_DAY if checked out before midpoint of shift
+      if (checkOut) {
+        const [endH, endM] = shiftEnd.split(':').map(Number);
+        const [startH, startM] = shiftStart.split(':').map(Number);
+        const shiftEndDate = new Date(checkIn);
+        shiftEndDate.setHours(endH, endM, 0, 0);
+        const shiftStartDate = new Date(checkIn);
+        shiftStartDate.setHours(startH, startM, 0, 0);
+        const midpoint = new Date((shiftStartDate.getTime() + shiftEndDate.getTime()) / 2);
+        if (checkOut < midpoint) data.status = [AttendanceStatus.HALF_DAY];
+      }
     }
 
     return this.databaseService.attendance.update({
       where: { uuid },
       data,
       include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
-
     });
   }
 
@@ -309,7 +331,7 @@ export class AttendanceService {
     return parseFloat((ms / (1000 * 60 * 60)).toFixed(2));
   }
 
-  private determineStatus(checkInTime: Date, shiftStart: string): string[] {
+  private determineStatus(checkInTime: Date, shiftStart = '08:00'): string[] {
     const [hours, minutes] = shiftStart.split(':').map(Number);
     const scheduledStart = new Date(checkInTime);
     scheduledStart.setHours(hours, minutes, 0, 0);
