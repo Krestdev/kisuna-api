@@ -16,9 +16,13 @@ import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { BatchAttendanceItemDto } from './dto/batch-attendance.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { SystemRole } from '@prisma/client';
+import { CompanyScope } from '../common/decorators/company-scope.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import { CompanyScopeGuard } from 'src/common/guards/company-scope.guard';
 
 @ApiTags('Attendance')
 // @ApiBearerAuth()
@@ -29,11 +33,26 @@ export class AttendanceController {
 
   @Post('batch')
   @ApiBearerAuth('JWT-auth')
+  @CompanyScope()
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Manually create multiple attendance records (admin)' })
   @ApiResponse({ status: 201, description: 'Attendance records created' })
-  createMany(@Body() body: CreateAttendanceDto[] | { records: CreateAttendanceDto[] }) {
-    const records = Array.isArray(body) ? body : body.records;
+  createMany(@Body() body: BatchAttendanceItemDto[]) {
+    const records: CreateAttendanceDto[] = body.map((item) => {
+      const dateBase = item.date.split('T')[0];
+      const checkIn = item.checkIn
+        ? new Date(`${dateBase}T${item.checkIn}`).toISOString()
+        : new Date(item.date).toISOString();
+      const checkOut = item.checkOut
+        ? new Date(`${dateBase}T${item.checkOut}`).toISOString()
+        : undefined;
+      return {
+        employeeId: item.userId,
+        checkIn,
+        checkOut,
+        status: (item.statut ?? ['PRESENT']) as any,
+      };
+    });
     return this.attendanceService.createMany(records);
   }
 
@@ -75,19 +94,27 @@ export class AttendanceController {
   }
 
   @Get()
+  @CompanyScope()
+  @UseGuards(AuthGuard('jwt'), CompanyScopeGuard)
   @ApiBearerAuth('JWT-auth')
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN, SystemRole.EMPLOYEE)
-  @ApiOperation({
-    summary: 'List all attendance records',
-    description: 'Get all attendance records with optional filtering by month and year.'
-  })
+  @ApiOperation({ summary: 'List all attendance records', description: 'Get all attendance records with optional filtering by month and year.' })
   @ApiQuery({ name: 'month', required: false, description: 'Month (1-12)', example: 6 })
   @ApiQuery({ name: 'year', required: false, description: 'Year', example: 2026 })
-  @ApiResponse({ status: 200, description: 'List of attendance records' })
-  findAll(@Query('month') month?: string, @Query('year') year?: string) {
+  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated attendance records' })
+  findAll(
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     return this.attendanceService.findAll(
       month ? parseInt(month) : undefined,
       year ? parseInt(year) : undefined,
+      page ? parseInt(page) : 1,
+      limit ? parseInt(limit) : 20,
     );
   }
 

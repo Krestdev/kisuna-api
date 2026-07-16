@@ -18,7 +18,7 @@ import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
-import { AttendanceStatus, LeaveStatus } from '@prisma/client';
+import { Attendance, AttendanceStatus, LeaveStatus } from '@prisma/client';
 
 const STANDARD_HOURS = 8;
 const GRACE_PERIOD_MINUTES = 15;
@@ -26,8 +26,8 @@ const GRACE_PERIOD_MINUTES = 15;
 @Injectable()
 export class AttendanceService {
   constructor(
-    private prisma: DatabaseService,
-    private schedulesService: SchedulesService,
+    private readonly databaseService: DatabaseService,
+    private readonly schedulesService: SchedulesService,
   ) { }
 
   async createMany(dtos: CreateAttendanceDto[]) {
@@ -35,7 +35,7 @@ export class AttendanceService {
   }
 
   async create(dto: CreateAttendanceDto) {
-    const employee = await this.prisma.employee.findUnique({ where: { uuid: dto.employeeId } });
+    const employee = await this.databaseService.employee.findUnique({ where: { uuid: dto.employeeId } });
     if (!employee) throw new NotFoundException('Employee not found');
 
     const checkIn = new Date(dto.checkIn);
@@ -49,7 +49,7 @@ export class AttendanceService {
     const workedHour = checkOut ? this.calculateHours(checkIn, checkOut) : undefined;
     const overtimes = workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
 
-    return this.prisma.attendance.create({
+    return this.databaseService.attendance.create({
       data: {
         employeeId: dto.employeeId,
         checkIn,
@@ -60,12 +60,12 @@ export class AttendanceService {
         workedHour,
         overtimes,
       },
-      include: { employee: true },
+      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
     });
   }
 
   async checkIn(dto: CheckInDto) {
-    const employee = await this.prisma.employee.findUnique({
+    const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });
 
@@ -75,7 +75,7 @@ export class AttendanceService {
 
     // Check if employee is on approved leave today
     const today = new Date();
-    const onLeave = await this.prisma.leave.findFirst({
+    const onLeave = await this.databaseService.leave.findFirst({
       where: {
         employeeId: dto.employeeId,
         status: LeaveStatus.APPROVED,
@@ -103,7 +103,7 @@ export class AttendanceService {
       );
     }
 
-    const existing = await this.prisma.attendance.findFirst({
+    const existing = await this.databaseService.attendance.findFirst({
       where: {
         employeeId: dto.employeeId,
         checkIn: {
@@ -119,7 +119,7 @@ export class AttendanceService {
 
     const status = this.determineStatus(today, schedule.shiftStart);
 
-    return this.prisma.attendance.create({
+    return this.databaseService.attendance.create({
       data: {
         employeeId: dto.employeeId,
         checkIn: today,
@@ -127,12 +127,13 @@ export class AttendanceService {
         longitude: dto.longitude,
         status,
       },
-      include: { employee: true },
+      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+
     });
   }
 
-  async checkOut(dto: CheckOutDto) {
-    const record = await this.prisma.attendance.findFirst({
+  async checkOut(dto: CheckOutDto): Promise<Attendance> {
+    const record = await this.databaseService.attendance.findFirst({
       where: {
         employeeId: dto.employeeId,
         checkOut: null,
@@ -148,35 +149,49 @@ export class AttendanceService {
     const workedHour = this.calculateHours(record.checkIn, checkOut);
     const overtimes = Math.max(0, workedHour - STANDARD_HOURS);
 
-    return this.prisma.attendance.update({
+    return this.databaseService.attendance.update({
       where: { uuid: record.uuid },
       data: { checkOut, workedHour, overtimes },
-      include: { employee: true },
+      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
     });
   }
 
-  async findAll(month?: number, year?: number) {
-    const where: any = {};
+  async findAll(month?: number, year?: number, page = 1, limit = 20) {
+    const attendanceWhere: any = {};
 
     if (month && year) {
       const date = new Date(year, month - 1);
-      where.checkIn = {
-        gte: startOfMonth(date),
-        lte: endOfMonth(date),
-      };
+      attendanceWhere.checkIn = { gte: startOfMonth(date), lte: endOfMonth(date) };
     }
 
-    return this.prisma.attendance.findMany({
-      where,
-      include: { employee: true },
-      orderBy: { checkIn: 'desc' },
-    });
+    const skip = (page - 1) * limit;
+    const [employees, total] = await Promise.all([
+      this.databaseService.employee.findMany({
+        skip,
+        take: limit,
+        select: {
+          uuid: true,
+          firstName: true,
+          lastName: true,
+          position: true,
+          user: { select: { email: true } },
+          attendances: {
+            where: attendanceWhere,
+            orderBy: { checkIn: 'desc' },
+          },
+        },
+      }),
+      this.databaseService.employee.count(),
+    ]);
+
+    return { data: employees, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async findOne(uuid: string) {
-    const attendance = await this.prisma.attendance.findUnique({
+  async findOne(uuid: string): Promise<Attendance> {
+    const attendance = await this.databaseService.attendance.findUnique({
       where: { uuid },
-      include: { employee: true },
+      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+
     });
 
     if (!attendance) {
@@ -186,7 +201,7 @@ export class AttendanceService {
     return attendance;
   }
 
-  async findByEmployee(employeeId: string, month?: number, year?: number) {
+  async findByEmployee(employeeId: string, month?: number, year?: number): Promise<Attendance[]> {
     const where: any = { employeeId };
 
     if (month && year) {
@@ -197,15 +212,15 @@ export class AttendanceService {
       };
     }
 
-    return this.prisma.attendance.findMany({
+    return this.databaseService.attendance.findMany({
       where,
       orderBy: { checkIn: 'desc' },
     });
   }
 
-  async getMonthlySummary(employeeId: string, month: number, year: number) {
+  async getMonthlySummary(employeeId: string, month: number, year: number): Promise<any> {
     const date = new Date(year, month - 1);
-    const records = await this.prisma.attendance.findMany({
+    const records = await this.databaseService.attendance.findMany({
       where: {
         employeeId,
         checkIn: {
@@ -240,15 +255,16 @@ export class AttendanceService {
       data.overtimes = Math.max(0, data.workedHour - STANDARD_HOURS);
     }
 
-    return this.prisma.attendance.update({
+    return this.databaseService.attendance.update({
       where: { uuid },
       data,
-      include: { employee: true },
+      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+
     });
   }
 
   async markAbsent(dto: MarkAbsentDto) {
-    const employee = await this.prisma.employee.findUnique({
+    const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });
 
@@ -257,7 +273,7 @@ export class AttendanceService {
     }
 
     const date = new Date(dto.date);
-    const existing = await this.prisma.attendance.findFirst({
+    const existing = await this.databaseService.attendance.findFirst({
       where: {
         employeeId: dto.employeeId,
         checkIn: {
@@ -271,7 +287,7 @@ export class AttendanceService {
       throw new BadRequestException('Attendance record already exists for this date');
     }
 
-    return this.prisma.attendance.create({
+    return this.databaseService.attendance.create({
       data: {
         employeeId: dto.employeeId,
         checkIn: startOfDay(date),
@@ -285,7 +301,7 @@ export class AttendanceService {
 
   async remove(uuid: string) {
     await this.findOne(uuid);
-    return this.prisma.attendance.delete({ where: { uuid } });
+    return this.databaseService.attendance.delete({ where: { uuid } });
   }
 
   private calculateHours(checkIn: Date, checkOut: Date): number {
