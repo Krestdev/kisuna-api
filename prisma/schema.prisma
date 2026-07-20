@@ -44,6 +44,8 @@ model Company {
   // positions    Position[]
   earningItems EarningItem[]
   declarations Declaration[]
+  recruitments Recruitment[]
+  leaveTypes   LeaveTypeConfig[]
 }
 
 model Department {
@@ -185,19 +187,19 @@ enum AttendanceStatus {
 }
 
 model Attendance {
-  uuid         String           @id @default(uuid())
+  uuid         String    @id @default(uuid())
   checkIn      DateTime
   checkOut     DateTime?
   latitude     Float
   longitude    Float
   workedHour   Float?
   overtimes    Float?
-  status       String[]         @default(["PRESENT"])
-  location     String?          @db.VarChar(255)
-  mission      String?          @db.VarChar(255)
-  observations String?          @db.VarChar(500)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  status       String[]  @default(["PRESENT"])
+  location     String?   @db.VarChar(255)
+  mission      String?   @db.VarChar(255)
+  observations String?   @db.VarChar(500)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
@@ -211,6 +213,11 @@ enum DocumentType {
   RESUME
   CONTRACT
   OTHER
+}
+
+enum RecruitmentStatus {
+  ACTIVE
+  EXPIRED
 }
 
 model File {
@@ -312,9 +319,24 @@ model User {
   employee   Employee? @relation(fields: [employeeId], references: [uuid])
 }
 
+model LeaveTypeConfig {
+  uuid        String   @id @default(uuid())
+  label       String   @db.VarChar(100)
+  daysAllowed Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [uuid])
+
+  leaves Leave[]
+
+  @@unique([companyId, label])
+}
+
 model Leave {
   uuid            Int         @id @default(autoincrement())
-  type            LeaveType
   startDate       DateTime
   endDate         DateTime
   reason          String?     @db.VarChar(255)
@@ -327,15 +349,9 @@ model Leave {
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [uuid])
-}
 
-enum LeaveType {
-  ANNUAL // paid vacation
-  SICK // sick leave
-  MATERNITY
-  PATERNITY
-  UNPAID
-  OTHER
+  leaveTypeConfigId String?
+  leaveTypeConfig   LeaveTypeConfig? @relation(fields: [leaveTypeConfigId], references: [uuid])
 }
 
 enum LeaveStatus {
@@ -415,6 +431,49 @@ model DeclarationLine {
   earnings DeclarationEarning[]
 
   @@unique([declarationId, employeeId, contractId])
+}
+
+enum CandidacyStatus {
+  PENDING
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+}
+
+model Candidacy {
+  uuid         String          @id @default(uuid())
+  fullName     String          @db.VarChar(150)
+  phone        String          @db.VarChar(20)
+  email        String          @db.VarChar(100)
+  address      String          @db.VarChar(255)
+  identityCard String          @db.VarChar(500)
+  cv           String          @db.VarChar(500)
+  degree       String?         @db.VarChar(500)
+  coverLetter  String?         @db.VarChar(500)
+  status       CandidacyStatus @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  recruitmentUuid String
+  recruitment     Recruitment @relation(fields: [recruitmentUuid], references: [uuid])
+}
+
+model Recruitment {
+  uuid        String            @id @default(uuid())
+  title       String            @db.VarChar(255)
+  description String?           @db.Text
+  status      RecruitmentStatus @default(ACTIVE)
+  criteria    String[]
+  place       String?           @db.VarChar(255)
+  tags        String[]
+  deadline    DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [uuid])
+
+  candidacies Candidacy[]
 }
 
 model DeclarationEarning {

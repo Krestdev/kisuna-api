@@ -8,6 +8,12 @@ import { RustfsService } from '../rustfs/rustfs.service';
 import { log } from 'console';
 import e from 'express';
 
+const DEFAULT_SCHEDULE = {
+  shiftStart: '08:00',
+  shiftEnd: '17:00',
+  workDays: 'MON,TUE,WED,THU,FRI',
+};
+
 @Injectable()
 export class EmployeesService {
   constructor(
@@ -53,6 +59,22 @@ export class EmployeesService {
           passwordHash: hashedPassword,
           employeeId: employee.uuid,
           role: 'EMPLOYEE',
+        },
+      });
+
+      // Create default schedule so employee can check in from day one
+      const scheduleStart = hireDate ? new Date(hireDate) : new Date();
+      const scheduleEnd = new Date(scheduleStart);
+      scheduleEnd.setFullYear(scheduleEnd.getFullYear() + 100);
+      await prisma.employeeSchedule.create({
+        data: {
+          employeeId: employee.uuid,
+          startDate: scheduleStart,
+          endDate: scheduleEnd,
+          shiftStart: DEFAULT_SCHEDULE.shiftStart,
+          shiftEnd: DEFAULT_SCHEDULE.shiftEnd,
+          workDays: DEFAULT_SCHEDULE.workDays,
+          status: 'ACTIVE',
         },
       });
 

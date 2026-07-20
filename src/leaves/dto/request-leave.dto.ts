@@ -1,17 +1,7 @@
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
-import { LeaveType } from '@prisma/client';
+import { IsDateString, IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class RequestLeaveDto {
-  @IsEnum(LeaveType)
-  type: LeaveType;
-
-  @IsDateString()
-  startDate: string;
-
-  @IsDateString()
-  endDate: string;
-
-  @IsString()
-  @IsOptional()
-  reason?: string;
+  @IsString() @IsNotEmpty() leaveTypeConfigId: string;
+  @IsDateString() startDate: string;
+  @IsString() @IsOptional() reason?: string;
 }

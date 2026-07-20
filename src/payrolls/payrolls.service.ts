@@ -4,7 +4,7 @@ import { AttendanceService } from '../attendance/attendance.service';
 import { SchedulesService } from '../schedules/schedules.service';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { AdjustPayrollDto } from './dto/adjust-payroll.dto';
-import { LeaveStatus, LeaveType } from '@prisma/client';
+import { LeaveStatus } from '@prisma/client';
 
 const DAY_MAP: Record<string, number> = {
   SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
@@ -16,7 +16,7 @@ export class PayrollsService {
     private readonly prisma: DatabaseService,
     private readonly attendanceService: AttendanceService,
     private readonly schedulesService: SchedulesService,
-  ) {}
+  ) { }
 
   async generatePayroll(employeeId: string, month: number, year: number) {
     const startDate = startOfMonth(new Date(year, month - 1));
@@ -59,6 +59,7 @@ export class PayrollsService {
         startDate: { gte: startDate },
         endDate: { lte: endDate },
       },
+      include: { leaveTypeConfig: true },
     });
 
     // Calculate leave days by type
@@ -70,7 +71,7 @@ export class PayrollsService {
         (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
       ) + 1;
 
-      if (leave.type === LeaveType.UNPAID) {
+      if (leave.leaveTypeConfig?.label?.toUpperCase() === 'UNPAID') {
         unpaidLeaveDays += leaveDays;
       } else {
         paidLeaveDays += leaveDays;

@@ -200,7 +200,6 @@ export class MeService {
         startDate: leave.startDate.toISOString().split('T')[0],
         endDate: leave.endDate.toISOString().split('T')[0],
         status: leave.status,
-        type: leave.type,
       })),
     };
   }
@@ -255,12 +254,19 @@ export class MeService {
       justificatifUrl = await this.rustfs.uploadFile(file, 'leaves');
     }
 
+    const leaveType = await this.prisma.leaveTypeConfig.findUnique({ where: { uuid: dto.leaveTypeConfigId } });
+    if (!leaveType || !leaveType.isActive) throw new Error('Leave type not found or inactive');
+
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + leaveType.daysAllowed - 1);
+
     const leave = await this.prisma.leave.create({
       data: {
         employeeId,
-        type: dto.type,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
+        leaveTypeConfigId: dto.leaveTypeConfigId,
+        startDate,
+        endDate,
         reason: dto.observation,
         justificatifUrl,
         status: LeaveStatus.PENDING_MANAGER,

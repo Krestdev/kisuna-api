@@ -19,6 +19,7 @@ import { LeavesModule } from './leaves/leaves.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MeModule } from './me/me.module';
 import { DeclarationsModule } from './declarations/declarations.module';
+import { RecruitmentModule } from './recruitment/recruitment.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DeclarationsModule } from './declarations/declarations.module';
     DashboardModule,
     MeModule,
     DeclarationsModule,
+    RecruitmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

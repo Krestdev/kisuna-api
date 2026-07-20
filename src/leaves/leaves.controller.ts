@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  Delete,
   ParseIntPipe,
   UseGuards,
   Request,
@@ -13,11 +14,15 @@ import {
 import { LeavesService } from './leaves.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
+import { CreateLeaveTypeDto } from './dto/create-leave-type.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { SystemRole } from '@prisma/client';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Leaves')
+@ApiBearerAuth('JWT-auth')
 @Controller('leaves')
 @UseGuards(JwtAuthGuard)
 export class LeavesController {
@@ -78,5 +83,32 @@ export class LeavesController {
   @Patch(':id/cancel-approved')
   async cancelApproved(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.leavesService.cancelApproved(id, req.user.employeeId);
+  }
+
+  // Leave Type Config
+  @Post('types')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  createLeaveType(@Body() dto: CreateLeaveTypeDto) {
+    return this.leavesService.createLeaveType(dto);
+  }
+
+  @Get('types/:companyId')
+  getLeaveTypes(@Param('companyId') companyId: string) {
+    return this.leavesService.findAllLeaveTypes(companyId);
+  }
+
+  @Patch('types/:uuid')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  updateLeaveType(@Param('uuid') uuid: string, @Body() dto: Partial<CreateLeaveTypeDto>) {
+    return this.leavesService.updateLeaveType(uuid, dto);
+  }
+
+  @Delete('types/:uuid')
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
+  removeLeaveType(@Param('uuid') uuid: string) {
+    return this.leavesService.removeLeaveType(uuid);
   }
 }
