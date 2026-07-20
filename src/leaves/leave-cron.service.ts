@@ -23,7 +23,9 @@ export class LeaveCronService {
       },
     });
 
-    this.logger.log(`Found ${approvedLeaves.length} employees on approved leave today`);
+    this.logger.log(
+      `Found ${approvedLeaves.length} employees on approved leave today`,
+    );
 
     for (const leave of approvedLeaves) {
       const existing = await this.prisma.attendance.findFirst({

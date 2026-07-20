@@ -1,5 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ContractsService } from './contracts.service';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { TerminateContractDto } from './dto/terminate-contract.dto';
@@ -38,7 +53,10 @@ export class ContractsController {
   @ApiParam({ name: 'id', description: 'Contract UUID' })
   @ApiResponse({ status: 200, description: 'Contract updated successfully' })
   @ApiResponse({ status: 404, description: 'Contract not found' })
-  update(@Param('id') id: string, @Body() updateContractDto: UpdateContractDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateContractDto: UpdateContractDto,
+  ) {
     return this.contractsService.update(id, updateContractDto);
   }
 
@@ -50,7 +68,10 @@ export class ContractsController {
   @ApiParam({ name: 'id', description: 'Contract UUID' })
   @ApiResponse({ status: 200, description: 'Contract terminated successfully' })
   @ApiResponse({ status: 404, description: 'Contract not found' })
-  terminate(@Param('id') id: string, @Body() terminateDto: TerminateContractDto) {
+  terminate(
+    @Param('id') id: string,
+    @Body() terminateDto: TerminateContractDto,
+  ) {
     return this.contractsService.terminate(id, terminateDto);
   }
 

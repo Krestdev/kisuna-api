@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
@@ -24,9 +29,10 @@ export class LeavesService {
       throw new BadRequestException('End date must be after start date');
     }
 
-    const requestedDays = Math.ceil(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
+    const requestedDays =
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
 
     await this.checkLeaveBalance(employeeId, requestedDays);
 
@@ -56,7 +62,7 @@ export class LeavesService {
 
     if (balance.remainingDays < requestedDays) {
       throw new BadRequestException(
-        `Insufficient leave balance. Remaining: ${balance.remainingDays} days`
+        `Insufficient leave balance. Remaining: ${balance.remainingDays} days`,
       );
     }
   }
@@ -116,12 +122,15 @@ export class LeavesService {
     const leave = await this.findOne(id);
 
     // Manager (SUPER_ADMIN) approves first
-    if (userRole === 'SUPER_ADMIN' && leave.status === LeaveStatus.PENDING_MANAGER) {
+    if (
+      userRole === 'SUPER_ADMIN' &&
+      leave.status === LeaveStatus.PENDING_MANAGER
+    ) {
       return this.prisma.leave.update({
         where: { uuid: id },
-        data: { 
+        data: {
           status: LeaveStatus.PENDING_HR,
-          approvedBy 
+          approvedBy,
         },
         include: { employee: true },
       });
@@ -129,9 +138,11 @@ export class LeavesService {
 
     // HR (ADMIN) approves second and finalizes
     if (userRole === 'ADMIN' && leave.status === LeaveStatus.PENDING_HR) {
-      const leaveDays = Math.ceil(
-        (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1;
+      const leaveDays =
+        Math.ceil(
+          (leave.endDate.getTime() - leave.startDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1;
 
       const year = leave.startDate.getFullYear();
       const balance = await this.prisma.leaveBalance.findUnique({
@@ -155,15 +166,22 @@ export class LeavesService {
       });
     }
 
-    throw new BadRequestException('Invalid approval workflow or insufficient permissions');
+    throw new BadRequestException(
+      'Invalid approval workflow or insufficient permissions',
+    );
   }
 
   async reject(id: number, approvedBy: string, dto: RejectLeaveDto) {
     const leave = await this.findOne(id);
 
-    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
-      throw new BadRequestException('Only pending leave requests can be rejected');
+      throw new BadRequestException(
+        'Only pending leave requests can be rejected',
+      );
     }
 
     return this.prisma.leave.update({
@@ -181,12 +199,19 @@ export class LeavesService {
     const leave = await this.findOne(id);
 
     if (leave.employeeId !== employeeId) {
-      throw new ForbiddenException('You can only cancel your own leave requests');
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
-    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
-      throw new BadRequestException('Only pending leave requests can be cancelled');
+      throw new BadRequestException(
+        'Only pending leave requests can be cancelled',
+      );
     }
 
     return this.prisma.leave.update({
@@ -200,16 +225,22 @@ export class LeavesService {
     const leave = await this.findOne(id);
 
     if (leave.employeeId !== employeeId) {
-      throw new ForbiddenException('You can only cancel your own leave requests');
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
     if (leave.status !== LeaveStatus.APPROVED) {
-      throw new BadRequestException('Only approved leave requests can be cancelled here');
+      throw new BadRequestException(
+        'Only approved leave requests can be cancelled here',
+      );
     }
 
-    const leaveDays = Math.ceil(
-      (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
+    const leaveDays =
+      Math.ceil(
+        (leave.endDate.getTime() - leave.startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1;
 
     const year = leave.startDate.getFullYear();
     const balance = await this.prisma.leaveBalance.findUnique({
@@ -249,7 +280,12 @@ export class LeavesService {
 
     if (!balance) {
       balance = await this.prisma.leaveBalance.create({
-        data: { employeeId, year: currentYear, totalDays: 21, remainingDays: 21 },
+        data: {
+          employeeId,
+          year: currentYear,
+          totalDays: 21,
+          remainingDays: 21,
+        },
       });
     }
 
@@ -272,7 +308,11 @@ export class LeavesService {
     });
   }
 
-  async initializeBalanceForYear(employeeId: string, year: number, totalDays: number = 21) {
+  async initializeBalanceForYear(
+    employeeId: string,
+    year: number,
+    totalDays: number = 21,
+  ) {
     const existing = await this.prisma.leaveBalance.findUnique({
       where: { employeeId_year: { employeeId, year } },
     });
@@ -292,7 +332,11 @@ export class LeavesService {
     });
   }
 
-  async updateBalanceQuota(employeeId: string, year: number, totalDays: number) {
+  async updateBalanceQuota(
+    employeeId: string,
+    year: number,
+    totalDays: number,
+  ) {
     const balance = await this.prisma.leaveBalance.findUnique({
       where: { employeeId_year: { employeeId, year } },
     });
@@ -302,7 +346,7 @@ export class LeavesService {
     }
 
     const difference = totalDays - balance.totalDays;
-    
+
     return this.prisma.leaveBalance.update({
       where: { uuid: balance.uuid },
       data: {

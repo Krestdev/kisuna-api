@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MinLength, MaxLength, IsEnum, IsDateString, IsUUID, IsInt, ValidateNested, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MinLength,
+  MaxLength,
+  IsEnum,
+  IsDateString,
+  IsUUID,
+  IsInt,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Gender, ContractType } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
@@ -14,7 +26,11 @@ class ContractInfoDto {
   @IsNotEmpty()
   endDate: string;
 
-  @ApiProperty({ enum: ContractType, example: 'CDD', description: 'Contract type' })
+  @ApiProperty({
+    enum: ContractType,
+    example: 'CDD',
+    description: 'Contract type',
+  })
   @IsEnum(ContractType)
   @IsNotEmpty()
   contract_type: ContractType;
@@ -24,7 +40,11 @@ class ContractInfoDto {
   @IsNotEmpty()
   baseSalary: number;
 
-  @ApiPropertyOptional({ example: 'XAF', description: 'Currency', default: 'XAF' })
+  @ApiPropertyOptional({
+    example: 'XAF',
+    description: 'Currency',
+    default: 'XAF',
+  })
   @IsOptional()
   @IsString()
   currency?: string;
@@ -43,28 +63,44 @@ export class CreateEmployeeDto {
   @MaxLength(100)
   lastName: string;
 
-  @ApiProperty({ enum: Gender, example: Gender.MALE, description: 'Employee gender' })
+  @ApiProperty({
+    enum: Gender,
+    example: Gender.MALE,
+    description: 'Employee gender',
+  })
   @IsEnum(Gender)
   @IsNotEmpty()
   gender: Gender;
 
-  @ApiProperty({ example: 'john.doe@company.com', description: 'Employee email address' })
+  @ApiProperty({
+    example: 'john.doe@company.com',
+    description: 'Employee email address',
+  })
   @IsString()
   @IsNotEmpty()
   email: string;
 
-  @ApiPropertyOptional({ example: '123 Main St, Springfield', description: 'Employee address' })
+  @ApiPropertyOptional({
+    example: '123 Main St, Springfield',
+    description: 'Employee address',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   address?: string;
 
-  @ApiPropertyOptional({ example: 1234567890, description: 'Employee phone number' })
+  @ApiPropertyOptional({
+    example: 1234567890,
+    description: 'Employee phone number',
+  })
   @IsOptional()
   @Type(() => Number)
   phoneNumber?: number;
 
-  @ApiPropertyOptional({ example: '1990-01-01', description: 'Employee birthday (ISO date string)' })
+  @ApiPropertyOptional({
+    example: '1990-01-01',
+    description: 'Employee birthday (ISO date string)',
+  })
   @IsOptional()
   @IsDateString()
   birthday?: string;
@@ -74,7 +110,10 @@ export class CreateEmployeeDto {
   @IsString()
   nationality?: string;
 
-  @ApiPropertyOptional({ example: 'Cameroun', description: 'Country of residence' })
+  @ApiPropertyOptional({
+    example: 'Cameroun',
+    description: 'Country of residence',
+  })
   @IsOptional()
   @IsString()
   countryOfResidence?: string;
@@ -94,12 +133,18 @@ export class CreateEmployeeDto {
   @Type(() => Number)
   CNPSNumber?: number;
 
-  @ApiPropertyOptional({ example: 'Jane Doe', description: 'Emergency contact name' })
+  @ApiPropertyOptional({
+    example: 'Jane Doe',
+    description: 'Emergency contact name',
+  })
   @IsOptional()
   @IsString()
   emergencyContactName?: string;
 
-  @ApiPropertyOptional({ example: 9876543210, description: 'Emergency contact phone' })
+  @ApiPropertyOptional({
+    example: 9876543210,
+    description: 'Emergency contact phone',
+  })
   @IsOptional()
   @Type(() => Number)
   EmergencyContactPhone?: number;
@@ -109,7 +154,10 @@ export class CreateEmployeeDto {
   @IsString()
   idDocumentType?: string;
 
-  @ApiPropertyOptional({ example: '123456789', description: 'ID document number' })
+  @ApiPropertyOptional({
+    example: '123456789',
+    description: 'ID document number',
+  })
   @IsOptional()
   @IsString()
   idDocumentNumber?: string;
@@ -144,7 +192,10 @@ export class CreateEmployeeDto {
   @IsString()
   grade?: string;
 
-  @ApiPropertyOptional({ example: 'Virement bancaire', description: 'Payment mode' })
+  @ApiPropertyOptional({
+    example: 'Virement bancaire',
+    description: 'Payment mode',
+  })
   @IsOptional()
   @IsString()
   paymentMode?: string;
@@ -154,7 +205,10 @@ export class CreateEmployeeDto {
   @IsString()
   workLocation?: string;
 
-  @ApiPropertyOptional({ example: 'Bastos Office', description: 'Work location details' })
+  @ApiPropertyOptional({
+    example: 'Bastos Office',
+    description: 'Work location details',
+  })
   @IsOptional()
   @IsString()
   workLocationDetails?: string;
@@ -171,11 +225,21 @@ export class CreateEmployeeDto {
 
   @ApiPropertyOptional({ description: 'Company UUID' })
   @IsOptional()
-  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
+  @Transform(({ value }) =>
+    !value ||
+    String(value).trim() === '' ||
+    value === 'null' ||
+    value === 'undefined'
+      ? undefined
+      : value,
+  )
   @IsString()
   companyId?: string;
 
-  @ApiPropertyOptional({ example: 'Software Engineer', description: 'Job position title' })
+  @ApiPropertyOptional({
+    example: 'Software Engineer',
+    description: 'Job position title',
+  })
   @IsOptional()
   @IsString()
   position?: string;
@@ -183,7 +247,8 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional({ description: 'Contract information (optional)' })
   @IsOptional()
   @Transform(({ value }) => {
-    if (value === '' || value === 'null' || value === 'undefined') return undefined;
+    if (value === '' || value === 'null' || value === 'undefined')
+      return undefined;
     if (typeof value === 'string') {
       try {
         return JSON.parse(value);
@@ -200,7 +265,8 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional({ description: 'Contract information alias (optional)' })
   @IsOptional()
   @Transform(({ value }) => {
-    if (value === '' || value === 'null' || value === 'undefined') return undefined;
+    if (value === '' || value === 'null' || value === 'undefined')
+      return undefined;
     if (typeof value === 'string') {
       try {
         return JSON.parse(value);
@@ -214,36 +280,56 @@ export class CreateEmployeeDto {
   @Type(() => ContractInfoDto)
   contracts?: ContractInfoDto;
 
-
   @ApiPropertyOptional({ description: 'Department UUID' })
-  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
+  @Transform(({ value }) =>
+    !value ||
+    String(value).trim() === '' ||
+    value === 'null' ||
+    value === 'undefined'
+      ? undefined
+      : value,
+  )
   @IsOptional()
   @IsString()
   departmentId?: string;
 
   @ApiPropertyOptional({ description: 'Supervisor UUID' })
-  @Transform(({ value }) => (!value || String(value).trim() === '' || value === 'null' || value === 'undefined') ? undefined : value)
+  @Transform(({ value }) =>
+    !value ||
+    String(value).trim() === '' ||
+    value === 'null' ||
+    value === 'undefined'
+      ? undefined
+      : value,
+  )
   @IsOptional()
   @IsString()
   supervisorId?: string;
 
-  @ApiPropertyOptional({ example: '2023-12-31', description: 'End date / Termination date' })
+  @ApiPropertyOptional({
+    example: '2023-12-31',
+    description: 'End date / Termination date',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ example: 21, description: 'Number of leave days available' })
+  @ApiPropertyOptional({
+    example: 21,
+    description: 'Number of leave days available',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   leaveDays?: number;
 }
 
-
 export class changeEmployeePassword {
   @ApiProperty({ description: 'New password', example: '********' })
   @IsString()
   @IsNotEmpty({ message: 'Nouveau mot de passe requis' })
-  @MinLength(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
+  @MinLength(6, {
+    message: 'Le mot de passe doit contenir au moins 6 caractères',
+  })
   newPassword: string;
 }

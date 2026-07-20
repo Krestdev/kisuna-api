@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { DepartmentsService } from './departments.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
@@ -26,7 +43,11 @@ export class DepartmentsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all departments' })
-  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company UUID' })
+  @ApiQuery({
+    name: 'companyId',
+    required: false,
+    description: 'Filter by company UUID',
+  })
   @ApiResponse({ status: 200, description: 'List of departments' })
   findAll(@Query('companyId') companyId?: string) {
     return this.departmentsService.findAll(companyId);
@@ -49,7 +70,10 @@ export class DepartmentsController {
   @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({ status: 200, description: 'Department updated successfully' })
   @ApiResponse({ status: 404, description: 'Department not found' })
-  update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateDepartmentDto: UpdateDepartmentDto,
+  ) {
     return this.departmentsService.update(id, updateDepartmentDto);
   }
 
@@ -59,9 +83,15 @@ export class DepartmentsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Assign a manager to a department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
-  @ApiParam({ name: 'employeeId', description: 'Employee UUID to assign as manager' })
+  @ApiParam({
+    name: 'employeeId',
+    description: 'Employee UUID to assign as manager',
+  })
   @ApiResponse({ status: 200, description: 'Manager assigned successfully' })
-  assignManager(@Param('id') id: string, @Param('employeeId') employeeId: string) {
+  assignManager(
+    @Param('id') id: string,
+    @Param('employeeId') employeeId: string,
+  ) {
     return this.departmentsService.assignManager(id, employeeId);
   }
 
@@ -71,8 +101,14 @@ export class DepartmentsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Soft-delete department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
-  @ApiResponse({ status: 200, description: 'Department deactivated successfully' })
-  @ApiResponse({ status: 400, description: 'Cannot delete: active positions exist' })
+  @ApiResponse({
+    status: 200,
+    description: 'Department deactivated successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete: active positions exist',
+  })
   remove(@Param('id') id: string) {
     return this.departmentsService.remove(id);
   }

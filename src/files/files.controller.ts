@@ -1,8 +1,25 @@
-import { Controller, Post, Param, UploadedFile, UseInterceptors, Get, Body, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  UploadedFile,
+  UseInterceptors,
+  Get,
+  Body,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { CreateFileDto } from './dto/create-file.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiConsumes,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { SystemRole } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -10,7 +27,6 @@ import { RolesGuard } from '../common/guards/roles.guard';
 @ApiTags('Files')
 @Controller('employees/:employeeId/files')
 export class FilesController {
-
   constructor(private readonly filesService: FilesService) {}
 
   @Post()
@@ -25,7 +41,7 @@ export class FilesController {
   async uploadFile(
     @Param('employeeId') employeeId: string,
     @UploadedFile() file: Express.Multer.File,
-    @Body() dto: CreateFileDto
+    @Body() dto: CreateFileDto,
   ) {
     return this.filesService.uploadFile(employeeId, file, dto);
   }
@@ -39,7 +55,9 @@ export class FilesController {
   }
 
   @Get(':fileId/url')
-  @ApiOperation({ summary: 'Get a presigned URL to securely download/view the file' })
+  @ApiOperation({
+    summary: 'Get a presigned URL to securely download/view the file',
+  })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
   @ApiParam({ name: 'fileId', description: 'File UUID' })
   @ApiResponse({ status: 200, description: 'Presigned URL' })

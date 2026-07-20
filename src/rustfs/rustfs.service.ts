@@ -43,7 +43,7 @@ export class RustfsService implements OnModuleInit {
 
   async uploadFile(
     file: Express.Multer.File,
-    folder: string = 'general'
+    folder: string = 'general',
   ): Promise<string> {
     const objectKey = `${folder}/${Date.now()}-${file.originalname}`;
 
@@ -67,7 +67,7 @@ export class RustfsService implements OnModuleInit {
   async uploadBuffer(
     buffer: Buffer,
     filePath: string,
-    contentType: string
+    contentType: string,
   ): Promise<string> {
     await this.client.send(
       new PutObjectCommand({
@@ -86,10 +86,7 @@ export class RustfsService implements OnModuleInit {
     return fullPath;
   }
 
-  async getFileUrl(
-    fullPath: string,
-    expiresIn = 3600,
-  ): Promise<string> {
+  async getFileUrl(fullPath: string, expiresIn = 3600): Promise<string> {
     const objectKey = this.extractObjectKey(fullPath);
     const command = new GetObjectCommand({
       Bucket: this.bucket,

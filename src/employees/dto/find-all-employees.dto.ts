@@ -3,7 +3,10 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class FindAllEmployeesDto {
-  @ApiPropertyOptional({ description: 'Page number for pagination', default: 1 })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -42,7 +45,9 @@ export class FindAllEmployeesDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Include inactive employees (true/false)' })
+  @ApiPropertyOptional({
+    description: 'Include inactive employees (true/false)',
+  })
   @IsOptional()
   @IsString()
   includeInactive?: string;
@@ -52,7 +57,9 @@ export class FindAllEmployeesDto {
   @IsString()
   includeSensitive?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by contract type (CDI, CDD, Stage, Prestation, Essai)' })
+  @ApiPropertyOptional({
+    description: 'Filter by contract type (CDI, CDD, Stage, Prestation, Essai)',
+  })
   @IsOptional()
   @IsString()
   contractType?: string;

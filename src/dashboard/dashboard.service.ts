@@ -19,10 +19,10 @@ export class DashboardService {
       lastPayslip,
     ] = await Promise.all([
       this.prisma.leave.count({
-        where: { 
-          status: { 
-            in: [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR] 
-          } 
+        where: {
+          status: {
+            in: [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR],
+          },
         },
       }),
       this.prisma.employee.count({
@@ -40,18 +40,30 @@ export class DashboardService {
       }),
     ]);
 
-    let lastPayslipInfo: { period: string; label: string; totalBulletins: number } | null = null;
-    
+    let lastPayslipInfo: {
+      period: string;
+      label: string;
+      totalBulletins: number;
+    } | null = null;
+
     if (lastPayslip) {
       const payrollMonth = lastPayslip.payroll.startDate;
       const totalBulletins = await this.prisma.payslip.count({
         where: {
           payroll: {
             startDate: {
-              gte: new Date(payrollMonth.getFullYear(), payrollMonth.getMonth(), 1),
+              gte: new Date(
+                payrollMonth.getFullYear(),
+                payrollMonth.getMonth(),
+                1,
+              ),
             },
             endDate: {
-              lte: new Date(payrollMonth.getFullYear(), payrollMonth.getMonth() + 1, 0),
+              lte: new Date(
+                payrollMonth.getFullYear(),
+                payrollMonth.getMonth() + 1,
+                0,
+              ),
             },
           },
         },

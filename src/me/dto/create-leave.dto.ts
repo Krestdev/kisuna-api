@@ -1,10 +1,20 @@
-import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { LeaveType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateLeaveDto {
-  @ApiProperty({ description: 'Type of leave', enum: LeaveType, example: 'ANNUAL' })
+  @ApiProperty({
+    description: 'Type of leave',
+    enum: LeaveType,
+    example: 'ANNUAL',
+  })
   @IsEnum(LeaveType)
   type: LeaveType;
 
@@ -16,12 +26,18 @@ export class CreateLeaveDto {
   @IsDateString()
   endDate: string;
 
-  @ApiPropertyOptional({ description: 'Leave observation/reason', example: 'Voyage familial' })
+  @ApiPropertyOptional({
+    description: 'Leave observation/reason',
+    example: 'Voyage familial',
+  })
   @IsString()
   @IsOptional()
   observation?: string;
 
-  @ApiProperty({ description: 'Deduct from annual leave balance', example: true })
+  @ApiProperty({
+    description: 'Deduct from annual leave balance',
+    example: true,
+  })
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   deductFromAnnualBalance: boolean;

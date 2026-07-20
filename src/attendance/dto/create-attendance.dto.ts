@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, IsEnum, IsOptional, IsDateString, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  IsNumber,
+} from 'class-validator';
 import { AttendanceStatus } from '@prisma/client';
 
 export class CreateAttendanceDto {
@@ -17,7 +25,11 @@ export class CreateAttendanceDto {
   @IsOptional()
   checkOut?: string;
 
-  @ApiProperty({ enum: AttendanceStatus, isArray: true, example: ['PRESENT', 'FIELD'] })
+  @ApiProperty({
+    enum: AttendanceStatus,
+    isArray: true,
+    example: ['PRESENT', 'FIELD'],
+  })
   @IsArray()
   @IsEnum(AttendanceStatus, { each: true })
   status: AttendanceStatus[];

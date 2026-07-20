@@ -14,7 +14,10 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered.' })
-  @ApiResponse({ status: 400, description: 'Bad Request (e.g., user already exists).' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request (e.g., user already exists).',
+  })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
@@ -24,7 +27,10 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login user and get JWT token' })
   @ApiResponse({ status: 200, description: 'Login successful.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized (invalid credentials).' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized (invalid credentials).',
+  })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }

@@ -13,7 +13,7 @@ export class MeService {
   constructor(
     private prisma: DatabaseService,
     private rustfs: RustfsService,
-  ) { }
+  ) {}
 
   async getDashboard(employeeId: string) {
     const [leaveBalance, leaveConsumed, lastPayslip] = await Promise.all([
@@ -57,9 +57,10 @@ export class MeService {
       return { usedDays: 0, percentageUsed: 0 };
     }
 
-    const percentageUsed = balance.totalDays > 0
-      ? Math.round((balance.usedDays / balance.totalDays) * 100)
-      : 0;
+    const percentageUsed =
+      balance.totalDays > 0
+        ? Math.round((balance.usedDays / balance.totalDays) * 100)
+        : 0;
 
     return {
       usedDays: balance.usedDays,
@@ -96,8 +97,20 @@ export class MeService {
       },
     });
 
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const monthNames = [
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
+    ];
 
     return {
       period,
@@ -120,7 +133,10 @@ export class MeService {
     if (startDate || endDate) {
       where.checkIn = {};
       if (startDate) where.checkIn.gte = new Date(startDate);
-      if (endDate) where.checkIn.lte = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+      if (endDate)
+        where.checkIn.lte = new Date(
+          new Date(endDate).setHours(23, 59, 59, 999),
+        );
     }
 
     const [attendances, total] = await Promise.all([
@@ -141,15 +157,23 @@ export class MeService {
       where: {
         employeeId,
         status: LeaveStatus.APPROVED,
-        startDate: { lte: new Date(Math.max(...attendances.map(a => a.checkIn.getTime()))) },
-        endDate: { gte: new Date(Math.min(...attendances.map(a => a.checkIn.getTime()))) },
+        startDate: {
+          lte: new Date(
+            Math.max(...attendances.map((a) => a.checkIn.getTime())),
+          ),
+        },
+        endDate: {
+          gte: new Date(
+            Math.min(...attendances.map((a) => a.checkIn.getTime())),
+          ),
+        },
       },
     });
 
     return {
       data: attendances.map((attendance) => {
         const date = attendance.checkIn.toISOString().split('T')[0];
-        const onLeave = leaves.some(leave => {
+        const onLeave = leaves.some((leave) => {
           const start = leave.startDate.toISOString().split('T')[0];
           const end = leave.endDate.toISOString().split('T')[0];
           return date >= start && date <= end;
@@ -248,7 +272,11 @@ export class MeService {
     };
   }
 
-  async createLeave(employeeId: string, dto: CreateLeaveDto, file?: Express.Multer.File) {
+  async createLeave(
+    employeeId: string,
+    dto: CreateLeaveDto,
+    file?: Express.Multer.File,
+  ) {
     let justificatifUrl = '';
 
     if (file) {
@@ -343,8 +371,12 @@ export class MeService {
         cnpsNumber: employee.CNPSNumber?.toString(),
         idDocumentType: employee.idDocumentType,
         idDocumentNumber: employee.idDocumentNumber,
-        idDocumentIssueDate: employee.idDocumentIssueDate?.toISOString().split('T')[0],
-        idDocumentExpiryDate: employee.idDocumentExpiryDate?.toISOString().split('T')[0],
+        idDocumentIssueDate: employee.idDocumentIssueDate
+          ?.toISOString()
+          .split('T')[0],
+        idDocumentExpiryDate: employee.idDocumentExpiryDate
+          ?.toISOString()
+          .split('T')[0],
         idDocumentIssuePlace: employee.idDocumentIssuePlace,
         idDocumentFileUrl: employee.idDocumentFileUrl || '',
       },
@@ -375,7 +407,10 @@ export class MeService {
       throw new BadRequestException('User not found');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new BadRequestException('Mot de passe actuel incorrect');
     }

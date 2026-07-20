@@ -1,10 +1,31 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateEarningItemDto, UpdateEarningItemDto } from './dto/earning-item.dto';
-import { CreateDeclarationDto, UpdateDeclarationDto } from './dto/declaration.dto';
-import { CreateDeclarationLineDto, BulkCreateDeclarationLinesDto } from './dto/declaration-line.dto';
-import { CreateDeclarationEarningDto, UpdateDeclarationEarningDto } from './dto/declaration-earning.dto';
-import { DeclarationStatus, DeclarationType, EarningCategory } from '@prisma/client';
+import {
+  CreateEarningItemDto,
+  UpdateEarningItemDto,
+} from './dto/earning-item.dto';
+import {
+  CreateDeclarationDto,
+  UpdateDeclarationDto,
+} from './dto/declaration.dto';
+import {
+  CreateDeclarationLineDto,
+  BulkCreateDeclarationLinesDto,
+} from './dto/declaration-line.dto';
+import {
+  CreateDeclarationEarningDto,
+  UpdateDeclarationEarningDto,
+} from './dto/declaration-earning.dto';
+import {
+  DeclarationStatus,
+  DeclarationType,
+  EarningCategory,
+} from '@prisma/client';
 
 @Injectable()
 export class DeclarationsService {
@@ -18,7 +39,11 @@ export class DeclarationsService {
     });
   }
 
-  async findAllEarningItems(companyId: string, category?: EarningCategory, isActive?: boolean) {
+  async findAllEarningItems(
+    companyId: string,
+    category?: EarningCategory,
+    isActive?: boolean,
+  ) {
     return this.db.earningItem.findMany({
       where: {
         companyId,
@@ -64,7 +89,11 @@ export class DeclarationsService {
     });
   }
 
-  async findAllDeclarations(companyId?: string, type?: string, status?: DeclarationStatus) {
+  async findAllDeclarations(
+    companyId?: string,
+    type?: string,
+    status?: DeclarationStatus,
+  ) {
     return this.db.declaration.findMany({
       where: {
         ...(companyId && { companyId }),
@@ -104,8 +133,12 @@ export class DeclarationsService {
 
   async updateDeclaration(uuid: string, dto: UpdateDeclarationDto) {
     const declaration = await this.findOneDeclaration(uuid);
-    
-    if (dto.status && declaration.status !== DeclarationStatus.DRAFT && dto.status === DeclarationStatus.DRAFT) {
+
+    if (
+      dto.status &&
+      declaration.status !== DeclarationStatus.DRAFT &&
+      dto.status === DeclarationStatus.DRAFT
+    ) {
       throw new BadRequestException('Cannot revert to DRAFT status');
     }
 
@@ -113,7 +146,8 @@ export class DeclarationsService {
       where: { uuid },
       data: {
         ...dto,
-        ...(dto.status === DeclarationStatus.SUBMITTED && !declaration.submittedAt && { submittedAt: new Date() }),
+        ...(dto.status === DeclarationStatus.SUBMITTED &&
+          !declaration.submittedAt && { submittedAt: new Date() }),
       },
     });
   }
@@ -127,43 +161,50 @@ export class DeclarationsService {
   }
 
   // DeclarationLine methods (bulk)
-  async createDeclarationLines(declarationId: string, dto: BulkCreateDeclarationLinesDto) {
+  async createDeclarationLines(
+    declarationId: string,
+    dto: BulkCreateDeclarationLinesDto,
+  ) {
     const declaration = await this.findOneDeclaration(declarationId);
-    
+
     // Validate all employees exist
-    const employeeIds = dto.lines.map(line => line.employeeId);
+    const employeeIds = dto.lines.map((line) => line.employeeId);
     const employees = await this.db.employee.findMany({
-      where: { uuid: { in: employeeIds } }
+      where: { uuid: { in: employeeIds } },
     });
-    
+
     if (employees.length !== employeeIds.length) {
-      const foundIds = employees.map(e => e.uuid);
-      const missingIds = employeeIds.filter(id => !foundIds.includes(id));
-      throw new NotFoundException(`Employees not found: ${missingIds.join(', ')}`);
+      const foundIds = employees.map((e) => e.uuid);
+      const missingIds = employeeIds.filter((id) => !foundIds.includes(id));
+      throw new NotFoundException(
+        `Employees not found: ${missingIds.join(', ')}`,
+      );
     }
-    
+
     // Fetch active contracts for employees without contractId
     const linesWithContracts = await Promise.all(
       dto.lines.map(async (line) => {
         if (line.contractId) {
           return line;
         }
-        
+
         const activeContract = await this.db.contract.findFirst({
           where: {
             employeeId: line.employeeId,
-            status: 'ACTIVE'
-          }
+            status: 'ACTIVE',
+          },
         });
-        
+
         if (!activeContract) {
-          throw new NotFoundException(`No active contract found for employee ${line.employeeId}`);
+          throw new NotFoundException(
+            `No active contract found for employee ${line.employeeId}`,
+          );
         }
-        
+
         return { ...line, contractId: activeContract.uuid };
-      })
+      }),
     );
-    
+
     return this.db.$transaction(
       linesWithContracts.map((line) =>
         this.db.declarationLine.create({
@@ -188,8 +229,8 @@ export class DeclarationsService {
             contract: true,
             earnings: { include: { earningItem: true } },
           },
-        })
-      )
+        }),
+      ),
     );
   }
 
@@ -218,11 +259,17 @@ export class DeclarationsService {
     return line;
   }
 
-  async updateDeclarationLine(declarationId: string, lineId: string, dto: CreateDeclarationLineDto) {
+  async updateDeclarationLine(
+    declarationId: string,
+    lineId: string,
+    dto: CreateDeclarationLineDto,
+  ) {
     await this.findOneDeclarationLine(lineId);
 
     return this.db.$transaction(async (tx) => {
-      await tx.declarationEarning.deleteMany({ where: { declarationLineId: lineId } });
+      await tx.declarationEarning.deleteMany({
+        where: { declarationLineId: lineId },
+      });
 
       return tx.declarationLine.update({
         where: { uuid: lineId },
@@ -254,7 +301,10 @@ export class DeclarationsService {
   }
 
   // DeclarationEarning methods (granular)
-  async createDeclarationEarning(lineId: string, dto: CreateDeclarationEarningDto) {
+  async createDeclarationEarning(
+    lineId: string,
+    dto: CreateDeclarationEarningDto,
+  ) {
     await this.findOneDeclarationLine(lineId);
     return this.db.declarationEarning.create({
       data: {
@@ -265,10 +315,15 @@ export class DeclarationsService {
     });
   }
 
-  async updateDeclarationEarning(earningId: string, dto: UpdateDeclarationEarningDto) {
-    const earning = await this.db.declarationEarning.findUnique({ where: { uuid: earningId } });
+  async updateDeclarationEarning(
+    earningId: string,
+    dto: UpdateDeclarationEarningDto,
+  ) {
+    const earning = await this.db.declarationEarning.findUnique({
+      where: { uuid: earningId },
+    });
     if (!earning) throw new NotFoundException('Declaration earning not found');
-    
+
     return this.db.declarationEarning.update({
       where: { uuid: earningId },
       data: dto,
@@ -277,9 +332,11 @@ export class DeclarationsService {
   }
 
   async deleteDeclarationEarning(earningId: string) {
-    const earning = await this.db.declarationEarning.findUnique({ where: { uuid: earningId } });
+    const earning = await this.db.declarationEarning.findUnique({
+      where: { uuid: earningId },
+    });
     if (!earning) throw new NotFoundException('Declaration earning not found');
-    
+
     return this.db.declarationEarning.delete({ where: { uuid: earningId } });
   }
 }

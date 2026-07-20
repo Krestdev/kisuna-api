@@ -21,7 +21,11 @@ export class UpdateAttendanceDto {
   @IsDateString()
   checkOut?: string;
 
-  @ApiPropertyOptional({ enum: AttendanceStatus, isArray: true, example: ['PRESENT', 'FIELD'] })
+  @ApiPropertyOptional({
+    enum: AttendanceStatus,
+    isArray: true,
+    example: ['PRESENT', 'FIELD'],
+  })
   @IsOptional()
   @IsArray()
   @IsEnum(AttendanceStatus, { each: true })

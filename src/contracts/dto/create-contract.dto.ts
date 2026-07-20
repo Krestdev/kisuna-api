@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ContractType } from '@prisma/client';
 
 export class CreateContractDto {
@@ -23,7 +31,10 @@ export class CreateContractDto {
   @IsNotEmpty()
   baseSalary: number;
 
-  @ApiPropertyOptional({ description: 'Currency code, default is XAF', default: 'XAF' })
+  @ApiPropertyOptional({
+    description: 'Currency code, default is XAF',
+    default: 'XAF',
+  })
   @IsString()
   @IsOptional()
   currency?: string;

@@ -9,7 +9,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { CheckInDto } from './dto/checkin.dto';
 import { CheckOutDto } from './dto/checkout.dto';
@@ -29,13 +36,15 @@ import { CompanyScopeGuard } from 'src/common/guards/company-scope.guard';
 @Controller('attendance')
 // @UseGuards(JwtAuthGuard)
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) { }
+  constructor(private readonly attendanceService: AttendanceService) {}
 
   @Post('batch')
   @ApiBearerAuth('JWT-auth')
   @CompanyScope()
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  @ApiOperation({ summary: 'Manually create multiple attendance records (admin)' })
+  @ApiOperation({
+    summary: 'Manually create multiple attendance records (admin)',
+  })
   @ApiResponse({ status: 201, description: 'Attendance records created' })
   createMany(@Body() body: BatchAttendanceItemDto[]) {
     const records: CreateAttendanceDto[] = body.map((item) => {
@@ -68,13 +77,17 @@ export class AttendanceController {
 
   @Post('checkin')
   @ApiBearerAuth('JWT-auth')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN,)
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({
     summary: 'Employee check-in',
-    description: 'Records employee arrival with GPS coordinates. Validates no duplicate check-in for the day and determines if late based on schedule.'
+    description:
+      'Records employee arrival with GPS coordinates. Validates no duplicate check-in for the day and determines if late based on schedule.',
   })
   @ApiResponse({ status: 201, description: 'Successfully checked in' })
-  @ApiResponse({ status: 400, description: 'Already checked in today or invalid data' })
+  @ApiResponse({
+    status: 400,
+    description: 'Already checked in today or invalid data',
+  })
   @ApiResponse({ status: 404, description: 'Employee not found or inactive' })
   checkIn(@Body() dto: CheckInDto) {
     return this.attendanceService.checkIn(dto);
@@ -85,7 +98,8 @@ export class AttendanceController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({
     summary: 'Employee check-out',
-    description: 'Records employee departure. Automatically calculates worked hours and overtime (hours beyond 8).'
+    description:
+      'Records employee departure. Automatically calculates worked hours and overtime (hours beyond 8).',
   })
   @ApiResponse({ status: 200, description: 'Successfully checked out' })
   @ApiResponse({ status: 400, description: 'No open check-in found for today' })
@@ -97,12 +111,41 @@ export class AttendanceController {
   @CompanyScope()
   @UseGuards(AuthGuard('jwt'), CompanyScopeGuard)
   @ApiBearerAuth('JWT-auth')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN, SystemRole.EMPLOYEE)
-  @ApiOperation({ summary: 'List all attendance records', description: 'Get all attendance records with optional filtering by month and year.' })
-  @ApiQuery({ name: 'month', required: false, description: 'Month (1-12)', example: 6 })
-  @ApiQuery({ name: 'year', required: false, description: 'Year', example: 2026 })
-  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
+  @Roles(
+    SystemRole.SUPER_ADMIN,
+    SystemRole.COMPANY_ADMIN,
+    SystemRole.ADMIN,
+    SystemRole.EMPLOYEE,
+  )
+  @ApiOperation({
+    summary: 'List all attendance records',
+    description:
+      'Get all attendance records with optional filtering by month and year.',
+  })
+  @ApiQuery({
+    name: 'month',
+    required: false,
+    description: 'Month (1-12)',
+    example: 6,
+  })
+  @ApiQuery({
+    name: 'year',
+    required: false,
+    description: 'Year',
+    example: 2026,
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+    example: 20,
+  })
   @ApiResponse({ status: 200, description: 'Paginated attendance records' })
   findAll(
     @Query('month') month?: string,
@@ -120,7 +163,12 @@ export class AttendanceController {
 
   @Get(':id')
   @ApiBearerAuth('JWT-auth')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN, SystemRole.EMPLOYEE)
+  @Roles(
+    SystemRole.SUPER_ADMIN,
+    SystemRole.COMPANY_ADMIN,
+    SystemRole.ADMIN,
+    SystemRole.EMPLOYEE,
+  )
   @ApiOperation({ summary: 'Get attendance record by ID' })
   @ApiParam({ name: 'id', description: 'Attendance UUID' })
   @ApiResponse({ status: 200, description: 'Attendance record found' })
@@ -132,7 +180,8 @@ export class AttendanceController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Update attendance record',
-    description: 'Manual correction of attendance data. Admin only. Recalculates worked hours if both check-in and check-out are updated.'
+    description:
+      'Manual correction of attendance data. Admin only. Recalculates worked hours if both check-in and check-out are updated.',
   })
   @ApiParam({ name: 'id', description: 'Attendance UUID' })
   @ApiResponse({ status: 200, description: 'Attendance record updated' })
@@ -142,7 +191,10 @@ export class AttendanceController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete attendance record', description: 'Admin only. Permanently removes attendance record.' })
+  @ApiOperation({
+    summary: 'Delete attendance record',
+    description: 'Admin only. Permanently removes attendance record.',
+  })
   @ApiParam({ name: 'id', description: 'Attendance UUID' })
   @ApiResponse({ status: 200, description: 'Attendance record deleted' })
   @ApiResponse({ status: 404, description: 'Attendance record not found' })
@@ -153,10 +205,14 @@ export class AttendanceController {
   @Post('absent')
   @ApiOperation({
     summary: 'Mark employee absent',
-    description: 'Admin only. Manually create an absence record for a specific date. GPS coordinates set to 0,0.'
+    description:
+      'Admin only. Manually create an absence record for a specific date. GPS coordinates set to 0,0.',
   })
   @ApiResponse({ status: 201, description: 'Absence record created' })
-  @ApiResponse({ status: 400, description: 'Attendance record already exists for this date' })
+  @ApiResponse({
+    status: 400,
+    description: 'Attendance record already exists for this date',
+  })
   @ApiResponse({ status: 404, description: 'Employee not found' })
   markAbsent(@Body() dto: MarkAbsentDto) {
     return this.attendanceService.markAbsent(dto);
@@ -165,11 +221,22 @@ export class AttendanceController {
   @Get('employee/:employeeId')
   @ApiOperation({
     summary: 'Get employee attendance history',
-    description: 'Retrieve all attendance records for a specific employee with optional month/year filtering.'
+    description:
+      'Retrieve all attendance records for a specific employee with optional month/year filtering.',
   })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
-  @ApiQuery({ name: 'month', required: false, description: 'Month (1-12)', example: 6 })
-  @ApiQuery({ name: 'year', required: false, description: 'Year', example: 2026 })
+  @ApiQuery({
+    name: 'month',
+    required: false,
+    description: 'Month (1-12)',
+    example: 6,
+  })
+  @ApiQuery({
+    name: 'year',
+    required: false,
+    description: 'Year',
+    example: 2026,
+  })
   @ApiResponse({ status: 200, description: 'Employee attendance records' })
   findByEmployee(
     @Param('employeeId') employeeId: string,
@@ -186,11 +253,22 @@ export class AttendanceController {
   @Get('employee/:employeeId/summary')
   @ApiOperation({
     summary: 'Get monthly attendance summary',
-    description: 'Aggregated statistics for payroll: total days, present/late/absent counts, total hours worked, and overtime. Required for payroll calculations.'
+    description:
+      'Aggregated statistics for payroll: total days, present/late/absent counts, total hours worked, and overtime. Required for payroll calculations.',
   })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
-  @ApiQuery({ name: 'month', required: true, description: 'Month (1-12)', example: 6 })
-  @ApiQuery({ name: 'year', required: true, description: 'Year', example: 2026 })
+  @ApiQuery({
+    name: 'month',
+    required: true,
+    description: 'Month (1-12)',
+    example: 6,
+  })
+  @ApiQuery({
+    name: 'year',
+    required: true,
+    description: 'Year',
+    example: 2026,
+  })
   @ApiResponse({
     status: 200,
     description: 'Monthly summary statistics',
@@ -203,9 +281,9 @@ export class AttendanceController {
         halfDays: 0,
         onLeaveDays: 0,
         totalHours: 160.5,
-        totalOvertime: 8.5
-      }
-    }
+        totalOvertime: 8.5,
+      },
+    },
   })
   getMonthlySummary(
     @Param('employeeId') employeeId: string,

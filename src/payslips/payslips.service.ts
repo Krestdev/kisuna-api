@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RustfsService } from '../rustfs/rustfs.service';
 import PDFDocument = require('pdfkit');
@@ -22,11 +26,15 @@ export class PayslipsService {
     }
 
     if (payroll.status !== 'APPROVED') {
-      throw new BadRequestException('Payroll must be APPROVED before generating payslip');
+      throw new BadRequestException(
+        'Payroll must be APPROVED before generating payslip',
+      );
     }
 
     if (payroll.payslip) {
-      throw new BadRequestException('Payslip already generated for this payroll');
+      throw new BadRequestException(
+        'Payslip already generated for this payroll',
+      );
     }
 
     // Generate PDF
@@ -34,7 +42,11 @@ export class PayslipsService {
 
     // Upload PDF to Rustfs
     const objectKey = `payslips/${payroll.employeeId}/${payrollId}.pdf`;
-    const filePath = await this.rustfs.uploadBuffer(pdfBuffer, objectKey, 'application/pdf');
+    const filePath = await this.rustfs.uploadBuffer(
+      pdfBuffer,
+      objectKey,
+      'application/pdf',
+    );
 
     // Save payslip record
     return this.prisma.payslip.create({
@@ -93,7 +105,11 @@ export class PayslipsService {
       doc.moveDown();
 
       // Employee info
-      doc.fontSize(12).text(`Employee: ${payroll.employee.firstName} ${payroll.employee.lastName}`);
+      doc
+        .fontSize(12)
+        .text(
+          `Employee: ${payroll.employee.firstName} ${payroll.employee.lastName}`,
+        );
       doc.text(`Period: ${format(payroll.startDate, 'MMMM yyyy')}`);
       doc.moveDown();
 
@@ -103,7 +119,10 @@ export class PayslipsService {
       doc.text(`Bonus:          ${payroll.bonus.toFixed(2)} XAF`);
       doc.text(`Deductions:     -${payroll.deductions.toFixed(2)} XAF`);
       doc.moveDown();
-      doc.fontSize(14).font('Helvetica-Bold').text(`NET SALARY: ${payroll.netSalary.toFixed(2)} XAF`);
+      doc
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .text(`NET SALARY: ${payroll.netSalary.toFixed(2)} XAF`);
 
       doc.end();
     });

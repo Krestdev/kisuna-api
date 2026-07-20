@@ -44,4 +44,4 @@ import { DeclarationsModule } from './declarations/declarations.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

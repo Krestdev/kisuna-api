@@ -8,7 +8,11 @@ export class CreateCompanyDto {
   @MaxLength(100)
   name: string;
 
-  @ApiProperty({ example: 'A leading technology company', description: 'Company description', required: false })
+  @ApiProperty({
+    example: 'A leading technology company',
+    description: 'Company description',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(100)

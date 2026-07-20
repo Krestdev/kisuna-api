@@ -1,6 +1,12 @@
 import {
-  Controller, Post, Get, Patch, Delete,
-  Param, Body, UseGuards,
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
 } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -15,7 +21,7 @@ import { SystemRole } from '@prisma/client';
 @UseGuards(RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class SchedulesController {
-  constructor(private readonly schedulesService: SchedulesService) { }
+  constructor(private readonly schedulesService: SchedulesService) {}
 
   @Post()
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)

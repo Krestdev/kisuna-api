@@ -8,7 +8,13 @@ import { AuthModule } from '../auth/auth.module';
 import { RustfsModule } from '../rustfs/rustfs.module';
 
 @Module({
-  imports: [DatabaseModule, ContractsModule, LeavesModule, AuthModule, RustfsModule],
+  imports: [
+    DatabaseModule,
+    ContractsModule,
+    LeavesModule,
+    AuthModule,
+    RustfsModule,
+  ],
   controllers: [EmployeesController],
   providers: [EmployeesService],
 })

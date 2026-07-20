@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { COMPANY_SCOPE_KEY } from '../decorators/company-scope.decorator';
 import { DatabaseService } from '../../database/database.service';
@@ -11,10 +16,10 @@ export class CompanyScopeGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiresCompanyScope = this.reflector.getAllAndOverride<boolean>(COMPANY_SCOPE_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiresCompanyScope = this.reflector.getAllAndOverride<boolean>(
+      COMPANY_SCOPE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiresCompanyScope) {
       return true;
@@ -40,7 +45,9 @@ export class CompanyScopeGuard implements CanActivate {
     // For COMPANY_ADMIN, check company match
     if (user.role === 'COMPANY_ADMIN') {
       if (!user.employeeId) {
-        throw new ForbiddenException('Employee ID missing from token. Please log in again.');
+        throw new ForbiddenException(
+          'Employee ID missing from token. Please log in again.',
+        );
       }
 
       const employee = await this.prisma.employee.findUnique({

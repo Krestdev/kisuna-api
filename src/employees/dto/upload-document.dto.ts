@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { DocumentType } from '@prisma/client';
 
 export class UploadDocumentDto {
@@ -13,12 +19,16 @@ export class UploadDocumentDto {
   @IsNotEmpty()
   document_type: DocumentType;
 
-  @ApiPropertyOptional({ description: 'Path or URL to the stored file (e.g., S3 URL)' })
+  @ApiPropertyOptional({
+    description: 'Path or URL to the stored file (e.g., S3 URL)',
+  })
   @IsOptional()
   @IsString()
   path?: string;
 
-  @ApiPropertyOptional({ description: 'Expiration date of the document (e.g., ID cards)' })
+  @ApiPropertyOptional({
+    description: 'Expiration date of the document (e.g., ID cards)',
+  })
   @IsOptional()
   @IsDateString()
   expired_date?: string;
