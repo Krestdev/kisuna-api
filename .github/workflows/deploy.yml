@@ -1,4 +1,4 @@
-name: CreappUI CI/CD Pipeline
+name: Kisuma Api CI/CD Pipeline
 
 on:
   push:
