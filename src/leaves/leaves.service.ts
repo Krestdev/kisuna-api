@@ -1,9 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
 import { CreateLeaveTypeDto } from './dto/create-leave-type.dto';
-import { calculateWorkingDays, getWorkingDays } from '../common/utils/working-days.util';
+import {
+  calculateWorkingDays,
+  getWorkingDays,
+} from '../common/utils/working-days.util';
 import { LeaveStatus } from '@prisma/client';
 import { SchedulesService } from '../schedules/schedules.service';
 
@@ -12,14 +20,20 @@ export class LeavesService {
   constructor(
     private prisma: DatabaseService,
     private schedulesService: SchedulesService,
-  ) { }
+  ) {}
 
   async requestLeave(employeeId: string, dto: RequestLeaveDto) {
-    const employee = await this.prisma.employee.findUnique({ where: { uuid: employeeId } });
-    if (!employee || !employee.isActive) throw new NotFoundException('Employee not found or inactive');
+    const employee = await this.prisma.employee.findUnique({
+      where: { uuid: employeeId },
+    });
+    if (!employee || !employee.isActive)
+      throw new NotFoundException('Employee not found or inactive');
 
-    const leaveType = await this.prisma.leaveTypeConfig.findUnique({ where: { uuid: dto.leaveTypeConfigId } });
-    if (!leaveType || !leaveType.isActive) throw new NotFoundException('Leave type not found or inactive');
+    const leaveType = await this.prisma.leaveTypeConfig.findUnique({
+      where: { uuid: dto.leaveTypeConfigId },
+    });
+    if (!leaveType || !leaveType.isActive)
+      throw new NotFoundException('Leave type not found or inactive');
 
     const startDate = new Date(dto.startDate);
     const endDate = new Date(startDate);
@@ -53,7 +67,7 @@ export class LeavesService {
 
     if (balance.remainingDays < requestedDays) {
       throw new BadRequestException(
-        `Insufficient leave balance. Remaining: ${balance.remainingDays} days`
+        `Insufficient leave balance. Remaining: ${balance.remainingDays} days`,
       );
     }
   }
@@ -122,10 +136,17 @@ export class LeavesService {
 
     // HR (ADMIN) approves second and finalizes
     // if (userRole === 'SUPER_ADMIN' && leave.status === LeaveStatus.PENDING_HR) {
-    if ((userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') && leave.status !== LeaveStatus.APPROVED) {
-      const schedule = await this.schedulesService.getActiveSchedule(leave.employeeId);
+    if (
+      (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') &&
+      leave.status !== LeaveStatus.APPROVED
+    ) {
+      const schedule = await this.schedulesService.getActiveSchedule(
+        leave.employeeId,
+      );
       if (!schedule) {
-        throw new BadRequestException('No active schedule found for employee — cannot calculate leave days');
+        throw new BadRequestException(
+          'No active schedule found for employee — cannot calculate leave days',
+        );
       }
 
       const scheduleWorkDays = schedule.workDays.split(',');
@@ -147,16 +168,23 @@ export class LeavesService {
       }
 
       // Auto-create attendance records only for days in the employee's real schedule
-      const days = getWorkingDays(leave.startDate, leave.endDate).filter(({ date }) => {
-        const dow = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][date.getDay()];
-        return scheduleWorkDays.includes(dow);
-      });
+      const days = getWorkingDays(leave.startDate, leave.endDate).filter(
+        ({ date }) => {
+          const dow = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][
+            date.getDay()
+          ];
+          return scheduleWorkDays.includes(dow);
+        },
+      );
 
       for (const { date, isHalfDay } of days) {
         const existing = await this.prisma.attendance.findFirst({
           where: {
             employeeId: leave.employeeId,
-            checkIn: { gte: new Date(date.setHours(0, 0, 0, 0)), lte: new Date(date.setHours(23, 59, 59, 999)) },
+            checkIn: {
+              gte: new Date(date.setHours(0, 0, 0, 0)),
+              lte: new Date(date.setHours(23, 59, 59, 999)),
+            },
           },
         });
         if (!existing) {
@@ -164,7 +192,9 @@ export class LeavesService {
             data: {
               employeeId: leave.employeeId,
               checkIn: new Date(new Date(date).setHours(8, 0, 0, 0)),
-              checkOut: new Date(new Date(date).setHours(isHalfDay ? 12 : 17, 0, 0, 0)),
+              checkOut: new Date(
+                new Date(date).setHours(isHalfDay ? 12 : 17, 0, 0, 0),
+              ),
               latitude: 0,
               longitude: 0,
               workedHour: isHalfDay ? 4 : 9,
@@ -181,15 +211,22 @@ export class LeavesService {
       });
     }
 
-    throw new BadRequestException('Invalid approval workflow or insufficient permissions');
+    throw new BadRequestException(
+      'Invalid approval workflow or insufficient permissions',
+    );
   }
 
   async reject(id: number, approvedBy: string, dto: RejectLeaveDto) {
     const leave = await this.findOne(id);
 
-    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
-      throw new BadRequestException('Only pending leave requests can be rejected');
+      throw new BadRequestException(
+        'Only pending leave requests can be rejected',
+      );
     }
 
     return this.prisma.leave.update({
@@ -207,12 +244,19 @@ export class LeavesService {
     const leave = await this.findOne(id);
 
     if (leave.employeeId !== employeeId) {
-      throw new ForbiddenException('You can only cancel your own leave requests');
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
-    const validStatuses: LeaveStatus[] = [LeaveStatus.PENDING_MANAGER, LeaveStatus.PENDING_HR];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
-      throw new BadRequestException('Only pending leave requests can be cancelled');
+      throw new BadRequestException(
+        'Only pending leave requests can be cancelled',
+      );
     }
 
     return this.prisma.leave.update({
@@ -226,16 +270,22 @@ export class LeavesService {
     const leave = await this.findOne(id);
 
     if (leave.employeeId !== employeeId) {
-      throw new ForbiddenException('You can only cancel your own leave requests');
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
     if (leave.status !== LeaveStatus.APPROVED) {
-      throw new BadRequestException('Only approved leave requests can be cancelled here');
+      throw new BadRequestException(
+        'Only approved leave requests can be cancelled here',
+      );
     }
 
-    const leaveDays = Math.ceil(
-      (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
+    const leaveDays =
+      Math.ceil(
+        (leave.endDate.getTime() - leave.startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1;
 
     const year = leave.startDate.getFullYear();
     const balance = await this.prisma.leaveBalance.findUnique({
@@ -275,7 +325,12 @@ export class LeavesService {
 
     if (!balance) {
       balance = await this.prisma.leaveBalance.create({
-        data: { employeeId, year: currentYear, totalDays: 21, remainingDays: 21 },
+        data: {
+          employeeId,
+          year: currentYear,
+          totalDays: 21,
+          remainingDays: 21,
+        },
       });
     }
 
@@ -298,7 +353,11 @@ export class LeavesService {
     });
   }
 
-  async initializeBalanceForYear(employeeId: string, year: number, totalDays: number = 21) {
+  async initializeBalanceForYear(
+    employeeId: string,
+    year: number,
+    totalDays: number = 21,
+  ) {
     const existing = await this.prisma.leaveBalance.findUnique({
       where: { employeeId_year: { employeeId, year } },
     });
@@ -318,7 +377,11 @@ export class LeavesService {
     });
   }
 
-  async updateBalanceQuota(employeeId: string, year: number, totalDays: number) {
+  async updateBalanceQuota(
+    employeeId: string,
+    year: number,
+    totalDays: number,
+  ) {
     const balance = await this.prisma.leaveBalance.findUnique({
       where: { employeeId_year: { employeeId, year } },
     });
@@ -373,24 +436,35 @@ export class LeavesService {
 
   // Leave Type Config CRUD
   async createLeaveType(dto: CreateLeaveTypeDto) {
-    const company = await this.prisma.company.findUnique({ where: { uuid: dto.companyId } });
+    const company = await this.prisma.company.findUnique({
+      where: { uuid: dto.companyId },
+    });
     if (!company) throw new NotFoundException('Company not found');
     return this.prisma.leaveTypeConfig.create({ data: dto });
   }
 
   findAllLeaveTypes(companyId: string) {
-    return this.prisma.leaveTypeConfig.findMany({ where: { companyId, isActive: true } });
+    return this.prisma.leaveTypeConfig.findMany({
+      where: { companyId, isActive: true },
+    });
   }
 
   async updateLeaveType(uuid: string, dto: Partial<CreateLeaveTypeDto>) {
-    const existing = await this.prisma.leaveTypeConfig.findUnique({ where: { uuid } });
+    const existing = await this.prisma.leaveTypeConfig.findUnique({
+      where: { uuid },
+    });
     if (!existing) throw new NotFoundException('Leave type not found');
     return this.prisma.leaveTypeConfig.update({ where: { uuid }, data: dto });
   }
 
   async removeLeaveType(uuid: string) {
-    const existing = await this.prisma.leaveTypeConfig.findUnique({ where: { uuid } });
+    const existing = await this.prisma.leaveTypeConfig.findUnique({
+      where: { uuid },
+    });
     if (!existing) throw new NotFoundException('Leave type not found');
-    return this.prisma.leaveTypeConfig.update({ where: { uuid }, data: { isActive: false } });
+    return this.prisma.leaveTypeConfig.update({
+      where: { uuid },
+      data: { isActive: false },
+    });
   }
 }

@@ -1,28 +1,60 @@
-import { IsEnum, IsDateString, IsUUID, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsDateString,
+  IsUUID,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DeclarationType, DeclarationStatus } from '@prisma/client';
+import {
+  DeclarationCreateInput,
+  DeclarationUpdateInput,
+} from 'generated/prisma/models';
 
-export class CreateDeclarationDto {
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Company UUID' })
+export class CreateDeclarationDto implements Omit<
+  DeclarationCreateInput,
+  'id' | 'createdAt' | 'updatedAt' | 'lines' | 'declarationType' | 'company'
+> {
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Company UUID',
+  })
   @IsUUID()
   companyId: string;
 
-  @ApiProperty({ enum: DeclarationType, example: 'MONTHLY', required: false, description: 'Type of declaration' })
+  @ApiProperty({
+    enum: DeclarationType,
+    example: 'MONTHLY',
+    required: false,
+    description: 'Type of declaration',
+  })
   @IsEnum(DeclarationType)
   @IsOptional()
   type?: DeclarationType;
 
-  @ApiProperty({ example: '2026-06-01', description: 'Start date of declaration period' })
+  @ApiProperty({
+    example: '2026-06-01',
+    description: 'Start date of declaration period',
+  })
   @IsDateString()
   periodStart: string;
 
-  @ApiProperty({ example: '2026-06-30', description: 'End date of declaration period' })
+  @ApiProperty({
+    example: '2026-06-30',
+    description: 'End date of declaration period',
+  })
   @IsDateString()
   periodEnd: string;
 }
 
-export class UpdateDeclarationDto {
-  @ApiProperty({ enum: DeclarationStatus, example: 'SUBMITTED', required: false, description: 'Declaration status' })
+export class UpdateDeclarationDto implements DeclarationUpdateInput {
+  @ApiProperty({
+    enum: DeclarationStatus,
+    example: 'SUBMITTED',
+    required: false,
+    description: 'Declaration status',
+  })
   @IsEnum(DeclarationStatus)
   @IsOptional()
   status?: DeclarationStatus;

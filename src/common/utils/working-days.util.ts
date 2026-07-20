@@ -17,7 +17,10 @@ export function calculateWorkingDays(start: Date, end: Date): number {
  * Returns each working day between start and end (inclusive).
  * Saturday included as a working day.
  */
-export function getWorkingDays(start: Date, end: Date): { date: Date; isHalfDay: boolean }[] {
+export function getWorkingDays(
+  start: Date,
+  end: Date,
+): { date: Date; isHalfDay: boolean }[] {
   const days: { date: Date; isHalfDay: boolean }[] = [];
   const current = new Date(start);
   while (current <= end) {

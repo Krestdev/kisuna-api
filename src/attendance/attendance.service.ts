@@ -18,7 +18,12 @@ import { CheckOutDto } from './dto/checkout.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
-import { Attendance, AttendanceStatus, LeaveStatus } from '@prisma/client';
+import {
+  Attendance,
+  AttendanceStatus,
+  LeaveStatus,
+  Prisma,
+} from '@prisma/client';
 
 const STANDARD_HOURS = 8;
 const GRACE_PERIOD_MINUTES = 15;
@@ -28,26 +33,34 @@ export class AttendanceService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly schedulesService: SchedulesService,
-  ) { }
+  ) {}
 
   async createMany(dtos: CreateAttendanceDto[]) {
     return Promise.all(dtos.map((dto) => this.create(dto)));
   }
 
   async create(dto: CreateAttendanceDto) {
-    const employee = await this.databaseService.employee.findUnique({ where: { uuid: dto.employeeId } });
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid: dto.employeeId },
+    });
     if (!employee) throw new NotFoundException('Employee not found');
 
     const checkIn = new Date(dto.checkIn);
-    if (isNaN(checkIn.getTime())) throw new BadRequestException('Invalid checkIn date');
+    if (isNaN(checkIn.getTime()))
+      throw new BadRequestException('Invalid checkIn date');
 
     const checkOut = dto.checkOut ? new Date(dto.checkOut) : undefined;
-    if (checkOut && isNaN(checkOut.getTime())) throw new BadRequestException('Invalid checkOut date');
+    if (checkOut && isNaN(checkOut.getTime()))
+      throw new BadRequestException('Invalid checkOut date');
 
-    if (!dto.status?.length) throw new BadRequestException('status is required');
+    if (!dto.status?.length)
+      throw new BadRequestException('status is required');
 
-    const workedHour = checkOut ? this.calculateHours(checkIn, checkOut) : undefined;
-    const overtimes = workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
+    const workedHour = checkOut
+      ? this.calculateHours(checkIn, checkOut)
+      : undefined;
+    const overtimes =
+      workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
 
     return this.databaseService.attendance.create({
       data: {
@@ -60,7 +73,17 @@ export class AttendanceService {
         workedHour,
         overtimes,
       },
-      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -85,13 +108,19 @@ export class AttendanceService {
     });
 
     if (onLeave) {
-      throw new BadRequestException('You are on approved leave today, check-in not required');
+      throw new BadRequestException(
+        'You are on approved leave today, check-in not required',
+      );
     }
 
     // Get active schedule
-    const schedule = await this.schedulesService.getActiveSchedule(dto.employeeId);
+    const schedule = await this.schedulesService.getActiveSchedule(
+      dto.employeeId,
+    );
     if (!schedule) {
-      throw new BadRequestException('No active schedule found for this employee');
+      throw new BadRequestException(
+        'No active schedule found for this employee',
+      );
     }
 
     // Check if today is a valid work day
@@ -127,8 +156,17 @@ export class AttendanceService {
         longitude: dto.longitude,
         status,
       },
-      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
-
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -152,16 +190,29 @@ export class AttendanceService {
     return this.databaseService.attendance.update({
       where: { uuid: record.uuid },
       data: { checkOut, workedHour, overtimes },
-      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
   async findAll(month?: number, year?: number, page = 1, limit = 20) {
-    const attendanceWhere: any = {};
+    const attendanceWhere: { checkIn?: { gte: Date; lte: Date } } = {};
 
     if (month && year) {
       const date = new Date(year, month - 1);
-      attendanceWhere.checkIn = { gte: startOfMonth(date), lte: endOfMonth(date) };
+      attendanceWhere.checkIn = {
+        gte: startOfMonth(date),
+        lte: endOfMonth(date),
+      };
     }
 
     const skip = (page - 1) * limit;
@@ -184,14 +235,29 @@ export class AttendanceService {
       this.databaseService.employee.count(),
     ]);
 
-    return { data: employees, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      data: employees,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(uuid: string): Promise<Attendance> {
     const attendance = await this.databaseService.attendance.findUnique({
       where: { uuid },
-      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
-
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
 
     if (!attendance) {
@@ -201,8 +267,14 @@ export class AttendanceService {
     return attendance;
   }
 
-  async findByEmployee(employeeId: string, month?: number, year?: number): Promise<Attendance[]> {
-    const where: any = { employeeId };
+  async findByEmployee(
+    employeeId: string,
+    month?: number,
+    year?: number,
+  ): Promise<Attendance[]> {
+    const where: { employeeId: string; checkIn?: { gte: Date; lte: Date } } = {
+      employeeId,
+    };
 
     if (month && year) {
       const date = new Date(year, month - 1);
@@ -218,7 +290,20 @@ export class AttendanceService {
     });
   }
 
-  async getMonthlySummary(employeeId: string, month: number, year: number): Promise<any> {
+  async getMonthlySummary(
+    employeeId: string,
+    month: number,
+    year: number,
+  ): Promise<{
+    totalDays: number;
+    presentDays: number;
+    lateDays: number;
+    absentDays: number;
+    halfDays: number;
+    onLeaveDays: number;
+    totalHours: number;
+    totalOvertime: number;
+  }> {
     const date = new Date(year, month - 1);
     const records = await this.databaseService.attendance.findMany({
       where: {
@@ -245,13 +330,13 @@ export class AttendanceService {
   async update(uuid: string, dto: UpdateAttendanceDto) {
     const existing = await this.findOne(uuid);
 
-    const data: any = {};
+    const data: Prisma.AttendanceUpdateInput = {};
     if (dto.checkIn) data.checkIn = new Date(dto.checkIn);
     if (dto.checkOut) data.checkOut = new Date(dto.checkOut);
     if (dto.status) data.status = dto.status;
 
-    const checkIn = data.checkIn ?? existing.checkIn;
-    const checkOut = data.checkOut ?? existing.checkOut;
+    const checkIn = (data.checkIn as Date | undefined) ?? existing.checkIn;
+    const checkOut = (data.checkOut as Date | undefined) ?? existing.checkOut;
 
     if (checkOut) {
       data.workedHour = this.calculateHours(checkIn, checkOut);
@@ -260,7 +345,9 @@ export class AttendanceService {
 
     // Auto-recalculate status if checkIn changed and no explicit status provided
     if (data.checkIn && !dto.status) {
-      const schedule = await this.schedulesService.getActiveSchedule(existing.employeeId);
+      const schedule = await this.schedulesService.getActiveSchedule(
+        existing.employeeId,
+      );
       const shiftStart = schedule?.shiftStart ?? '08:00';
       const shiftEnd = schedule?.shiftEnd ?? '17:00';
       data.status = this.determineStatus(checkIn, shiftStart);
@@ -273,7 +360,9 @@ export class AttendanceService {
         shiftEndDate.setHours(endH, endM, 0, 0);
         const shiftStartDate = new Date(checkIn);
         shiftStartDate.setHours(startH, startM, 0, 0);
-        const midpoint = new Date((shiftStartDate.getTime() + shiftEndDate.getTime()) / 2);
+        const midpoint = new Date(
+          (shiftStartDate.getTime() + shiftEndDate.getTime()) / 2,
+        );
         if (checkOut < midpoint) data.status = [AttendanceStatus.HALF_DAY];
       }
     }
@@ -281,7 +370,17 @@ export class AttendanceService {
     return this.databaseService.attendance.update({
       where: { uuid },
       data,
-      include: { employee: { select: { uuid: true, firstName: true, lastName: true, position: true, user: { select: { email: true } } } } },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -306,7 +405,9 @@ export class AttendanceService {
     });
 
     if (existing) {
-      throw new BadRequestException('Attendance record already exists for this date');
+      throw new BadRequestException(
+        'Attendance record already exists for this date',
+      );
     }
 
     return this.databaseService.attendance.create({
@@ -315,7 +416,7 @@ export class AttendanceService {
         checkIn: startOfDay(date),
         latitude: 0,
         longitude: 0,
-        status: [dto.status],
+        status: dto.status,
       },
       include: { employee: true },
     });

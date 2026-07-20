@@ -15,11 +15,12 @@ import { LeavesService } from './leaves.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
 import { CreateLeaveTypeDto } from './dto/create-leave-type.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { SystemRole } from '@prisma/client';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthRequest } from '../common/types/auth-request.interface';
 
 @ApiTags('Leaves')
 @ApiBearerAuth('JWT-auth')
@@ -29,8 +30,9 @@ export class LeavesController {
   constructor(private readonly leavesService: LeavesService) {}
 
   @Post()
-  async requestLeave(@Request() req, @Body() dto: RequestLeaveDto) {
-    return this.leavesService.requestLeave(req.user.employeeId, dto);
+  async requestLeave(@Request() request: any, @Body() dto: RequestLeaveDto) {
+    const req = request as AuthRequest;
+    return this.leavesService.requestLeave(req.user.employeeId as string, dto);
   }
 
   @Get()
@@ -60,8 +62,15 @@ export class LeavesController {
   @Patch(':id/approve')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  async approve(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.leavesService.approve(id, req.user.employeeId, req.user.role);
+  async approve(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: AuthRequest,
+  ) {
+    return this.leavesService.approve(
+      id,
+      req.user.employeeId as string,
+      req.user.role,
+    );
   }
 
   @Patch(':id/reject')
@@ -69,20 +78,27 @@ export class LeavesController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async reject(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req,
+    @Request() request: any,
     @Body() dto: RejectLeaveDto,
   ) {
-    return this.leavesService.reject(id, req.user.employeeId, dto);
+    const req = request as AuthRequest;
+    return this.leavesService.reject(id, req.user.employeeId as string, dto);
   }
 
   @Patch(':id/cancel')
-  async cancel(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.leavesService.cancel(id, req.user.employeeId);
+  async cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: AuthRequest,
+  ) {
+    return this.leavesService.cancel(id, req.user.employeeId as string);
   }
 
   @Patch(':id/cancel-approved')
-  async cancelApproved(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.leavesService.cancelApproved(id, req.user.employeeId);
+  async cancelApproved(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: AuthRequest,
+  ) {
+    return this.leavesService.cancelApproved(id, req.user.employeeId as string);
   }
 
   // Leave Type Config
@@ -101,7 +117,10 @@ export class LeavesController {
   @Patch('types/:uuid')
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  updateLeaveType(@Param('uuid') uuid: string, @Body() dto: Partial<CreateLeaveTypeDto>) {
+  updateLeaveType(
+    @Param('uuid') uuid: string,
+    @Body() dto: Partial<CreateLeaveTypeDto>,
+  ) {
     return this.leavesService.updateLeaveType(uuid, dto);
   }
 

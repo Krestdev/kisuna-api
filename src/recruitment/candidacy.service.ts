@@ -27,8 +27,12 @@ export class CandidacyService {
       this.rustfs.uploadFile(files.cv, folder),
     ]);
 
-    const degree = files.degree ? await this.rustfs.uploadFile(files.degree, folder) : undefined;
-    const coverLetter = files.coverLetter ? await this.rustfs.uploadFile(files.coverLetter, folder) : undefined;
+    const degree = files.degree
+      ? await this.rustfs.uploadFile(files.degree, folder)
+      : undefined;
+    const coverLetter = files.coverLetter
+      ? await this.rustfs.uploadFile(files.coverLetter, folder)
+      : undefined;
 
     return this.db.candidacy.create({
       data: {
@@ -60,7 +64,10 @@ export class CandidacyService {
 
   async updateStatus(uuid: string, dto: UpdateCandidacyStatusDto) {
     await this.findOne(uuid);
-    return this.db.candidacy.update({ where: { uuid }, data: { status: dto.status } });
+    return this.db.candidacy.update({
+      where: { uuid },
+      data: { status: dto.status },
+    });
   }
 
   async remove(uuid: string) {

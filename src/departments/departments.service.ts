@@ -1,28 +1,41 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @Injectable()
 export class DepartmentsService {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
-  async validateManagerBelongsToCompany(companyId: string, employeeUuid: string) {
+  async validateManagerBelongsToCompany(
+    companyId: string,
+    employeeUuid: string,
+  ) {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: employeeUuid },
     });
-    if (!employee) throw new NotFoundException(`Employee with ID ${employeeUuid} not found`);
+    if (!employee)
+      throw new NotFoundException(`Employee with ID ${employeeUuid} not found`);
 
     if (employee.companyId !== companyId) {
-      throw new BadRequestException(`Employee does not belong to company ID ${companyId}`);
+      throw new BadRequestException(
+        `Employee does not belong to company ID ${companyId}`,
+      );
     }
   }
 
   async create(createDepartmentDto: CreateDepartmentDto) {
     const { companyId, employeeUuid, ...rest } = createDepartmentDto;
 
-    const company = await this.databaseService.company.findUnique({ where: { uuid: companyId } });
-    if (!company) throw new NotFoundException(`Company with ID ${companyId} not found`);
+    const company = await this.databaseService.company.findUnique({
+      where: { uuid: companyId },
+    });
+    if (!company)
+      throw new NotFoundException(`Company with ID ${companyId} not found`);
 
     if (employeeUuid) {
       await this.validateManagerBelongsToCompany(companyId, employeeUuid);
@@ -32,7 +45,9 @@ export class DepartmentsService {
       data: {
         ...rest,
         company: { connect: { uuid: companyId } },
-        ...(employeeUuid ? { employee: { connect: { uuid: employeeUuid } } } : {}),
+        ...(employeeUuid
+          ? { employee: { connect: { uuid: employeeUuid } } }
+          : {}),
       },
     });
   }
@@ -50,16 +65,22 @@ export class DepartmentsService {
       include: { company: true, employee: true },
     });
     if (!department || !department.isActive)
-      throw new NotFoundException(`Active Department with ID ${uuid} not found`);
+      throw new NotFoundException(
+        `Active Department with ID ${uuid} not found`,
+      );
     return department;
   }
 
   async update(uuid: string, updateDepartmentDto: UpdateDepartmentDto) {
     const department = await this.findOne(uuid);
-    const targetCompanyId = updateDepartmentDto.companyId ?? department.companyId;
+    const targetCompanyId =
+      updateDepartmentDto.companyId ?? department.companyId;
 
     if (updateDepartmentDto.employeeUuid) {
-      await this.validateManagerBelongsToCompany(targetCompanyId, updateDepartmentDto.employeeUuid);
+      await this.validateManagerBelongsToCompany(
+        targetCompanyId,
+        updateDepartmentDto.employeeUuid,
+      );
     }
 
     const { companyId, employeeUuid, ...rest } = updateDepartmentDto;
@@ -68,14 +89,19 @@ export class DepartmentsService {
       data: {
         ...rest,
         ...(companyId ? { company: { connect: { uuid: companyId } } } : {}),
-        ...(employeeUuid ? { employee: { connect: { uuid: employeeUuid } } } : {}),
+        ...(employeeUuid
+          ? { employee: { connect: { uuid: employeeUuid } } }
+          : {}),
       },
     });
   }
 
   async assignManager(uuid: string, employeeUuid: string) {
     const department = await this.findOne(uuid);
-    await this.validateManagerBelongsToCompany(department.companyId, employeeUuid);
+    await this.validateManagerBelongsToCompany(
+      department.companyId,
+      employeeUuid,
+    );
     return this.databaseService.department.update({
       where: { uuid },
       data: { employee: { connect: { uuid: employeeUuid } } },

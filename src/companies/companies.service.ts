@@ -1,11 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(createCompanyDto: CreateCompanyDto) {
     return this.databaseService.company.create({ data: createCompanyDto });
@@ -18,7 +22,7 @@ export class CompaniesService {
         contracts: true,
         employees: {
           where: { isActive: true },
-        }
+        },
       },
     });
   }
@@ -31,26 +35,36 @@ export class CompaniesService {
         contracts: true,
         employees: {
           where: { isActive: true },
-        }
+        },
       },
     });
-    if (!company) throw new NotFoundException(`Company with ID ${uuid} not found`);
+    if (!company)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
     return company;
   }
 
   async update(uuid: string, updateCompanyDto: UpdateCompanyDto) {
     await this.findOne(uuid);
-    return this.databaseService.company.update({ where: { uuid }, data: updateCompanyDto });
+    return this.databaseService.company.update({
+      where: { uuid },
+      data: updateCompanyDto,
+    });
   }
 
   async activate(uuid: string) {
     await this.findOne(uuid);
-    return this.databaseService.company.update({ where: { uuid }, data: { isActive: true } });
+    return this.databaseService.company.update({
+      where: { uuid },
+      data: { isActive: true },
+    });
   }
 
   async deactivate(uuid: string) {
     await this.findOne(uuid);
-    return this.databaseService.company.update({ where: { uuid }, data: { isActive: false } });
+    return this.databaseService.company.update({
+      where: { uuid },
+      data: { isActive: false },
+    });
   }
 
   async remove(uuid: string) {
@@ -58,11 +72,16 @@ export class CompaniesService {
       where: { uuid },
       include: { departments: true, contracts: true },
     });
-    if (!company) throw new NotFoundException(`Company with ID ${uuid} not found`);
+    if (!company)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
     if (company.departments.length > 0)
-      throw new BadRequestException('Cannot delete company: active departments exist');
+      throw new BadRequestException(
+        'Cannot delete company: active departments exist',
+      );
     if (company.contracts.length > 0)
-      throw new BadRequestException('Cannot delete company: active contracts exist');
+      throw new BadRequestException(
+        'Cannot delete company: active contracts exist',
+      );
     return this.databaseService.company.delete({ where: { uuid } });
   }
 }

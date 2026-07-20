@@ -1,7 +1,12 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { EmployeeSchedule } from 'generated/prisma/client';
 
 @Injectable()
 export class SchedulesService {
@@ -108,7 +113,17 @@ export class SchedulesService {
   async update(uuid: string, dto: UpdateScheduleDto) {
     await this.findOne(uuid);
 
-    const data: any = {};
+    const data: Partial<
+      Pick<
+        EmployeeSchedule,
+        | 'startDate'
+        | 'endDate'
+        | 'shiftStart'
+        | 'shiftEnd'
+        | 'workDays'
+        | 'status'
+      >
+    > = {};
     if (dto.startDate) data.startDate = new Date(dto.startDate);
     if (dto.endDate) data.endDate = new Date(dto.endDate);
     if (dto.shiftStart) data.shiftStart = dto.shiftStart;

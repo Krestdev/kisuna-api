@@ -1,22 +1,48 @@
-import { IsString, IsEnum, IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { EarningCategory } from '@prisma/client';
+import {
+  EarningItemCreateInput,
+  EarningItemUpdateInput,
+} from 'generated/prisma/models';
 
-export class CreateEarningItemDto {
-  @ApiProperty({ example: 'Housing Allowance', description: 'Name of the earning item' })
+export class CreateEarningItemDto implements Omit<
+  EarningItemCreateInput,
+  'id' | 'createdAt' | 'updatedAt' | 'company'
+> {
+  @ApiProperty({
+    example: 'Housing Allowance',
+    description: 'Name of the earning item',
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ enum: EarningCategory, example: 'ALLOWANCE', description: 'Category of earning' })
+  @ApiProperty({
+    enum: EarningCategory,
+    example: 'ALLOWANCE',
+    description: 'Category of earning',
+  })
   @IsEnum(EarningCategory)
   category: EarningCategory;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Company UUID' })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Company UUID',
+  })
   @IsUUID()
   companyId: string;
 }
 
-export class UpdateEarningItemDto {
+export class UpdateEarningItemDto implements Omit<
+  EarningItemUpdateInput,
+  'id' | 'createdAt' | 'updatedAt' | 'company'
+> {
   @ApiProperty({ example: 'Transport Allowance', required: false })
   @IsString()
   @IsOptional()

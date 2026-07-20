@@ -1,4 +1,9 @@
-import { IsDateString, IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import {
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class RequestLeaveDto {
   @IsString() @IsNotEmpty() leaveTypeConfigId: string;

@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { PayrollsService } from './payrolls.service';
 import { AdjustPayrollDto } from './dto/adjust-payroll.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -11,7 +21,7 @@ import { SystemRole } from '@prisma/client';
 @UseGuards(RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class PayrollsController {
-  constructor(private readonly payrollsService: PayrollsService) { }
+  constructor(private readonly payrollsService: PayrollsService) {}
 
   @Post('generate')
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
@@ -27,10 +37,7 @@ export class PayrollsController {
   @Get()
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'List all payrolls or filter by period' })
-  findAll(
-    @Query('month') month?: number,
-    @Query('year') year?: number,
-  ) {
+  findAll(@Query('month') month?: number, @Query('year') year?: number) {
     if (month && year) {
       return this.payrollsService.findByPeriod(+month, +year);
     }

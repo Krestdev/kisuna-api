@@ -1,8 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ContractType } from '@prisma/client';
+import { ContractCreateInput } from 'generated/prisma/models';
 
-export class CreateContractDto {
+export class CreateContractDto implements Omit<
+  ContractCreateInput,
+  'uuid' | 'createdAt' | 'updatedAt' | 'employeeId' | 'employee' | 'company'
+> {
   @ApiProperty({ description: 'Start date of the contract' })
   @IsNotEmpty()
   @IsDateString()
@@ -23,7 +35,10 @@ export class CreateContractDto {
   @IsNotEmpty()
   baseSalary: number;
 
-  @ApiPropertyOptional({ description: 'Currency code, default is XAF', default: 'XAF' })
+  @ApiPropertyOptional({
+    description: 'Currency code, default is XAF',
+    default: 'XAF',
+  })
   @IsString()
   @IsOptional()
   currency?: string;

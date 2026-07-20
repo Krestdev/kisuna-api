@@ -1,7 +1,6 @@
 import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 export class CreateLeaveDto {
   @ApiProperty({ description: 'Leave type config UUID' })
   @IsString()
@@ -11,12 +10,18 @@ export class CreateLeaveDto {
   @IsDateString()
   startDate: string;
 
-  @ApiPropertyOptional({ description: 'Leave observation/reason', example: 'Voyage familial' })
+  @ApiPropertyOptional({
+    description: 'Leave observation/reason',
+    example: 'Voyage familial',
+  })
   @IsString()
   @IsOptional()
   observation?: string;
 
-  @ApiProperty({ description: 'Deduct from annual leave balance', example: true })
+  @ApiProperty({
+    description: 'Deduct from annual leave balance',
+    example: true,
+  })
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   deductFromAnnualBalance: boolean;

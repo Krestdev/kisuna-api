@@ -24,9 +24,8 @@ import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { BatchAttendanceItemDto } from './dto/batch-attendance.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { SystemRole } from '@prisma/client';
+import { SystemRole, AttendanceStatus } from '@prisma/client';
 import { CompanyScope } from '../common/decorators/company-scope.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { CompanyScopeGuard } from 'src/common/guards/company-scope.guard';
@@ -59,7 +58,11 @@ export class AttendanceController {
         employeeId: item.userId,
         checkIn,
         checkOut,
-        status: (item.statut ?? ['PRESENT']) as any,
+        status: (item.statut as unknown as AttendanceStatus[]) ?? [
+          AttendanceStatus.PRESENT,
+        ],
+        latitude: item.latitude,
+        longitude: item.longitude,
       };
     });
     return this.attendanceService.createMany(records);

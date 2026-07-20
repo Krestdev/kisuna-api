@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateRecruitmentDto } from './dto/create-recruitment.dto';
 import { UpdateRecruitmentDto } from './dto/update-recruitment.dto';
@@ -7,7 +11,7 @@ import { RecruitmentStatus } from '@prisma/client';
 
 @Injectable()
 export class RecruitmentService {
-  constructor(private readonly db: DatabaseService) { }
+  constructor(private readonly db: DatabaseService) {}
 
   async create(dto: CreateRecruitmentDto) {
     try {
@@ -47,7 +51,10 @@ export class RecruitmentService {
     await this.findOne(uuid);
     return this.db.recruitment.update({
       where: { uuid },
-      data: { ...dto, deadline: dto.deadline ? new Date(dto.deadline) : undefined },
+      data: {
+        ...dto,
+        deadline: dto.deadline ? new Date(dto.deadline) : undefined,
+      },
     });
   }
 
@@ -69,7 +76,7 @@ export class RecruitmentService {
     if (!rec) throw new NotFoundException('Recruitment not found');
     return this.db.recruitment.update({
       where: { uuid },
-      data: { tags: dto.tags as any },
+      data: { tags: dto.tags },
     });
   }
 }

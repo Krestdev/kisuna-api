@@ -1,5 +1,19 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { RecruitmentService } from './recruitment.service';
 import { CreateRecruitmentDto } from './dto/create-recruitment.dto';
 import { UpdateRecruitmentDto } from './dto/update-recruitment.dto';
@@ -9,7 +23,7 @@ import { RecruitmentStatus } from '@prisma/client';
 @ApiBearerAuth('JWT-auth')
 @Controller('recruitment')
 export class RecruitmentController {
-  constructor(private readonly recruitmentService: RecruitmentService) { }
+  constructor(private readonly recruitmentService: RecruitmentService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a recruitment post' })
@@ -42,12 +56,13 @@ export class RecruitmentController {
     return this.recruitmentService.remove(uuid);
   }
 
-
   @Patch(':uuid/status')
-  updateStatus(@Param('uuid') uuid: string, @Body() dto: { status: RecruitmentStatus }) {
+  updateStatus(
+    @Param('uuid') uuid: string,
+    @Body() dto: { status: RecruitmentStatus },
+  ) {
     return this.recruitmentService.updateStatus(uuid, dto);
   }
-
 
   @Patch(':uuid/tag')
   @ApiOperation({ summary: 'Update a recruitment post tags' })

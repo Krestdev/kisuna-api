@@ -2,7 +2,8 @@
 // Based on your HR Management System ERD
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-ts"
+  output   = "../generated/prisma"
 }
 
 datasource db {

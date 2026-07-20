@@ -1,8 +1,18 @@
 import { IsNumber, IsBoolean, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  DeclarationEarningCreateInput,
+  DeclarationEarningUpdateInput,
+} from 'generated/prisma/models';
 
-export class CreateDeclarationEarningDto {
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Earning item UUID' })
+export class CreateDeclarationEarningDto implements Omit<
+  DeclarationEarningCreateInput,
+  'id' | 'declarationId' | 'declarationLine' | 'earningItem'
+> {
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Earning item UUID',
+  })
   @IsUUID()
   earningItemId: string;
 
@@ -14,12 +24,18 @@ export class CreateDeclarationEarningDto {
   @IsBoolean()
   taxable: boolean;
 
-  @ApiProperty({ example: true, description: 'Is this earning subject to social contributions?' })
+  @ApiProperty({
+    example: true,
+    description: 'Is this earning subject to social contributions?',
+  })
   @IsBoolean()
   cotisable: boolean;
 }
 
-export class UpdateDeclarationEarningDto {
+export class UpdateDeclarationEarningDto implements Omit<
+  DeclarationEarningUpdateInput,
+  'id' | 'declarationId'
+> {
   @ApiProperty({ example: 75000, description: 'Updated amount' })
   @IsNumber()
   amount: number;
@@ -28,7 +44,10 @@ export class UpdateDeclarationEarningDto {
   @IsBoolean()
   taxable: boolean;
 
-  @ApiProperty({ example: false, description: 'Is this earning subject to social contributions?' })
+  @ApiProperty({
+    example: false,
+    description: 'Is this earning subject to social contributions?',
+  })
   @IsBoolean()
   cotisable: boolean;
 }

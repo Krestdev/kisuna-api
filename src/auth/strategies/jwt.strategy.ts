@@ -2,6 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  employeeId?: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
@@ -10,13 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'super-secret-key-for-dev',
     });
-    console.log('JwtStrategy initialized with secret:', process.env.JWT_SECRET || 'super-secret-key-for-dev');
   }
 
-  async validate(payload: any) {
-    console.log('JWT validate called with payload:', payload);
-    const user = { uuid: payload.sub, email: payload.email, role: payload.role, employeeId: payload.employeeId };
-    console.log('Returning user:', user);
-    return user;
+  validate(payload: JwtPayload) {
+    return {
+      uuid: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      employeeId: payload.employeeId,
+    };
   }
 }

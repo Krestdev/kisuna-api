@@ -7,7 +7,11 @@ import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
 // Fix BigInt serialization
-BigInt.prototype['toJSON'] = function () { return this.toString(); };
+(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (
+  this: bigint,
+) {
+  return this.toString();
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -36,11 +40,10 @@ async function bootstrap() {
     }),
   });
 
-
   app.enableCors({
-    origin: "*",
+    origin: '*',
     credentials: true,
-    methods: ["GET", "PUT", "PATCH", "POST", "DELETE"]
+    methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'],
   });
 
   app.useGlobalPipes(
@@ -56,16 +59,21 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('KIZUNA API')
-    .setDescription('HR Management System API for Krest Holding - Manage employees, departments, and authentication')
+    .setDescription(
+      'HR Management System API for Krest Holding - Manage employees, departments, and authentication',
+    )
     .setVersion('1.0')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      name: 'JWT',
-      description: 'Enter JWT token',
-      in: 'header',
-    }, 'JWT-auth')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .addTag('Auth', 'Authentication endpoints')
     .addTag('Users', 'User management')
     .addTag('Employees', 'Employee management')
@@ -77,4 +85,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3004, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
-bootstrap();
+void bootstrap();

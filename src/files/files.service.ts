@@ -7,22 +7,26 @@ import { CreateFileDto } from './dto/create-file.dto';
 export class FilesService {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly rustfs: RustfsService
+    private readonly rustfs: RustfsService,
   ) {}
 
-  async uploadFile(employeeId: string, file: Express.Multer.File, dto: CreateFileDto) {
+  async uploadFile(
+    employeeId: string,
+    file: Express.Multer.File,
+    dto: CreateFileDto,
+  ) {
     // 1. Upload to RustFS
     const path = await this.rustfs.uploadFile(file, `employees/${employeeId}`);
 
     // 2. Save metadata to DB
     return this.databaseService.file.create({
       data: {
-        file_name:     file.originalname,
+        file_name: file.originalname,
         document_type: dto.document_type,
         path,
-        expired_date:  dto.expired_date ? new Date(dto.expired_date) : null,
+        expired_date: dto.expired_date ? new Date(dto.expired_date) : null,
         employeeId,
-      }
+      },
     });
   }
 
@@ -35,7 +39,7 @@ export class FilesService {
 
   async getPresignedUrl(fileId: string) {
     const file = await this.databaseService.file.findUnique({
-      where: { uuid: fileId }
+      where: { uuid: fileId },
     });
     if (!file) {
       throw new NotFoundException('File not found');
@@ -49,7 +53,7 @@ export class FilesService {
 
   async deleteFile(fileId: string) {
     const file = await this.databaseService.file.findUnique({
-      where: { uuid: fileId }
+      where: { uuid: fileId },
     });
     if (!file) {
       throw new NotFoundException('File not found');
@@ -57,10 +61,10 @@ export class FilesService {
     if (!file.path) {
       throw new NotFoundException('File path not found in database');
     }
-    
+
     // Delete from RustFS
     await this.rustfs.deleteFile(file.path);
-    
+
     // Delete from DB
     await this.databaseService.file.delete({ where: { uuid: fileId } });
   }

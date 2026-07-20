@@ -1,5 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -82,7 +97,10 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Delete company' })
   @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Cannot delete: active departments or contracts exist' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete: active departments or contracts exist',
+  })
   remove(@Param('id') id: string) {
     return this.companiesService.remove(id);
   }

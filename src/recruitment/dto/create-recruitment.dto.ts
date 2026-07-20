@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsDateString,
+} from 'class-validator';
 import { RecruitmentStatus } from '@prisma/client';
 
 export class CreateRecruitmentDto {

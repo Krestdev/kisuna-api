@@ -1,15 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { TerminateContractDto } from './dto/terminate-contract.dto';
 import { FindAllContractsDto } from './dto/find-all-contracts.dto';
 import { ContractStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ContractsService {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(employeeId: string, createContractDto: CreateContractDto) {
     // 1. One Active Contract Rule
@@ -44,7 +49,7 @@ export class ContractsService {
     const { page = 1, limit = 10, companyId, employeeId, status } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.ContractWhereInput = {
       ...(companyId ? { companyId } : {}),
       ...(employeeId ? { employeeId } : {}),
       ...(status ? { status } : {}),
@@ -88,7 +93,9 @@ export class ContractsService {
   }
 
   async update(uuid: string, updateContractDto: UpdateContractDto) {
-    const contract = await this.databaseService.contract.findUnique({ where: { uuid } });
+    const contract = await this.databaseService.contract.findUnique({
+      where: { uuid },
+    });
     if (!contract) throw new NotFoundException('Contract not found');
 
     const { startDate, endDate, ...rest } = updateContractDto;
@@ -104,7 +111,9 @@ export class ContractsService {
   }
 
   async terminate(uuid: string, terminateDto: TerminateContractDto) {
-    const contract = await this.databaseService.contract.findUnique({ where: { uuid } });
+    const contract = await this.databaseService.contract.findUnique({
+      where: { uuid },
+    });
     if (!contract) throw new NotFoundException('Contract not found');
     if (contract.status !== ContractStatus.ACTIVE) {
       throw new BadRequestException('Only active contracts can be terminated');
@@ -130,7 +139,9 @@ export class ContractsService {
   }
 
   async renew(uuid: string, createContractDto: CreateContractDto) {
-    const oldContract = await this.databaseService.contract.findUnique({ where: { uuid } });
+    const oldContract = await this.databaseService.contract.findUnique({
+      where: { uuid },
+    });
     if (!oldContract) throw new NotFoundException('Contract not found');
 
     return this.databaseService.$transaction(async (prisma) => {
@@ -174,7 +185,9 @@ export class ContractsService {
 
     for (const contract of expiringContracts) {
       // TODO: Send notification to HR / Admin about expiring contract
-      console.log(`Contract ${contract.uuid} for employee ${contract.employee.firstName} is expiring soon.`);
+      console.log(
+        `Contract ${contract.uuid} for employee ${contract.employee.firstName} is expiring soon.`,
+      );
 
       await this.databaseService.contract.update({
         where: { uuid: contract.uuid },

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { DatabaseService } from '../database/database.service';
 import { LeaveStatus, AttendanceStatus } from '@prisma/client';
 import { startOfDay, endOfDay } from 'date-fns';
@@ -23,7 +23,9 @@ export class LeaveCronService {
       },
     });
 
-    this.logger.log(`Found ${approvedLeaves.length} employees on approved leave today`);
+    this.logger.log(
+      `Found ${approvedLeaves.length} employees on approved leave today`,
+    );
 
     for (const leave of approvedLeaves) {
       const existing = await this.prisma.attendance.findFirst({

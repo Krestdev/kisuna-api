@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { AttendanceService } from '../attendance/attendance.service';
 import { SchedulesService } from '../schedules/schedules.service';
@@ -7,7 +11,13 @@ import { AdjustPayrollDto } from './dto/adjust-payroll.dto';
 import { LeaveStatus } from '@prisma/client';
 
 const DAY_MAP: Record<string, number> = {
-  SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
+  SUN: 0,
+  MON: 1,
+  TUE: 2,
+  WED: 3,
+  THU: 4,
+  FRI: 5,
+  SAT: 6,
 };
 
 @Injectable()
@@ -16,7 +26,7 @@ export class PayrollsService {
     private readonly prisma: DatabaseService,
     private readonly attendanceService: AttendanceService,
     private readonly schedulesService: SchedulesService,
-  ) { }
+  ) {}
 
   async generatePayroll(employeeId: string, month: number, year: number) {
     const startDate = startOfMonth(new Date(year, month - 1));
@@ -49,7 +59,11 @@ export class PayrollsService {
       : ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 
     // 4. Get attendance summary for the month
-    const summary = await this.attendanceService.getMonthlySummary(employeeId, month, year);
+    const summary = await this.attendanceService.getMonthlySummary(
+      employeeId,
+      month,
+      year,
+    );
 
     // 4.5. Get approved leaves for this period
     const leaves = await this.prisma.leave.findMany({
@@ -63,24 +77,27 @@ export class PayrollsService {
     });
 
     // Calculate leave days by type
-    let paidLeaveDays = 0;
     let unpaidLeaveDays = 0;
 
     for (const leave of leaves) {
-      const leaveDays = Math.ceil(
-        (leave.endDate.getTime() - leave.startDate.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1;
+      const leaveDays =
+        Math.ceil(
+          (leave.endDate.getTime() - leave.startDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1;
 
       if (leave.leaveTypeConfig?.label?.toUpperCase() === 'UNPAID') {
         unpaidLeaveDays += leaveDays;
-      } else {
-        paidLeaveDays += leaveDays;
       }
     }
 
     // 5. Calculate pay using schedule-aware daily/hourly rates
     const OVERTIME_RATE = 1.5;
-    const expectedDays = this.countWorkingDays(startDate, endDate, workDaysList);
+    const expectedDays = this.countWorkingDays(
+      startDate,
+      endDate,
+      workDaysList,
+    );
     const DAILY_RATE = contract.baseSalary / (expectedDays || 26);
     const HOURLY_RATE = DAILY_RATE / 8;
 
@@ -132,7 +149,12 @@ export class PayrollsService {
   async findOne(uuid: string) {
     const payroll = await this.prisma.payroll.findUnique({
       where: { uuid },
-      include: { employee: true, contract: true, attendances: true, payslip: true },
+      include: {
+        employee: true,
+        contract: true,
+        attendances: true,
+        payslip: true,
+      },
     });
     if (!payroll) throw new NotFoundException('Payroll not found');
     return payroll;
@@ -147,7 +169,8 @@ export class PayrollsService {
 
     const bonus = dto.bonus ?? payroll.bonus;
     const deductions = dto.deductions ?? payroll.deductions;
-    const netSalary = payroll.baseSalary + payroll.overtimePay + bonus - deductions;
+    const netSalary =
+      payroll.baseSalary + payroll.overtimePay + bonus - deductions;
 
     return this.prisma.payroll.update({
       where: { uuid },
@@ -159,7 +182,9 @@ export class PayrollsService {
     const payroll = await this.findOne(uuid);
 
     if (payroll.status !== 'PENDING' && payroll.status !== 'DRAFT') {
-      throw new BadRequestException('Only DRAFT or PENDING payrolls can be approved');
+      throw new BadRequestException(
+        'Only DRAFT or PENDING payrolls can be approved',
+      );
     }
 
     return this.prisma.payroll.update({
@@ -172,7 +197,9 @@ export class PayrollsService {
     const payroll = await this.findOne(uuid);
 
     if (payroll.status !== 'APPROVED') {
-      throw new BadRequestException('Only APPROVED payrolls can be marked as paid');
+      throw new BadRequestException(
+        'Only APPROVED payrolls can be marked as paid',
+      );
     }
 
     return this.prisma.payroll.update({
@@ -221,7 +248,9 @@ export class PayrollsService {
   }
 
   private countWorkingDays(start: Date, end: Date, workDays: string[]): number {
-    const allowedDays = workDays.map((d) => DAY_MAP[d.trim()]).filter((n) => n !== undefined);
+    const allowedDays = workDays
+      .map((d) => DAY_MAP[d.trim()])
+      .filter((n) => n !== undefined);
     let count = 0;
     const current = new Date(start);
 

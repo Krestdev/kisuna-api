@@ -1,7 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsDateString, Matches } from 'class-validator';
+import { EmployeeScheduleCreateInput } from 'generated/prisma/models';
 
-export class CreateScheduleDto {
+export class CreateScheduleDto implements Omit<
+  EmployeeScheduleCreateInput,
+  'status' | 'uuid' | 'createdAt' | 'updatedAt' | 'employee'
+> {
   @ApiProperty({ description: 'Employee UUID' })
   @IsNotEmpty()
   @IsString()
