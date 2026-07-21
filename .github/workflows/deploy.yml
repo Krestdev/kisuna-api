@@ -1,4 +1,4 @@
-name: Kisuma Api CI/CD Pipeline
+name: Kisuna API CI/CD Pipeline
 
 on:
   push:
@@ -10,10 +10,23 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Run linter
         run: npm run lint
 
@@ -21,76 +34,55 @@ jobs:
     name: Build API
     runs-on: ubuntu-latest
     needs: lint
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Type Check
+        run: npx tsc --noEmit
+
       - name: Build project
         run: npm run build
 
-  # deploy:
-  #   name: Deploy to VPS
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   steps:
-  #     - name: Checkout repo
-  #       uses: actions/checkout@v4
+# name: Kisuma Api CI/CD Pipeline
 
-  #     - name: Setup SSH
-  #       uses: webfactory/ssh-agent@v0.9.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+# on:
+#   push:
+#     branches:
+#       - main
+#       - dev
 
-  #     - name: Add VPS to known_hosts
-  #       run: |
-  #         ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+# jobs:
+#   lint:
+#     name: Lint Code
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Install deps
+#         run: npm ci
+#       - name: Run linter
+#         run: npm run lint
 
-  #     - name: Set env vars
-  #       run: |
-  #         ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-  #         echo "DEPLOY_DIR=~/deployments/creapp/api" >> $GITHUB_ENV
-
-  #     - name: Deploy to VPS
-  #       run: |
-  #         ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'bash -s' << EOF
-  #           set -euo pipefail
-
-  #           DEPLOY_DIR=~/deployments/creapp/api
-
-  #           if [ ! -d $DEPLOY_DIR ]; then
-  #             mkdir -p $DEPLOY_DIR
-  #             git clone https://github.com/${{ github.repository }} $DEPLOY_DIR
-  #           else
-  #             cd $DEPLOY_DIR
-  #             git pull origin main
-  #           fi
-
-  #           ls /root
-
-  #           cd $DEPLOY_DIR
-
-  #           export DOCKER_BUILDKIT=0
-
-  #           # Remove any containers that might conflict
-  #           docker rm -f creappapi 2>/dev/null || true
-  #           docker rmi creapp-creappapi:latest 2>/dev/null || true
-
-  #           # Build and run the new image
-  #           docker compose up -d --build
-
-  #           # Health check loop
-  #           for i in {1..10}; do
-  #             if curl --fail http://localhost:5002/health; then
-  #               echo "✅ Health check passed"
-  #               break
-  #             fi
-  #             echo "⏳ Waiting for app to be ready... ($i/10)"
-  #             sleep 6
-  #           done
-
-  #           echo "🎯 Deployment complete"
-  #           exit 0
-  #         EOF
-
-  #     - name: Confirm remote session is done
-  #       run: echo "🧠 SSH session completed cleanly"
+#   build:
+#     name: Build API
+#     runs-on: ubuntu-latest
+#     needs: lint
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Install deps
+#         run: npm ci
+#       - name: Build project
+#         run: npm run build
