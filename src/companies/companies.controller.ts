@@ -52,7 +52,7 @@ export class CompaniesController {
   @Get()
   @ApiOperation({ summary: 'Get all companies' })
   @ApiResponse({ status: 200, description: 'List of companies' })
-  findAll(@Query() query: FindAllCompaniesDto) {
+  findAll(@Query() query: Record<string, unknown>) {
     return this.companiesService.findAll(query);
   }
 

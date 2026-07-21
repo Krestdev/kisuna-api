@@ -16,8 +16,13 @@ export class CompaniesService {
     return this.databaseService.company.create({ data: createCompanyDto });
   }
 
-  async findAll(query: FindAllCompaniesDto) {
-    const { page = 1, limit = 20, name, description } = query;
+  // TODO: #6 Uptimise all functions this way @FNMALIC
+  async findAll({
+    page = 1,
+    limit = 20,
+    name,
+    description,
+  }: FindAllCompaniesDto) {
     const skip = (page - 1) * limit;
 
     return this.databaseService.company.findMany({
@@ -55,7 +60,7 @@ export class CompaniesService {
   }
 
   async update(uuid: string, updateCompanyDto: UpdateCompanyDto) {
-    await this.findOne(uuid);
+    await this.findOne(uuid); // TODO: #4
     return this.databaseService.company.update({
       where: { uuid },
       data: updateCompanyDto,
@@ -63,7 +68,7 @@ export class CompaniesService {
   }
 
   async activate(uuid: string) {
-    await this.findOne(uuid);
+    await this.findOne(uuid); // TODO: #4 Remove unnecessary code @FNMALIC
     return this.databaseService.company.update({
       where: { uuid },
       data: { isActive: true },
@@ -71,7 +76,7 @@ export class CompaniesService {
   }
 
   async deactivate(uuid: string) {
-    await this.findOne(uuid);
+    await this.findOne(uuid); // TODO: #4
     return this.databaseService.company.update({
       where: { uuid },
       data: { isActive: false },
