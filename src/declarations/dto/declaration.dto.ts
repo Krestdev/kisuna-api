@@ -5,6 +5,13 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import {
+  IsEnum,
+  IsDateString,
+  IsUUID,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DeclarationType, DeclarationStatus } from '@prisma/client';
 import {
@@ -29,6 +36,12 @@ export class CreateDeclarationDto implements Omit<
     required: false,
     description: 'Type of declaration',
   })
+  @ApiProperty({
+    enum: DeclarationType,
+    example: 'MONTHLY',
+    required: false,
+    description: 'Type of declaration',
+  })
   @IsEnum(DeclarationType)
   @IsOptional()
   type?: DeclarationType;
@@ -37,9 +50,17 @@ export class CreateDeclarationDto implements Omit<
     example: '2026-06-01',
     description: 'Start date of declaration period',
   })
+  @ApiProperty({
+    example: '2026-06-01',
+    description: 'Start date of declaration period',
+  })
   @IsDateString()
   periodStart: string;
 
+  @ApiProperty({
+    example: '2026-06-30',
+    description: 'End date of declaration period',
+  })
   @ApiProperty({
     example: '2026-06-30',
     description: 'End date of declaration period',

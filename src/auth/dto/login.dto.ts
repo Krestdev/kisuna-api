@@ -19,6 +19,11 @@ export class LoginDto implements Omit<
     description: 'User password',
     minLength: 6,
   })
+  @ApiProperty({
+    example: 'admin123',
+    description: 'User password',
+    minLength: 6,
+  })
   @IsString()
   @IsNotEmpty()
   @MinLength(6)

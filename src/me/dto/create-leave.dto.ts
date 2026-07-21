@@ -22,6 +22,10 @@ export class CreateLeaveDto {
     description: 'Deduct from annual leave balance',
     example: true,
   })
+  @ApiProperty({
+    description: 'Deduct from annual leave balance',
+    example: true,
+  })
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   deductFromAnnualBalance: boolean;

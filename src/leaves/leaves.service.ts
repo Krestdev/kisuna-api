@@ -4,6 +4,12 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
@@ -67,6 +73,7 @@ export class LeavesService {
 
     if (balance.remainingDays < requestedDays) {
       throw new BadRequestException(
+        `Insufficient leave balance. Remaining: ${balance.remainingDays} days`,
         `Insufficient leave balance. Remaining: ${balance.remainingDays} days`,
       );
     }
@@ -214,6 +221,9 @@ export class LeavesService {
     throw new BadRequestException(
       'Invalid approval workflow or insufficient permissions',
     );
+    throw new BadRequestException(
+      'Invalid approval workflow or insufficient permissions',
+    );
   }
 
   async reject(id: number, approvedBy: string, dto: RejectLeaveDto) {
@@ -223,7 +233,14 @@ export class LeavesService {
       LeaveStatus.PENDING_MANAGER,
       LeaveStatus.PENDING_HR,
     ];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
+      throw new BadRequestException(
+        'Only pending leave requests can be rejected',
+      );
       throw new BadRequestException(
         'Only pending leave requests can be rejected',
       );
@@ -247,13 +264,23 @@ export class LeavesService {
       throw new ForbiddenException(
         'You can only cancel your own leave requests',
       );
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
     const validStatuses: LeaveStatus[] = [
       LeaveStatus.PENDING_MANAGER,
       LeaveStatus.PENDING_HR,
     ];
+    const validStatuses: LeaveStatus[] = [
+      LeaveStatus.PENDING_MANAGER,
+      LeaveStatus.PENDING_HR,
+    ];
     if (!validStatuses.includes(leave.status)) {
+      throw new BadRequestException(
+        'Only pending leave requests can be cancelled',
+      );
       throw new BadRequestException(
         'Only pending leave requests can be cancelled',
       );
@@ -273,14 +300,25 @@ export class LeavesService {
       throw new ForbiddenException(
         'You can only cancel your own leave requests',
       );
+      throw new ForbiddenException(
+        'You can only cancel your own leave requests',
+      );
     }
 
     if (leave.status !== LeaveStatus.APPROVED) {
       throw new BadRequestException(
         'Only approved leave requests can be cancelled here',
       );
+      throw new BadRequestException(
+        'Only approved leave requests can be cancelled here',
+      );
     }
 
+    const leaveDays =
+      Math.ceil(
+        (leave.endDate.getTime() - leave.startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1;
     const leaveDays =
       Math.ceil(
         (leave.endDate.getTime() - leave.startDate.getTime()) /
@@ -331,6 +369,12 @@ export class LeavesService {
           totalDays: 21,
           remainingDays: 21,
         },
+        data: {
+          employeeId,
+          year: currentYear,
+          totalDays: 21,
+          remainingDays: 21,
+        },
       });
     }
 
@@ -353,6 +397,11 @@ export class LeavesService {
     });
   }
 
+  async initializeBalanceForYear(
+    employeeId: string,
+    year: number,
+    totalDays: number = 21,
+  ) {
   async initializeBalanceForYear(
     employeeId: string,
     year: number,
@@ -382,6 +431,11 @@ export class LeavesService {
     year: number,
     totalDays: number,
   ) {
+  async updateBalanceQuota(
+    employeeId: string,
+    year: number,
+    totalDays: number,
+  ) {
     const balance = await this.prisma.leaveBalance.findUnique({
       where: { employeeId_year: { employeeId, year } },
     });
@@ -391,6 +445,7 @@ export class LeavesService {
     }
 
     const difference = totalDays - balance.totalDays;
+
 
     return this.prisma.leaveBalance.update({
       where: { uuid: balance.uuid },

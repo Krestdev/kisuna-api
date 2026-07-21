@@ -8,6 +8,7 @@ export class SetRoleDto implements Pick<UserUpdateInput, 'role'> {
     description: 'Role to assign to the employee',
     enum: SystemRole,
     example: 'COMPANY_ADMIN',
+    example: 'COMPANY_ADMIN',
   })
   @IsEnum(SystemRole)
   role: SystemRole;

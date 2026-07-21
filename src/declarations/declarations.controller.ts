@@ -17,6 +17,14 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { DeclarationsService } from './declarations.service';
 import {
   CreateEarningItemDto,
@@ -54,6 +62,14 @@ export class DeclarationsController {
     status: 201,
     description: 'Earning item created successfully',
   })
+  @ApiOperation({
+    summary: 'Create earning item',
+    description: 'Create a new earning item (salary component) for a company',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Earning item created successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   createEarningItem(@Body() dto: CreateEarningItemDto) {
     return this.service.createEarningItem(dto);
@@ -65,7 +81,23 @@ export class DeclarationsController {
     description:
       'Retrieve earning items filtered by company, category, or active status',
   })
+  @ApiOperation({
+    summary: 'Get all earning items',
+    description:
+      'Retrieve earning items filtered by company, category, or active status',
+  })
   @ApiQuery({ name: 'companyId', required: true, description: 'Company UUID' })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    enum: EarningCategory,
+    description: 'Filter by earning category',
+  })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    description: 'Filter by active status (true/false)',
+  })
   @ApiQuery({
     name: 'category',
     required: false,
@@ -95,6 +127,10 @@ export class DeclarationsController {
     summary: 'Get earning item by ID',
     description: 'Retrieve a specific earning item',
   })
+  @ApiOperation({
+    summary: 'Get earning item by ID',
+    description: 'Retrieve a specific earning item',
+  })
   @ApiParam({ name: 'uuid', description: 'Earning item UUID' })
   @ApiResponse({ status: 200, description: 'Earning item details' })
   @ApiResponse({ status: 404, description: 'Earning item not found' })
@@ -107,12 +143,24 @@ export class DeclarationsController {
     summary: 'Update earning item',
     description: 'Update an existing earning item',
   })
+  @ApiOperation({
+    summary: 'Update earning item',
+    description: 'Update an existing earning item',
+  })
   @ApiParam({ name: 'uuid', description: 'Earning item UUID' })
   @ApiResponse({
     status: 200,
     description: 'Earning item updated successfully',
   })
+  @ApiResponse({
+    status: 200,
+    description: 'Earning item updated successfully',
+  })
   @ApiResponse({ status: 404, description: 'Earning item not found' })
+  updateEarningItem(
+    @Param('uuid') uuid: string,
+    @Body() dto: UpdateEarningItemDto,
+  ) {
   updateEarningItem(
     @Param('uuid') uuid: string,
     @Body() dto: UpdateEarningItemDto,
@@ -125,7 +173,15 @@ export class DeclarationsController {
     summary: 'Delete earning item',
     description: 'Delete an earning item',
   })
+  @ApiOperation({
+    summary: 'Delete earning item',
+    description: 'Delete an earning item',
+  })
   @ApiParam({ name: 'uuid', description: 'Earning item UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Earning item deleted successfully',
+  })
   @ApiResponse({
     status: 200,
     description: 'Earning item deleted successfully',
@@ -141,6 +197,10 @@ export class DeclarationsController {
     summary: 'Create declaration',
     description: 'Create a new payroll declaration for a period',
   })
+  @ApiOperation({
+    summary: 'Create declaration',
+    description: 'Create a new payroll declaration for a period',
+  })
   @ApiResponse({ status: 201, description: 'Declaration created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   createDeclaration(@Body() dto: CreateDeclarationDto) {
@@ -152,8 +212,18 @@ export class DeclarationsController {
     summary: 'Get all declarations',
     description: 'Retrieve declarations filtered by company, type, or status',
   })
+  @ApiOperation({
+    summary: 'Get all declarations',
+    description: 'Retrieve declarations filtered by company, type, or status',
+  })
   @ApiQuery({ name: 'companyId', required: false, description: 'Company UUID' })
   @ApiQuery({ name: 'type', required: false, description: 'Declaration type' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: DeclarationStatus,
+    description: 'Declaration status',
+  })
   @ApiQuery({
     name: 'status',
     required: false,
@@ -174,6 +244,10 @@ export class DeclarationsController {
     summary: 'Get declaration by ID',
     description: 'Retrieve a specific declaration with all lines and earnings',
   })
+  @ApiOperation({
+    summary: 'Get declaration by ID',
+    description: 'Retrieve a specific declaration with all lines and earnings',
+  })
   @ApiParam({ name: 'uuid', description: 'Declaration UUID' })
   @ApiResponse({ status: 200, description: 'Declaration details' })
   @ApiResponse({ status: 404, description: 'Declaration not found' })
@@ -186,9 +260,17 @@ export class DeclarationsController {
     summary: 'Update declaration',
     description: 'Update declaration details or status',
   })
+  @ApiOperation({
+    summary: 'Update declaration',
+    description: 'Update declaration details or status',
+  })
   @ApiParam({ name: 'uuid', description: 'Declaration UUID' })
   @ApiResponse({ status: 200, description: 'Declaration updated successfully' })
   @ApiResponse({ status: 404, description: 'Declaration not found' })
+  updateDeclaration(
+    @Param('uuid') uuid: string,
+    @Body() dto: UpdateDeclarationDto,
+  ) {
   updateDeclaration(
     @Param('uuid') uuid: string,
     @Body() dto: UpdateDeclarationDto,
@@ -197,6 +279,10 @@ export class DeclarationsController {
   }
 
   @Delete('declarations/:uuid')
+  @ApiOperation({
+    summary: 'Delete declaration',
+    description: 'Delete a declaration and all associated lines',
+  })
   @ApiOperation({
     summary: 'Delete declaration',
     description: 'Delete a declaration and all associated lines',
@@ -214,7 +300,15 @@ export class DeclarationsController {
     summary: 'Create declaration lines',
     description: 'Bulk create declaration lines for employees',
   })
+  @ApiOperation({
+    summary: 'Create declaration lines',
+    description: 'Bulk create declaration lines for employees',
+  })
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Declaration lines created successfully',
+  })
   @ApiResponse({
     status: 201,
     description: 'Declaration lines created successfully',
@@ -232,6 +326,10 @@ export class DeclarationsController {
     summary: 'Get declaration lines',
     description: 'Retrieve all lines for a declaration',
   })
+  @ApiOperation({
+    summary: 'Get declaration lines',
+    description: 'Retrieve all lines for a declaration',
+  })
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
   @ApiResponse({ status: 200, description: 'List of declaration lines' })
   findDeclarationLines(@Param('declarationId') declarationId: string) {
@@ -239,6 +337,10 @@ export class DeclarationsController {
   }
 
   @Get('declarations/:declarationId/lines/:lineId')
+  @ApiOperation({
+    summary: 'Get declaration line by ID',
+    description: 'Retrieve a specific declaration line with earnings',
+  })
   @ApiOperation({
     summary: 'Get declaration line by ID',
     description: 'Retrieve a specific declaration line with earnings',
@@ -256,8 +358,16 @@ export class DeclarationsController {
     summary: 'Update declaration line',
     description: 'Update a declaration line',
   })
+  @ApiOperation({
+    summary: 'Update declaration line',
+    description: 'Update a declaration line',
+  })
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
   @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Declaration line updated successfully',
+  })
   @ApiResponse({
     status: 200,
     description: 'Declaration line updated successfully',
@@ -276,8 +386,16 @@ export class DeclarationsController {
     summary: 'Delete declaration line',
     description: 'Delete a declaration line and associated earnings',
   })
+  @ApiOperation({
+    summary: 'Delete declaration line',
+    description: 'Delete a declaration line and associated earnings',
+  })
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
   @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Declaration line deleted successfully',
+  })
   @ApiResponse({
     status: 200,
     description: 'Declaration line deleted successfully',
@@ -289,6 +407,10 @@ export class DeclarationsController {
 
   // DeclarationEarning routes (granular edits)
   @Post('declaration-lines/:lineId/earnings')
+  @ApiOperation({
+    summary: 'Add earning to line',
+    description: 'Add an earning entry to a declaration line',
+  })
   @ApiOperation({
     summary: 'Add earning to line',
     description: 'Add an earning entry to a declaration line',
@@ -308,6 +430,10 @@ export class DeclarationsController {
     summary: 'Update earning',
     description: 'Update an earning entry amount',
   })
+  @ApiOperation({
+    summary: 'Update earning',
+    description: 'Update an earning entry amount',
+  })
   @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
   @ApiParam({ name: 'earningId', description: 'Declaration earning UUID' })
   @ApiResponse({ status: 200, description: 'Earning updated successfully' })
@@ -320,6 +446,10 @@ export class DeclarationsController {
   }
 
   @Delete('declaration-lines/:lineId/earnings/:earningId')
+  @ApiOperation({
+    summary: 'Delete earning',
+    description: 'Remove an earning entry from a declaration line',
+  })
   @ApiOperation({
     summary: 'Delete earning',
     description: 'Remove an earning entry from a declaration line',

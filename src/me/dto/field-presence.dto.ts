@@ -18,6 +18,10 @@ export class FieldPresenceDto implements Pick<
     description: 'Mission description',
     example: 'Installation serveur client',
   })
+  @ApiProperty({
+    description: 'Mission description',
+    example: 'Installation serveur client',
+  })
   @IsString()
   @IsNotEmpty({ message: 'Mission requise' })
   mission: string;
@@ -26,10 +30,15 @@ export class FieldPresenceDto implements Pick<
     description: 'Additional observations',
     example: 'RAS',
   })
+  @ApiPropertyOptional({
+    description: 'Additional observations',
+    example: 'RAS',
+  })
   @IsString()
   @IsOptional()
   observations?: string;
 
+  @ApiProperty({ description: 'GPS latitude coordinate', example: 3.848 })
   @ApiProperty({ description: 'GPS latitude coordinate', example: 3.848 })
   @IsNumber()
   @IsNotEmpty({ message: 'Coordonnées GPS requises' })

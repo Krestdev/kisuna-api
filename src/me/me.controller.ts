@@ -20,6 +20,15 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MeService } from './me.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetLeavesDto } from './dto/get-leaves.dto';
@@ -197,12 +206,20 @@ export class MeController {
   @ApiOperation({
     summary: 'Submit a new leave request with optional justification file',
   })
+  @ApiOperation({
+    summary: 'Submit a new leave request with optional justification file',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       required: ['type', 'startDate', 'endDate', 'deductFromAnnualBalance'],
       properties: {
+        type: {
+          type: 'string',
+          enum: ['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'UNPAID', 'OTHER'],
+          example: 'ANNUAL',
+        },
         type: {
           type: 'string',
           enum: ['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'UNPAID', 'OTHER'],
@@ -217,8 +234,17 @@ export class MeController {
           format: 'binary',
           description: 'Optional justification file',
         },
+        justificatif: {
+          type: 'string',
+          format: 'binary',
+          description: 'Optional justification file',
+        },
       },
     },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Leave request created successfully',
   })
   @ApiResponse({
     status: 201,

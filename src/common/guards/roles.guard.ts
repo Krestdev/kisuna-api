@@ -4,6 +4,12 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { SystemRole } from '@prisma/client';
@@ -29,6 +35,10 @@ export class RolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredRoles = this.reflector.getAllAndOverride<SystemRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
     const requiredRoles = this.reflector.getAllAndOverride<SystemRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],

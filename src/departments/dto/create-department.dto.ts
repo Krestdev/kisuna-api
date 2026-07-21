@@ -23,6 +23,11 @@ export class CreateDepartmentDto implements Omit<
     description: 'Department description',
     required: false,
   })
+  @ApiProperty({
+    example: 'Software development and IT',
+    description: 'Department description',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(255)
@@ -32,9 +37,18 @@ export class CreateDepartmentDto implements Omit<
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'Company UUID',
   })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Company UUID',
+  })
   @IsUUID()
   companyId: string;
 
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174001',
+    description: 'Manager (Employee) UUID',
+    required: false,
+  })
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174001',
     description: 'Manager (Employee) UUID',

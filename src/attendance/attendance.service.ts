@@ -34,6 +34,7 @@ export class AttendanceService {
     private readonly databaseService: DatabaseService,
     private readonly schedulesService: SchedulesService,
   ) {}
+  ) {}
 
   async createMany(dtos: CreateAttendanceDto[]) {
     return Promise.all(dtos.map((dto) => this.create(dto)));
@@ -43,19 +44,33 @@ export class AttendanceService {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid: dto.employeeId },
+    });
     if (!employee) throw new NotFoundException('Employee not found');
 
     const checkIn = new Date(dto.checkIn);
+    if (isNaN(checkIn.getTime()))
+      throw new BadRequestException('Invalid checkIn date');
     if (isNaN(checkIn.getTime()))
       throw new BadRequestException('Invalid checkIn date');
 
     const checkOut = dto.checkOut ? new Date(dto.checkOut) : undefined;
     if (checkOut && isNaN(checkOut.getTime()))
       throw new BadRequestException('Invalid checkOut date');
+    if (checkOut && isNaN(checkOut.getTime()))
+      throw new BadRequestException('Invalid checkOut date');
 
     if (!dto.status?.length)
       throw new BadRequestException('status is required');
+    if (!dto.status?.length)
+      throw new BadRequestException('status is required');
 
+    const workedHour = checkOut
+      ? this.calculateHours(checkIn, checkOut)
+      : undefined;
+    const overtimes =
+      workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
     const workedHour = checkOut
       ? this.calculateHours(checkIn, checkOut)
       : undefined;
@@ -72,6 +87,17 @@ export class AttendanceService {
         longitude: dto.longitude ?? 0,
         workedHour,
         overtimes,
+      },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
       },
       include: {
         employee: {
@@ -111,13 +137,22 @@ export class AttendanceService {
       throw new BadRequestException(
         'You are on approved leave today, check-in not required',
       );
+      throw new BadRequestException(
+        'You are on approved leave today, check-in not required',
+      );
     }
 
     // Get active schedule
     const schedule = await this.schedulesService.getActiveSchedule(
       dto.employeeId,
     );
+    const schedule = await this.schedulesService.getActiveSchedule(
+      dto.employeeId,
+    );
     if (!schedule) {
+      throw new BadRequestException(
+        'No active schedule found for this employee',
+      );
       throw new BadRequestException(
         'No active schedule found for this employee',
       );
@@ -167,6 +202,17 @@ export class AttendanceService {
           },
         },
       },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -201,6 +247,17 @@ export class AttendanceService {
           },
         },
       },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -209,6 +266,10 @@ export class AttendanceService {
 
     if (month && year) {
       const date = new Date(year, month - 1);
+      attendanceWhere.checkIn = {
+        gte: startOfMonth(date),
+        lte: endOfMonth(date),
+      };
       attendanceWhere.checkIn = {
         gte: startOfMonth(date),
         lte: endOfMonth(date),
@@ -242,11 +303,29 @@ export class AttendanceService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+    return {
+      data: employees,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(uuid: string): Promise<Attendance> {
     const attendance = await this.databaseService.attendance.findUnique({
       where: { uuid },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
       include: {
         employee: {
           select: {
@@ -381,6 +460,17 @@ export class AttendanceService {
           },
         },
       },
+      include: {
+        employee: {
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
     });
   }
 
@@ -405,6 +495,9 @@ export class AttendanceService {
     });
 
     if (existing) {
+      throw new BadRequestException(
+        'Attendance record already exists for this date',
+      );
       throw new BadRequestException(
         'Attendance record already exists for this date',
       );

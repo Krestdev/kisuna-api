@@ -7,6 +7,10 @@ export class FindAllContractsDto {
     description: 'Page number for pagination',
     default: 1,
   })
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

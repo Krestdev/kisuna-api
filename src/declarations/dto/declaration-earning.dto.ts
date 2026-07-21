@@ -28,6 +28,10 @@ export class CreateDeclarationEarningDto implements Omit<
     example: true,
     description: 'Is this earning subject to social contributions?',
   })
+  @ApiProperty({
+    example: true,
+    description: 'Is this earning subject to social contributions?',
+  })
   @IsBoolean()
   cotisable: boolean;
 }
@@ -44,6 +48,10 @@ export class UpdateDeclarationEarningDto implements Omit<
   @IsBoolean()
   taxable: boolean;
 
+  @ApiProperty({
+    example: false,
+    description: 'Is this earning subject to social contributions?',
+  })
   @ApiProperty({
     example: false,
     description: 'Is this earning subject to social contributions?',

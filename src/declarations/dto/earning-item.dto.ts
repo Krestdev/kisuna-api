@@ -5,6 +5,13 @@ import {
   IsOptional,
   IsUUID,
 } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { EarningCategory } from '@prisma/client';
 import {
@@ -28,9 +35,18 @@ export class CreateEarningItemDto implements Omit<
     example: 'ALLOWANCE',
     description: 'Category of earning',
   })
+  @ApiProperty({
+    enum: EarningCategory,
+    example: 'ALLOWANCE',
+    description: 'Category of earning',
+  })
   @IsEnum(EarningCategory)
   category: EarningCategory;
 
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Company UUID',
+  })
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'Company UUID',

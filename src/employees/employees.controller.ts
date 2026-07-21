@@ -52,6 +52,7 @@ export class EmployeesController {
     private readonly contractsService: ContractsService,
     private readonly leavesService: LeavesService,
   ) {}
+  ) {}
 
   @Post()
   @UseGuards(RolesGuard, CompanyScopeGuard)
@@ -72,6 +73,17 @@ export class EmployeesController {
     this.logger.log('=== CREATE EMPLOYEE REQUEST ===');
     this.logger.log('Body:', JSON.stringify(createEmployeeDto, null, 2));
     this.logger.log('Department ID:', createEmployeeDto.departmentId);
+    this.logger.log(
+      'Document:',
+      document
+        ? `${document.originalname} (${document.size} bytes)`
+        : 'No file',
+    );
+    return this.employeesService.create(
+      createEmployeeDto,
+      req.userCompanyId,
+      document,
+    );
     this.logger.log(
       'Document:',
       document
@@ -115,6 +127,9 @@ export class EmployeesController {
   @ApiOperation({
     summary: 'Get employee personal information (sensitive data)',
   })
+  @ApiOperation({
+    summary: 'Get employee personal information (sensitive data)',
+  })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 200, description: 'Employee personal details' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
@@ -138,6 +153,7 @@ export class EmployeesController {
     @UploadedFile() document?: Express.Multer.File,
   ) {
     console.log('updateEmployeeDto controller : ', updateEmployeeDto);
+    console.log('updateEmployeeDto controller : ', updateEmployeeDto);
     return this.employeesService.update(id, updateEmployeeDto, document);
   }
 
@@ -148,7 +164,14 @@ export class EmployeesController {
   @ApiOperation({
     summary: 'Deactivate employee (soft delete + free up positions)',
   })
+  @ApiOperation({
+    summary: 'Deactivate employee (soft delete + free up positions)',
+  })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Employee deactivated successfully',
+  })
   @ApiResponse({
     status: 200,
     description: 'Employee deactivated successfully',
@@ -168,6 +191,10 @@ export class EmployeesController {
     status: 200,
     description: 'Employee reactivated successfully',
   })
+  @ApiResponse({
+    status: 200,
+    description: 'Employee reactivated successfully',
+  })
   @ApiResponse({ status: 404, description: 'Employee not found' })
   reactivate(@Param('id') id: string) {
     return this.employeesService.reactivate(id);
@@ -183,7 +210,15 @@ export class EmployeesController {
     status: 200,
     description: 'Employee password changed successfully successfully',
   })
+  @ApiResponse({
+    status: 200,
+    description: 'Employee password changed successfully successfully',
+  })
   @ApiResponse({ status: 404, description: 'Employee not found' })
+  changeEmployeePassword(
+    @Param('id') id: string,
+    @Body() dto: changeEmployeePassword,
+  ) {
   changeEmployeePassword(
     @Param('id') id: string,
     @Body() dto: changeEmployeePassword,
@@ -202,6 +237,10 @@ export class EmployeesController {
     status: 404,
     description: 'Employee or user account not found',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Employee or user account not found',
+  })
   setRole(@Param('id') id: string, @Body() dto: SetRoleDto) {
     return this.employeesService.setRole(id, dto.role);
   }
@@ -213,6 +252,14 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Create a new contract for an employee' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 201, description: 'Contract created successfully' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request (e.g., already has active contract)',
+  })
+  createContract(
+    @Param('id') id: string,
+    @Body() createContractDto: CreateContractDto,
+  ) {
   @ApiResponse({
     status: 400,
     description: 'Bad request (e.g., already has active contract)',
@@ -247,6 +294,9 @@ export class EmployeesController {
   @ApiOperation({
     summary: 'Update leave balance quota for an employee (admin only)',
   })
+  @ApiOperation({
+    summary: 'Update leave balance quota for an employee (admin only)',
+  })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiParam({ name: 'year', description: 'Year' })
   updateLeaveQuota(
@@ -254,6 +304,11 @@ export class EmployeesController {
     @Param('year') year: string,
     @Body() dto: { totalDays: number },
   ) {
+    return this.leavesService.updateBalanceQuota(
+      id,
+      parseInt(year),
+      dto.totalDays,
+    );
     return this.leavesService.updateBalanceQuota(
       id,
       parseInt(year),

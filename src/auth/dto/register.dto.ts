@@ -19,6 +19,11 @@ export class RegisterDto implements Omit<
     description: 'User password (minimum 6 characters)',
     minLength: 6,
   })
+  @ApiProperty({
+    example: 'password123',
+    description: 'User password (minimum 6 characters)',
+    minLength: 6,
+  })
   @IsString()
   @IsNotEmpty()
   @MinLength(6)

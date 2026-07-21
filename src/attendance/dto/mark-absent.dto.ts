@@ -25,13 +25,16 @@ export class MarkAbsentDto implements Omit<
   @ApiProperty({
     description: 'Employee UUID',
     example: '550e8400-e29b-41d4-a716-446655440000',
+    example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsString()
   @IsNotEmpty()
   employeeId: string;
 
   @ApiProperty({
+  @ApiProperty({
     description: 'Date of absence',
+    example: '2026-06-16',
     example: '2026-06-16',
   })
   @IsDateString()

@@ -25,6 +25,27 @@ import {
   DeclarationType,
   EarningCategory,
 } from '@prisma/client';
+import {
+  CreateEarningItemDto,
+  UpdateEarningItemDto,
+} from './dto/earning-item.dto';
+import {
+  CreateDeclarationDto,
+  UpdateDeclarationDto,
+} from './dto/declaration.dto';
+import {
+  CreateDeclarationLineDto,
+  BulkCreateDeclarationLinesDto,
+} from './dto/declaration-line.dto';
+import {
+  CreateDeclarationEarningDto,
+  UpdateDeclarationEarningDto,
+} from './dto/declaration-earning.dto';
+import {
+  DeclarationStatus,
+  DeclarationType,
+  EarningCategory,
+} from '@prisma/client';
 
 @Injectable()
 export class DeclarationsService {
@@ -38,6 +59,11 @@ export class DeclarationsService {
     });
   }
 
+  async findAllEarningItems(
+    companyId: string,
+    category?: EarningCategory,
+    isActive?: boolean,
+  ) {
   async findAllEarningItems(
     companyId: string,
     category?: EarningCategory,
@@ -93,6 +119,11 @@ export class DeclarationsService {
     type?: string,
     status?: DeclarationStatus,
   ) {
+  async findAllDeclarations(
+    companyId?: string,
+    type?: string,
+    status?: DeclarationStatus,
+  ) {
     return this.db.declaration.findMany({
       where: {
         ...(companyId && { companyId }),
@@ -138,6 +169,12 @@ export class DeclarationsService {
       declaration.status !== DeclarationStatus.DRAFT &&
       dto.status === DeclarationStatus.DRAFT
     ) {
+
+    if (
+      dto.status &&
+      declaration.status !== DeclarationStatus.DRAFT &&
+      dto.status === DeclarationStatus.DRAFT
+    ) {
       throw new BadRequestException('Cannot revert to DRAFT status');
     }
 
@@ -145,6 +182,8 @@ export class DeclarationsService {
       where: { uuid },
       data: {
         ...dto,
+        ...(dto.status === DeclarationStatus.SUBMITTED &&
+          !declaration.submittedAt && { submittedAt: new Date() }),
         ...(dto.status === DeclarationStatus.SUBMITTED &&
           !declaration.submittedAt && { submittedAt: new Date() }),
       },
@@ -168,9 +207,12 @@ export class DeclarationsService {
 
     // Validate all employees exist
     const employeeIds = dto.lines.map((line) => line.employeeId);
+    const employeeIds = dto.lines.map((line) => line.employeeId);
     const employees = await this.db.employee.findMany({
       where: { uuid: { in: employeeIds } },
+      where: { uuid: { in: employeeIds } },
     });
+
 
     if (employees.length !== employeeIds.length) {
       const foundIds = employees.map((e) => e.uuid);
@@ -178,7 +220,13 @@ export class DeclarationsService {
       throw new NotFoundException(
         `Employees not found: ${missingIds.join(', ')}`,
       );
+      const foundIds = employees.map((e) => e.uuid);
+      const missingIds = employeeIds.filter((id) => !foundIds.includes(id));
+      throw new NotFoundException(
+        `Employees not found: ${missingIds.join(', ')}`,
+      );
     }
+
 
     // Fetch active contracts for employees without contractId
     const linesWithContracts = await Promise.all(
@@ -187,22 +235,32 @@ export class DeclarationsService {
           return line;
         }
 
+
         const activeContract = await this.db.contract.findFirst({
           where: {
             employeeId: line.employeeId,
             status: 'ACTIVE',
           },
+            status: 'ACTIVE',
+          },
         });
+
 
         if (!activeContract) {
           throw new NotFoundException(
             `No active contract found for employee ${line.employeeId}`,
           );
+          throw new NotFoundException(
+            `No active contract found for employee ${line.employeeId}`,
+          );
         }
+
 
         return { ...line, contractId: activeContract.uuid };
       }),
+      }),
     );
+
 
     return this.db.$transaction(
       linesWithContracts.map((line) =>
@@ -228,6 +286,8 @@ export class DeclarationsService {
             contract: true,
             earnings: { include: { earningItem: true } },
           },
+        }),
+      ),
         }),
       ),
     );
@@ -263,9 +323,17 @@ export class DeclarationsService {
     lineId: string,
     dto: CreateDeclarationLineDto,
   ) {
+  async updateDeclarationLine(
+    declarationId: string,
+    lineId: string,
+    dto: CreateDeclarationLineDto,
+  ) {
     await this.findOneDeclarationLine(lineId);
 
     return this.db.$transaction(async (tx) => {
+      await tx.declarationEarning.deleteMany({
+        where: { declarationLineId: lineId },
+      });
       await tx.declarationEarning.deleteMany({
         where: { declarationLineId: lineId },
       });
@@ -304,6 +372,10 @@ export class DeclarationsService {
     lineId: string,
     dto: CreateDeclarationEarningDto,
   ) {
+  async createDeclarationEarning(
+    lineId: string,
+    dto: CreateDeclarationEarningDto,
+  ) {
     await this.findOneDeclarationLine(lineId);
     return this.db.declarationEarning.create({
       data: {
@@ -321,7 +393,15 @@ export class DeclarationsService {
     const earning = await this.db.declarationEarning.findUnique({
       where: { uuid: earningId },
     });
+  async updateDeclarationEarning(
+    earningId: string,
+    dto: UpdateDeclarationEarningDto,
+  ) {
+    const earning = await this.db.declarationEarning.findUnique({
+      where: { uuid: earningId },
+    });
     if (!earning) throw new NotFoundException('Declaration earning not found');
+
 
     return this.db.declarationEarning.update({
       where: { uuid: earningId },
@@ -334,7 +414,11 @@ export class DeclarationsService {
     const earning = await this.db.declarationEarning.findUnique({
       where: { uuid: earningId },
     });
+    const earning = await this.db.declarationEarning.findUnique({
+      where: { uuid: earningId },
+    });
     if (!earning) throw new NotFoundException('Declaration earning not found');
+
 
     return this.db.declarationEarning.delete({ where: { uuid: earningId } });
   }
