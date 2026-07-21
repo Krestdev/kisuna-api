@@ -1,198 +1,1 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { CreateContractDto } from './dto/create-contract.dto';
-import { UpdateContractDto } from './dto/update-contract.dto';
-import { TerminateContractDto } from './dto/terminate-contract.dto';
-import { FindAllContractsDto } from './dto/find-all-contracts.dto';
-import { ContractStatus } from '@prisma/client';
-import { Prisma } from '@prisma/client';
-import { Cron, CronExpression } from '@nestjs/schedule';
-
-@Injectable()
-export class ContractsService {
-  constructor(private readonly databaseService: DatabaseService) {}
-
-  async create(employeeId: string, createContractDto: CreateContractDto) {
-    // 1. One Active Contract Rule
-    const existingActive = await this.databaseService.contract.findFirst({
-      where: { employeeId, status: ContractStatus.ACTIVE },
-    });
-
-    if (existingActive) {
-      throw new BadRequestException('Employee already has an active contract');
-    }
-
-    const { startDate, endDate, companyId, ...rest } = createContractDto;
-
-    // Optional: auto-expire logic could be here if we were renewing,
-    // but for simple create, we just create the contract.
-    // If they meant any creation auto-expires old ones, we can do it in a transaction.
-    // Given the rule above, there won't be an active contract to expire if we throw.
-    // So let's stick to the rule.
-
-    return this.databaseService.contract.create({
-      data: {
-        ...rest,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        employee: { connect: { uuid: employeeId } },
-        company: { connect: { uuid: companyId } },
-      },
-    });
-  }
-
-  async findAll(query: FindAllContractsDto) {
-    const { page = 1, limit = 10, companyId, employeeId, status } = query;
-    const skip = (page - 1) * limit;
-
-    const where: Prisma.ContractWhereInput = {
-      ...(companyId ? { companyId } : {}),
-      ...(employeeId ? { employeeId } : {}),
-      ...(status ? { status } : {}),
-    };
-
-    const [data, total] = await Promise.all([
-      this.databaseService.contract.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          employee: { select: { uuid: true, firstName: true, lastName: true } },
-          company: { select: { uuid: true, name: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.databaseService.contract.count({ where }),
-    ]);
-
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
-
-  async findOne(uuid: string) {
-    const contract = await this.databaseService.contract.findUnique({
-      where: { uuid },
-      include: {
-        employee: true,
-        company: true,
-      },
-    });
-    if (!contract) throw new NotFoundException('Contract not found');
-    return contract;
-  }
-
-  async update(uuid: string, updateContractDto: UpdateContractDto) {
-    const contract = await this.databaseService.contract.findUnique({
-      where: { uuid },
-    });
-    if (!contract) throw new NotFoundException('Contract not found');
-
-    const { startDate, endDate, ...rest } = updateContractDto;
-
-    return this.databaseService.contract.update({
-      where: { uuid },
-      data: {
-        ...rest,
-        ...(startDate ? { startDate: new Date(startDate) } : {}),
-        ...(endDate ? { endDate: new Date(endDate) } : {}),
-      },
-    });
-  }
-
-  async terminate(uuid: string, terminateDto: TerminateContractDto) {
-    const contract = await this.databaseService.contract.findUnique({
-      where: { uuid },
-    });
-    if (!contract) throw new NotFoundException('Contract not found');
-    if (contract.status !== ContractStatus.ACTIVE) {
-      throw new BadRequestException('Only active contracts can be terminated');
-    }
-
-    return this.databaseService.$transaction(async (prisma) => {
-      const updatedContract = await prisma.contract.update({
-        where: { uuid },
-        data: {
-          status: ContractStatus.TERMINATED,
-          terminationReason: terminateDto.terminationReason,
-        },
-      });
-
-      // Employee Status Sync
-      await prisma.employee.update({
-        where: { uuid: contract.employeeId },
-        data: { status: 'TERMINATED', isActive: false },
-      });
-
-      return updatedContract;
-    });
-  }
-
-  async renew(uuid: string, createContractDto: CreateContractDto) {
-    const oldContract = await this.databaseService.contract.findUnique({
-      where: { uuid },
-    });
-    if (!oldContract) throw new NotFoundException('Contract not found');
-
-    return this.databaseService.$transaction(async (prisma) => {
-      // 1. Expire the old contract
-      await prisma.contract.update({
-        where: { uuid },
-        data: { status: ContractStatus.EXPIRED },
-      });
-
-      // 2. Create the new contract
-      const { startDate, endDate, companyId, ...rest } = createContractDto;
-      const newContract = await prisma.contract.create({
-        data: {
-          ...rest,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          employee: { connect: { uuid: oldContract.employeeId } },
-          company: { connect: { uuid: companyId } },
-        },
-      });
-
-      return newContract;
-    });
-  }
-
-  @Cron(CronExpression.EVERY_2ND_MONTH)
-  async checkExpiring() {
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-
-    const expiringContracts = await this.databaseService.contract.findMany({
-      where: {
-        status: ContractStatus.ACTIVE,
-        endDate: {
-          lte: thirtyDaysFromNow,
-        },
-        expiryAlertSent: false,
-      },
-      include: { employee: true },
-    });
-
-    for (const contract of expiringContracts) {
-      // TODO: Send notification to HR / Admin about expiring contract
-      console.log(
-        `Contract ${contract.uuid} for employee ${contract.employee.firstName} is expiring soon.`,
-      );
-
-      await this.databaseService.contract.update({
-        where: { uuid: contract.uuid },
-        data: { expiryAlertSent: true },
-      });
-    }
-  }
-}
+import {  Injectable,  NotFoundException,  BadRequestException,} from '@nestjs/common';import { DatabaseService } from '../database/database.service';import { CreateContractDto } from './dto/create-contract.dto';import { UpdateContractDto } from './dto/update-contract.dto';import { TerminateContractDto } from './dto/terminate-contract.dto';import { FindAllContractsDto } from './dto/find-all-contracts.dto';import { ContractStatus } from '../../generated/prisma/client';import { Prisma } from '../../generated/prisma/client';import { Cron, CronExpression } from '@nestjs/schedule';@Injectable()export class ContractsService {  constructor(private readonly databaseService: DatabaseService) {}  async create(employeeId: string, createContractDto: CreateContractDto) {    // 1. One Active Contract Rule    const existingActive = await this.databaseService.contract.findFirst({      where: { employeeId, status: ContractStatus.ACTIVE },    });    if (existingActive) {      throw new BadRequestException('Employee already has an active contract');    }    const { startDate, endDate, companyId, ...rest } = createContractDto;    // Optional: auto-expire logic could be here if we were renewing,    // but for simple create, we just create the contract.    // If they meant any creation auto-expires old ones, we can do it in a transaction.    // Given the rule above, there won't be an active contract to expire if we throw.    // So let's stick to the rule.    return this.databaseService.contract.create({      data: {        ...rest,        startDate: new Date(startDate),        endDate: new Date(endDate),        employee: { connect: { uuid: employeeId } },        company: { connect: { uuid: companyId } },      },    });  }  async findAll(query: FindAllContractsDto) {    const { page = 1, limit = 10, companyId, employeeId, status } = query;    const skip = (page - 1) * limit;    const where: Prisma.ContractWhereInput = {      ...(companyId ? { companyId } : {}),      ...(employeeId ? { employeeId } : {}),      ...(status ? { status } : {}),    };    const [data, total] = await Promise.all([      this.databaseService.contract.findMany({        where,        skip,        take: limit,        include: {          employee: { select: { uuid: true, firstName: true, lastName: true } },          company: { select: { uuid: true, name: true } },        },        orderBy: { createdAt: 'desc' },      }),      this.databaseService.contract.count({ where }),    ]);    return {      data,      meta: {        total,        page,        limit,        totalPages: Math.ceil(total / limit),      },    };  }  async findOne(uuid: string) {    const contract = await this.databaseService.contract.findUnique({      where: { uuid },      include: {        employee: true,        company: true,      },    });    if (!contract) throw new NotFoundException('Contract not found');    return contract;  }  async update(uuid: string, updateContractDto: UpdateContractDto) {    const contract = await this.databaseService.contract.findUnique({      where: { uuid },    });    if (!contract) throw new NotFoundException('Contract not found');    const { startDate, endDate, ...rest } = updateContractDto;    return this.databaseService.contract.update({      where: { uuid },      data: {        ...rest,        ...(startDate ? { startDate: new Date(startDate) } : {}),        ...(endDate ? { endDate: new Date(endDate) } : {}),      },    });  }  async terminate(uuid: string, terminateDto: TerminateContractDto) {    const contract = await this.databaseService.contract.findUnique({      where: { uuid },    });    if (!contract) throw new NotFoundException('Contract not found');    if (contract.status !== ContractStatus.ACTIVE) {      throw new BadRequestException('Only active contracts can be terminated');    }    return this.databaseService.$transaction(async (prisma) => {      const updatedContract = await prisma.contract.update({        where: { uuid },        data: {          status: ContractStatus.TERMINATED,          terminationReason: terminateDto.terminationReason,        },      });      // Employee Status Sync      await prisma.employee.update({        where: { uuid: contract.employeeId },        data: { status: 'TERMINATED', isActive: false },      });      return updatedContract;    });  }  async renew(uuid: string, createContractDto: CreateContractDto) {    const oldContract = await this.databaseService.contract.findUnique({      where: { uuid },    });    if (!oldContract) throw new NotFoundException('Contract not found');    return this.databaseService.$transaction(async (prisma) => {      // 1. Expire the old contract      await prisma.contract.update({        where: { uuid },        data: { status: ContractStatus.EXPIRED },      });      // 2. Create the new contract      const { startDate, endDate, companyId, ...rest } = createContractDto;      const newContract = await prisma.contract.create({        data: {          ...rest,          startDate: new Date(startDate),          endDate: new Date(endDate),          employee: { connect: { uuid: oldContract.employeeId } },          company: { connect: { uuid: companyId } },        },      });      return newContract;    });  }  @Cron(CronExpression.EVERY_2ND_MONTH)  async checkExpiring() {    const thirtyDaysFromNow = new Date();    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);    const expiringContracts = await this.databaseService.contract.findMany({      where: {        status: ContractStatus.ACTIVE,        endDate: {          lte: thirtyDaysFromNow,        },        expiryAlertSent: false,      },      include: { employee: true },    });    for (const contract of expiringContracts) {      // TODO: Send notification to HR / Admin about expiring contract      console.log(        `Contract ${contract.uuid} for employee ${contract.employee.firstName} is expiring soon.`,      );      await this.databaseService.contract.update({        where: { uuid: contract.uuid },        data: { expiryAlertSent: true },      });    }  }}
