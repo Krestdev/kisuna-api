@@ -6,14 +6,7 @@ import {
   ValidateNested,
   IsOptional,
 } from 'class-validator';
-import {
-  IsNumber,
-  IsBoolean,
-  IsUUID,
-  IsArray,
-  ValidateNested,
-  IsOptional,
-} from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { DeclarationEarningCreateInput } from 'generated/prisma/models';
@@ -97,7 +90,6 @@ export class CreateDeclarationLineDto {
   baseSalaryCotisable: boolean;
 
   @ApiProperty({
-  @ApiProperty({
     type: [DeclarationEarningItemDto],
     example: [
       {
@@ -114,7 +106,6 @@ export class CreateDeclarationLineDto {
       },
     ],
     description: 'Additional earnings for this employee',
-    description: 'Additional earnings for this employee',
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -124,9 +115,7 @@ export class CreateDeclarationLineDto {
 
 export class BulkCreateDeclarationLinesDto {
   @ApiProperty({
-  @ApiProperty({
     type: [CreateDeclarationLineDto],
-    description: 'Array of declaration lines to create',
     description: 'Array of declaration lines to create',
   })
   @IsArray()

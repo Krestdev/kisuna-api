@@ -52,7 +52,6 @@ export class EmployeesController {
     private readonly contractsService: ContractsService,
     private readonly leavesService: LeavesService,
   ) {}
-  ) {}
 
   @Post()
   @UseGuards(RolesGuard, CompanyScopeGuard)
@@ -73,17 +72,6 @@ export class EmployeesController {
     this.logger.log('=== CREATE EMPLOYEE REQUEST ===');
     this.logger.log('Body:', JSON.stringify(createEmployeeDto, null, 2));
     this.logger.log('Department ID:', createEmployeeDto.departmentId);
-    this.logger.log(
-      'Document:',
-      document
-        ? `${document.originalname} (${document.size} bytes)`
-        : 'No file',
-    );
-    return this.employeesService.create(
-      createEmployeeDto,
-      req.userCompanyId,
-      document,
-    );
     this.logger.log(
       'Document:',
       document
@@ -210,15 +198,7 @@ export class EmployeesController {
     status: 200,
     description: 'Employee password changed successfully successfully',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Employee password changed successfully successfully',
-  })
   @ApiResponse({ status: 404, description: 'Employee not found' })
-  changeEmployeePassword(
-    @Param('id') id: string,
-    @Body() dto: changeEmployeePassword,
-  ) {
   changeEmployeePassword(
     @Param('id') id: string,
     @Body() dto: changeEmployeePassword,
@@ -252,14 +232,6 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Create a new contract for an employee' })
   @ApiParam({ name: 'id', description: 'Employee UUID' })
   @ApiResponse({ status: 201, description: 'Contract created successfully' })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request (e.g., already has active contract)',
-  })
-  createContract(
-    @Param('id') id: string,
-    @Body() createContractDto: CreateContractDto,
-  ) {
   @ApiResponse({
     status: 400,
     description: 'Bad request (e.g., already has active contract)',
@@ -304,11 +276,6 @@ export class EmployeesController {
     @Param('year') year: string,
     @Body() dto: { totalDays: number },
   ) {
-    return this.leavesService.updateBalanceQuota(
-      id,
-      parseInt(year),
-      dto.totalDays,
-    );
     return this.leavesService.updateBalanceQuota(
       id,
       parseInt(year),

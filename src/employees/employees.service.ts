@@ -3,11 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -28,32 +23,7 @@ export class EmployeesService {
     private readonly databaseService: DatabaseService,
     private readonly rustfs: RustfsService,
   ) {}
-  ) {}
 
-  async create(
-    createEmployeeDto: CreateEmployeeDto,
-    userCompanyId?: string,
-    document?: Express.Multer.File,
-  ) {
-    const {
-      birthday,
-      hireDate,
-      companyId,
-      contract,
-      contracts,
-      idDocumentIssueDate,
-      idDocumentExpiryDate,
-      email,
-      departmentId,
-      supervisorId,
-      endDate,
-      leaveDays,
-      phoneNumber,
-      EmergencyContactPhone,
-      matrimonial_status,
-      number_of_children,
-      ...rest
-    } = createEmployeeDto;
   async create(
     createEmployeeDto: CreateEmployeeDto,
     userCompanyId?: string,
@@ -110,12 +80,6 @@ export class EmployeesService {
           ...(supervisorId
             ? { supervisor: { connect: { uuid: supervisorId } } }
             : {}),
-          idDocumentIssueDate: idDocumentIssueDate
-            ? new Date(idDocumentIssueDate)
-            : undefined,
-          idDocumentExpiryDate: idDocumentExpiryDate
-            ? new Date(idDocumentExpiryDate)
-            : undefined,
           ...(finalCompanyId
             ? { company: { connect: { uuid: finalCompanyId } } }
             : {}),
@@ -175,14 +139,6 @@ export class EmployeesService {
         contractData.contract_type &&
         contractData.baseSalary
       ) {
-      if (
-        contractData &&
-        finalCompanyId &&
-        contractData.startDate &&
-        contractData.endDate &&
-        contractData.contract_type &&
-        contractData.baseSalary
-      ) {
         await prisma.contract.create({
           data: {
             employeeId: employee.uuid,
@@ -213,10 +169,6 @@ export class EmployeesService {
           document,
           `employees/${employee.uuid}`,
         );
-        const path = await this.rustfs.uploadFile(
-          document,
-          `employees/${employee.uuid}`,
-        );
         await prisma.employee.update({
           where: { uuid: employee.uuid },
           data: { idDocumentFileUrl: path },
@@ -226,9 +178,6 @@ export class EmployeesService {
             file_name: document.originalname,
             document_type: (rest.idDocumentType as DocumentType) ?? 'CNI',
             path,
-            expired_date: createEmployeeDto.idDocumentExpiryDate
-              ? new Date(createEmployeeDto.idDocumentExpiryDate)
-              : null,
             expired_date: createEmployeeDto.idDocumentExpiryDate
               ? new Date(createEmployeeDto.idDocumentExpiryDate)
               : null,
@@ -257,7 +206,6 @@ export class EmployeesService {
 
     // For COMPANY_ADMIN, filter by their company
     const finalCompanyId = userCompanyId || companyId?.trim() || undefined;
-    const finalCompanyId = userCompanyId || companyId?.trim() || undefined;
 
     // Check if any valid params provided (ignore empty strings)
     const hasParams = !!(
@@ -269,19 +217,10 @@ export class EmployeesService {
       includeInactive ||
       contractType?.trim()
     );
-    const hasParams = !!(
-      page ||
-      limit ||
-      departmentId?.trim() ||
-      status?.trim() ||
-      search?.trim() ||
-      includeInactive ||
-      contractType?.trim()
-    );
+
     const returnAll = userCompanyId && !hasParams;
 
     const actualPage = page || 1;
-    const actualLimit = returnAll ? undefined : limit || 10;
     const actualLimit = returnAll ? undefined : limit || 10;
     const skip = returnAll ? undefined : (actualPage - 1) * (actualLimit || 10);
 
@@ -327,15 +266,7 @@ export class EmployeesService {
             endDate: true,
           },
         },
-        contracts: {
-          select: {
-            baseSalary: true,
-            currency: true,
-            contract_type: true,
-            startDate: true,
-            endDate: true,
-          },
-        },
+
         user: { select: { uuid: true, email: true, role: true } },
       };
     } else {
@@ -367,32 +298,10 @@ export class EmployeesService {
             updatedAt: true,
           },
         },
-        contracts: {
-          select: {
-            uuid: true,
-            contract_type: true,
-            startDate: true,
-            endDate: true,
-            status: true,
-          },
-        },
-        user: {
-          select: {
-            uuid: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
       };
     }
 
     const companyWhere = finalCompanyId
-      ? {
-          ...(includeInactive === 'true' ? {} : { isActive: true }),
-          companyId: finalCompanyId,
-        }
       ? {
           ...(includeInactive === 'true' ? {} : { isActive: true }),
           companyId: finalCompanyId,
@@ -405,13 +314,9 @@ export class EmployeesService {
       companyWhere
         ? this.databaseService.employee.count({ where: companyWhere })
         : Promise.resolve(undefined),
-      companyWhere
-        ? this.databaseService.employee.count({ where: companyWhere })
-        : Promise.resolve(undefined),
     ]);
 
     return {
-      data: data.map((emp) => ({
       data: data.map((emp) => ({
         ...emp,
         role: (emp as { user?: { role?: string } }).user?.role ?? null,
@@ -482,16 +387,6 @@ export class EmployeesService {
     });
     if (!existing || !existing.isActive)
       throw new NotFoundException('Active employee not found');
-  async update(
-    uuid: string,
-    updateEmployeeDto: UpdateEmployeeDto,
-    document?: Express.Multer.File,
-  ) {
-    const existing = await this.databaseService.employee.findUnique({
-      where: { uuid },
-    });
-    if (!existing || !existing.isActive)
-      throw new NotFoundException('Active employee not found');
 
     const {
       birthday,
@@ -517,14 +412,6 @@ export class EmployeesService {
       departmentId && UUID_REGEX.test(departmentId) ? departmentId : undefined;
     const validSupervisorId =
       supervisorId && UUID_REGEX.test(supervisorId) ? supervisorId : undefined;
-    const UUID_REGEX =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const validCompanyId =
-      companyId && UUID_REGEX.test(companyId) ? companyId : undefined;
-    const validDepartmentId =
-      departmentId && UUID_REGEX.test(departmentId) ? departmentId : undefined;
-    const validSupervisorId =
-      supervisorId && UUID_REGEX.test(supervisorId) ? supervisorId : undefined;
     const contractData = contracts || contract;
 
     return this.databaseService.$transaction(async (prisma) => {
@@ -535,21 +422,6 @@ export class EmployeesService {
           birthday: birthday ? new Date(birthday) : undefined,
           hireDate: hireDate ? new Date(hireDate) : undefined,
           endDate: endDate ? new Date(endDate) : undefined,
-          idDocumentIssueDate: idDocumentIssueDate
-            ? new Date(idDocumentIssueDate)
-            : undefined,
-          idDocumentExpiryDate: idDocumentExpiryDate
-            ? new Date(idDocumentExpiryDate)
-            : undefined,
-          ...(validCompanyId
-            ? { company: { connect: { uuid: validCompanyId } } }
-            : {}),
-          ...(validDepartmentId
-            ? { department: { connect: { uuid: validDepartmentId } } }
-            : {}),
-          ...(validSupervisorId
-            ? { supervisor: { connect: { uuid: validSupervisorId } } }
-            : {}),
           idDocumentIssueDate: idDocumentIssueDate
             ? new Date(idDocumentIssueDate)
             : undefined,
@@ -590,17 +462,11 @@ export class EmployeesService {
           throw new NotFoundException(
             'Employee must belong to a company to create a contract',
           );
-          throw new NotFoundException(
-            'Employee must belong to a company to create a contract',
-          );
         }
 
         const startDate = new Date(singleContract.startDate);
         const endDate = new Date(singleContract.endDate);
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-          throw new BadRequestException(
-            'Invalid contract startDate or endDate',
-          );
           throw new BadRequestException(
             'Invalid contract startDate or endDate',
           );
@@ -625,10 +491,6 @@ export class EmployeesService {
           document,
           `employees/${updatedEmployee.uuid}`,
         );
-        const path = await this.rustfs.uploadFile(
-          document,
-          `employees/${updatedEmployee.uuid}`,
-        );
         return prisma.employee.update({
           where: { uuid },
           data: { idDocumentFileUrl: path },
@@ -648,12 +510,9 @@ export class EmployeesService {
     });
 
     console.log(employee?.user?.passwordHash);
-    console.log(employee?.user?.passwordHash);
 
     if (!employee) throw new BadRequestException('Employee not not found');
-    if (!employee) throw new BadRequestException('Employee not not found');
 
-    if (!employee?.user?.passwordHash) return;
     if (!employee?.user?.passwordHash) return;
 
     // const isPasswordValid = await bcrypt.compare(newPassword, employee?.user?.passwordHash);
@@ -676,9 +535,6 @@ export class EmployeesService {
     const existing = await this.databaseService.employee.findUnique({
       where: { uuid },
     });
-    const existing = await this.databaseService.employee.findUnique({
-      where: { uuid },
-    });
     if (!existing) throw new NotFoundException('Employee not found');
 
     return this.databaseService.$transaction(async (prisma) => {
@@ -695,9 +551,6 @@ export class EmployeesService {
   }
 
   async reactivate(uuid: string) {
-    const employee = await this.databaseService.employee.findUnique({
-      where: { uuid },
-    });
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid },
     });

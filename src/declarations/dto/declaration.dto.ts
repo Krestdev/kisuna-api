@@ -5,13 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import {
-  IsEnum,
-  IsDateString,
-  IsUUID,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
 import { DeclarationType, DeclarationStatus } from '@prisma/client';
 import {

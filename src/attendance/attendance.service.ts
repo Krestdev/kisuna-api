@@ -34,7 +34,6 @@ export class AttendanceService {
     private readonly databaseService: DatabaseService,
     private readonly schedulesService: SchedulesService,
   ) {}
-  ) {}
 
   async createMany(dtos: CreateAttendanceDto[]) {
     return Promise.all(dtos.map((dto) => this.create(dto)));
@@ -44,9 +43,7 @@ export class AttendanceService {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });
-    const employee = await this.databaseService.employee.findUnique({
-      where: { uuid: dto.employeeId },
-    });
+
     if (!employee) throw new NotFoundException('Employee not found');
 
     const checkIn = new Date(dto.checkIn);
@@ -71,11 +68,6 @@ export class AttendanceService {
       : undefined;
     const overtimes =
       workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
-    const workedHour = checkOut
-      ? this.calculateHours(checkIn, checkOut)
-      : undefined;
-    const overtimes =
-      workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
 
     return this.databaseService.attendance.create({
       data: {
@@ -87,17 +79,6 @@ export class AttendanceService {
         longitude: dto.longitude ?? 0,
         workedHour,
         overtimes,
-      },
-      include: {
-        employee: {
-          select: {
-            uuid: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-            user: { select: { email: true } },
-          },
-        },
       },
       include: {
         employee: {
@@ -146,13 +127,8 @@ export class AttendanceService {
     const schedule = await this.schedulesService.getActiveSchedule(
       dto.employeeId,
     );
-    const schedule = await this.schedulesService.getActiveSchedule(
-      dto.employeeId,
-    );
+
     if (!schedule) {
-      throw new BadRequestException(
-        'No active schedule found for this employee',
-      );
       throw new BadRequestException(
         'No active schedule found for this employee',
       );
@@ -202,17 +178,6 @@ export class AttendanceService {
           },
         },
       },
-      include: {
-        employee: {
-          select: {
-            uuid: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-            user: { select: { email: true } },
-          },
-        },
-      },
     });
   }
 
@@ -236,17 +201,6 @@ export class AttendanceService {
     return this.databaseService.attendance.update({
       where: { uuid: record.uuid },
       data: { checkOut, workedHour, overtimes },
-      include: {
-        employee: {
-          select: {
-            uuid: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-            user: { select: { email: true } },
-          },
-        },
-      },
       include: {
         employee: {
           select: {
@@ -315,17 +269,6 @@ export class AttendanceService {
   async findOne(uuid: string): Promise<Attendance> {
     const attendance = await this.databaseService.attendance.findUnique({
       where: { uuid },
-      include: {
-        employee: {
-          select: {
-            uuid: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-            user: { select: { email: true } },
-          },
-        },
-      },
       include: {
         employee: {
           select: {
@@ -449,17 +392,6 @@ export class AttendanceService {
     return this.databaseService.attendance.update({
       where: { uuid },
       data,
-      include: {
-        employee: {
-          select: {
-            uuid: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-            user: { select: { email: true } },
-          },
-        },
-      },
       include: {
         employee: {
           select: {

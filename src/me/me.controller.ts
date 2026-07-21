@@ -20,15 +20,6 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiConsumes,
-  ApiBody,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
 import { MeService } from './me.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetLeavesDto } from './dto/get-leaves.dto';
@@ -220,20 +211,10 @@ export class MeController {
           enum: ['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'UNPAID', 'OTHER'],
           example: 'ANNUAL',
         },
-        type: {
-          type: 'string',
-          enum: ['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'UNPAID', 'OTHER'],
-          example: 'ANNUAL',
-        },
         startDate: { type: 'string', format: 'date', example: '2026-07-01' },
         endDate: { type: 'string', format: 'date', example: '2026-07-15' },
         observation: { type: 'string', example: 'Voyage familial' },
         deductFromAnnualBalance: { type: 'boolean', example: true },
-        justificatif: {
-          type: 'string',
-          format: 'binary',
-          description: 'Optional justification file',
-        },
         justificatif: {
           type: 'string',
           format: 'binary',

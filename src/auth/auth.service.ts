@@ -3,11 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -20,8 +16,6 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private readonly databaseService: DatabaseService,
-  ) {}
     private readonly databaseService: DatabaseService,
   ) {}
 
@@ -68,20 +62,8 @@ export class AuthService {
       role: user.role,
       employeeId: user.employeeId,
     };
-    const payload = {
-      sub: user.uuid,
-      email: user.email,
-      role: user.role,
-      employeeId: user.employeeId,
-    };
     return {
       access_token: await this.jwtService.signAsync(payload),
-      user: {
-        uuid: user.uuid,
-        email: user.email,
-        role: user.role,
-        employeeId: user.employeeId,
-      },
       user: {
         uuid: user.uuid,
         email: user.email,

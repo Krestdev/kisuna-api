@@ -17,14 +17,6 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
 import { DeclarationsService } from './declarations.service';
 import {
   CreateEarningItemDto,
@@ -34,14 +26,8 @@ import {
   CreateDeclarationDto,
   UpdateDeclarationDto,
 } from './dto/declaration.dto';
-import {
-  CreateDeclarationLineDto,
-  BulkCreateDeclarationLinesDto,
-} from './dto/declaration-line.dto';
-import {
-  CreateDeclarationEarningDto,
-  UpdateDeclarationEarningDto,
-} from './dto/declaration-earning.dto';
+import { BulkCreateDeclarationLinesDto } from './dto/declaration-line.dto';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EarningCategory, DeclarationStatus } from '@prisma/client';
 
@@ -161,10 +147,6 @@ export class DeclarationsController {
     @Param('uuid') uuid: string,
     @Body() dto: UpdateEarningItemDto,
   ) {
-  updateEarningItem(
-    @Param('uuid') uuid: string,
-    @Body() dto: UpdateEarningItemDto,
-  ) {
     return this.service.updateEarningItem(uuid, dto);
   }
 
@@ -271,10 +253,6 @@ export class DeclarationsController {
     @Param('uuid') uuid: string,
     @Body() dto: UpdateDeclarationDto,
   ) {
-  updateDeclaration(
-    @Param('uuid') uuid: string,
-    @Body() dto: UpdateDeclarationDto,
-  ) {
     return this.service.updateDeclaration(uuid, dto);
   }
 
@@ -319,146 +297,5 @@ export class DeclarationsController {
     @Body() dto: BulkCreateDeclarationLinesDto,
   ) {
     return this.service.createDeclarationLines(declarationId, dto);
-  }
-
-  @Get('declarations/:declarationId/lines')
-  @ApiOperation({
-    summary: 'Get declaration lines',
-    description: 'Retrieve all lines for a declaration',
-  })
-  @ApiOperation({
-    summary: 'Get declaration lines',
-    description: 'Retrieve all lines for a declaration',
-  })
-  @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
-  @ApiResponse({ status: 200, description: 'List of declaration lines' })
-  findDeclarationLines(@Param('declarationId') declarationId: string) {
-    return this.service.findDeclarationLines(declarationId);
-  }
-
-  @Get('declarations/:declarationId/lines/:lineId')
-  @ApiOperation({
-    summary: 'Get declaration line by ID',
-    description: 'Retrieve a specific declaration line with earnings',
-  })
-  @ApiOperation({
-    summary: 'Get declaration line by ID',
-    description: 'Retrieve a specific declaration line with earnings',
-  })
-  @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiResponse({ status: 200, description: 'Declaration line details' })
-  @ApiResponse({ status: 404, description: 'Declaration line not found' })
-  findOneDeclarationLine(@Param('lineId') lineId: string) {
-    return this.service.findOneDeclarationLine(lineId);
-  }
-
-  @Patch('declarations/:declarationId/lines/:lineId')
-  @ApiOperation({
-    summary: 'Update declaration line',
-    description: 'Update a declaration line',
-  })
-  @ApiOperation({
-    summary: 'Update declaration line',
-    description: 'Update a declaration line',
-  })
-  @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Declaration line updated successfully',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Declaration line updated successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Declaration line not found' })
-  updateDeclarationLine(
-    @Param('declarationId') declarationId: string,
-    @Param('lineId') lineId: string,
-    @Body() dto: CreateDeclarationLineDto,
-  ) {
-    return this.service.updateDeclarationLine(declarationId, lineId, dto);
-  }
-
-  @Delete('declarations/:declarationId/lines/:lineId')
-  @ApiOperation({
-    summary: 'Delete declaration line',
-    description: 'Delete a declaration line and associated earnings',
-  })
-  @ApiOperation({
-    summary: 'Delete declaration line',
-    description: 'Delete a declaration line and associated earnings',
-  })
-  @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Declaration line deleted successfully',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Declaration line deleted successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Declaration line not found' })
-  deleteDeclarationLine(@Param('lineId') lineId: string) {
-    return this.service.deleteDeclarationLine(lineId);
-  }
-
-  // DeclarationEarning routes (granular edits)
-  @Post('declaration-lines/:lineId/earnings')
-  @ApiOperation({
-    summary: 'Add earning to line',
-    description: 'Add an earning entry to a declaration line',
-  })
-  @ApiOperation({
-    summary: 'Add earning to line',
-    description: 'Add an earning entry to a declaration line',
-  })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiResponse({ status: 201, description: 'Earning added successfully' })
-  @ApiResponse({ status: 404, description: 'Declaration line not found' })
-  createDeclarationEarning(
-    @Param('lineId') lineId: string,
-    @Body() dto: CreateDeclarationEarningDto,
-  ) {
-    return this.service.createDeclarationEarning(lineId, dto);
-  }
-
-  @Patch('declaration-lines/:lineId/earnings/:earningId')
-  @ApiOperation({
-    summary: 'Update earning',
-    description: 'Update an earning entry amount',
-  })
-  @ApiOperation({
-    summary: 'Update earning',
-    description: 'Update an earning entry amount',
-  })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiParam({ name: 'earningId', description: 'Declaration earning UUID' })
-  @ApiResponse({ status: 200, description: 'Earning updated successfully' })
-  @ApiResponse({ status: 404, description: 'Earning not found' })
-  updateDeclarationEarning(
-    @Param('earningId') earningId: string,
-    @Body() dto: UpdateDeclarationEarningDto,
-  ) {
-    return this.service.updateDeclarationEarning(earningId, dto);
-  }
-
-  @Delete('declaration-lines/:lineId/earnings/:earningId')
-  @ApiOperation({
-    summary: 'Delete earning',
-    description: 'Remove an earning entry from a declaration line',
-  })
-  @ApiOperation({
-    summary: 'Delete earning',
-    description: 'Remove an earning entry from a declaration line',
-  })
-  @ApiParam({ name: 'lineId', description: 'Declaration line UUID' })
-  @ApiParam({ name: 'earningId', description: 'Declaration earning UUID' })
-  @ApiResponse({ status: 200, description: 'Earning deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Earning not found' })
-  deleteDeclarationEarning(@Param('earningId') earningId: string) {
-    return this.service.deleteDeclarationEarning(earningId);
   }
 }
