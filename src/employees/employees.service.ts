@@ -17,8 +17,8 @@ export class EmployeesService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly rustfs: RustfsService,
-  ) {}
-
+  ) { }
+  // TODO: refine this function by avoiding unnecessary distruction and optimise data integrity controle block @
   async create(
     createEmployeeDto: CreateEmployeeDto,
     userCompanyId?: string,
@@ -272,9 +272,9 @@ export class EmployeesService {
 
     const companyWhere = finalCompanyId
       ? {
-          ...(includeInactive === 'true' ? {} : { isActive: true }),
-          companyId: finalCompanyId,
-        }
+        ...(includeInactive === 'true' ? {} : { isActive: true }),
+        companyId: finalCompanyId,
+      }
       : null;
 
     const [data, total, totalInCompany] = await Promise.all([
