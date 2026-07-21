@@ -6,6 +6,7 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { FindAllCompaniesDto } from './dto/find-all-companies.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -15,8 +16,18 @@ export class CompaniesService {
     return this.databaseService.company.create({ data: createCompanyDto });
   }
 
-  async findAll() {
+  async findAll(query: FindAllCompaniesDto) {
+    const { page = 1, limit = 20, name, description } = query;
+    const skip = (page - 1) * limit;
+
     return this.databaseService.company.findMany({
+      where: {
+        name,
+        description,
+      },
+      skip,
+      take: limit,
+      orderBy: { name: 'asc' },
       include: {
         departments: true,
         contracts: true,

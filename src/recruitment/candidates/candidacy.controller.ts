@@ -18,8 +18,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CandidacyService } from './candidacy.service';
-import { CreateCandidacyDto } from './dto/create-candidacy.dto';
-import { UpdateCandidacyStatusDto } from './dto/update-candidacy-status.dto';
+import { CreateCandidacyDto } from '../dto/create-candidacy.dto';
+import { UpdateCandidacyStatusDto } from '../dto/update-candidacy-status.dto';
 
 @ApiTags('Candidacy')
 @Controller('recruitment/candidacy')
