@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { RustfsService } from '../rustfs/rustfs.service';
-import { CreateCandidacyDto } from './dto/create-candidacy.dto';
-import { UpdateCandidacyStatusDto } from './dto/update-candidacy-status.dto';
+import { DatabaseService } from '../../database/database.service';
+import { RustfsService } from '../../rustfs/rustfs.service';
+import { CreateCandidacyDto } from '../dto/create-candidacy.dto';
+import { UpdateCandidacyStatusDto } from '../dto/update-candidacy-status.dto';
 
 @Injectable()
 export class CandidacyService {

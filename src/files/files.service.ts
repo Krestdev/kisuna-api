@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RustfsService } from '../rustfs/rustfs.service';
 import { CreateFileDto } from './dto/create-file.dto';
+import { FindAllFileDto } from './dto/find-all-file.dto';
 
 @Injectable()
 export class FilesService {
@@ -30,11 +31,38 @@ export class FilesService {
     });
   }
 
-  async findAll(employeeId: string) {
-    return this.databaseService.file.findMany({
-      where: { employeeId },
+  async findAll(query: FindAllFileDto) {
+    const {
+      employeeId,
+      document_type,
+      file_name,
+      expired_date,
+      page = 1,
+      limit = 20,
+    } = query;
+
+    const skip = (page - 1) * limit;
+    const data = await this.databaseService.file.findMany({
+      where: {
+        // AND:[{
+        employeeId,
+        document_type,
+        file_name,
+        expired_date: expired_date ? new Date(expired_date) : null,
+        // }]
+      },
+      skip,
+      take: limit,
+      include: {
+        employee: {
+          select: { uuid: true, firstName: true, lastName: true },
+        },
+      },
       orderBy: { createAt: 'desc' },
     });
+
+    const totalPages = Math.ceil(data.length / limit);
+    return { data, meta: { page, limit, total: data.length, totalPages } };
   }
 
   async getPresignedUrl(fileId: string) {
