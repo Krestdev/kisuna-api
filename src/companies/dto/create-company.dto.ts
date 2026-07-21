@@ -1,7 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import { CompanyCreateInput } from 'generated/prisma/models';
 
-export class CreateCompanyDto {
+export class CreateCompanyDto implements Omit<
+  CompanyCreateInput,
+  'id' | 'createdAt' | 'updatedAt'
+> {
   @ApiProperty({ example: 'Acme Corp', description: 'The name of the company' })
   @IsString()
   @IsNotEmpty()

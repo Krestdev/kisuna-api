@@ -8,6 +8,11 @@ import { Reflector } from '@nestjs/core';
 import { COMPANY_SCOPE_KEY } from '../decorators/company-scope.decorator';
 import { DatabaseService } from '../../database/database.service';
 
+interface AuthenticatedRequest {
+  user?: { role: string; employeeId?: string };
+  userCompanyId?: string;
+}
+
 @Injectable()
 export class CompanyScopeGuard implements CanActivate {
   constructor(
@@ -25,24 +30,16 @@ export class CompanyScopeGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
 
-    // SUPER_ADMIN has access to all companies
-    if (user.role === 'SUPER_ADMIN') {
-      return true;
-    }
+    if (user.role === 'SUPER_ADMIN') return true;
+    if (user.role === 'ADMIN') return true;
 
-    // ADMIN has access to all companies
-    if (user.role === 'ADMIN') {
-      return true;
-    }
-
-    // For COMPANY_ADMIN, check company match
     if (user.role === 'COMPANY_ADMIN') {
       if (!user.employeeId) {
         throw new ForbiddenException(
@@ -59,7 +56,6 @@ export class CompanyScopeGuard implements CanActivate {
         throw new ForbiddenException('Employee not assigned to any company');
       }
 
-      // Store company ID in request for filtering
       request.userCompanyId = employee.companyId;
       return true;
     }

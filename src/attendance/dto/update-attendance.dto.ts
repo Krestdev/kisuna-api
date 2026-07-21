@@ -1,5 +1,6 @@
 import { IsArray, IsEnum, IsOptional, IsDateString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { AttendanceUpdateInput } from 'generated/prisma/models';
 
 enum AttendanceStatus {
   PRESENT = 'PRESENT',
@@ -10,7 +11,10 @@ enum AttendanceStatus {
   FIELD = 'FIELD',
 }
 
-export class UpdateAttendanceDto {
+export class UpdateAttendanceDto implements Omit<
+  AttendanceUpdateInput,
+  'id' | 'employee' | 'payroll' | 'createdAt' | 'updatedAt'
+> {
   @ApiPropertyOptional({ example: '2026-06-16T08:00:00Z' })
   @IsOptional()
   @IsDateString()

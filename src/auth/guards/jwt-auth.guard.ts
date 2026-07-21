@@ -5,16 +5,20 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
+interface JwtRequest {
+  headers: { authorization?: string };
+  user?: { uuid: string; email: string; role: string; employeeId?: string };
+}
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
-    console.log('JwtAuthGuard canActivate called');
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<JwtRequest>();
     console.log('Authorization header:', request.headers.authorization);
     return super.canActivate(context);
   }
 
-  handleRequest(err, user, info) {
+  handleRequest<T>(err: Error | null, user: T, info: unknown): T {
     console.log(
       'JwtAuthGuard handleRequest - err:',
       err,

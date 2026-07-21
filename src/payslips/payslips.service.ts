@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RustfsService } from '../rustfs/rustfs.service';
-import PDFDocument = require('pdfkit');
+import PDFDocument from 'pdfkit';
 import { format } from 'date-fns';
 
 @Injectable()
@@ -91,12 +91,20 @@ export class PayslipsService {
     });
   }
 
-  private async generatePdf(payroll: any): Promise<Buffer> {
+  private async generatePdf(payroll: {
+    employee: { firstName: string; lastName: string };
+    startDate: Date;
+    baseSalary: number;
+    overtimePay: number;
+    bonus: number;
+    deductions: number;
+    netSalary: number;
+  }): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument();
       const chunks: Buffer[] = [];
 
-      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 

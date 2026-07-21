@@ -8,13 +8,20 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
+
 import { SchedulesService } from './schedules.service';
+
 import { CreateScheduleDto } from './dto/create-schedule.dto';
+
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+
 import { RolesGuard } from '../common/guards/roles.guard';
+
 import { Roles } from '../common/decorators/roles.decorator';
-import { SystemRole } from '@prisma/client';
+
+import { SystemRole } from '../../generated/prisma/client';
 
 @ApiTags('Schedules')
 @Controller('schedules')

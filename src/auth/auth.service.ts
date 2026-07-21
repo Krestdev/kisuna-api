@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
+
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -26,7 +27,7 @@ export class AuthService {
       throw new BadRequestException('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const hashedPassword = await bcrypt.hash(registerDto.passwordHash, 10);
     const user = await this.databaseService.user.create({
       data: {
         email: registerDto.email,
@@ -34,7 +35,8 @@ export class AuthService {
       },
     });
 
-    const { passwordHash, ...result } = user;
+    // const { passwordHash: _pw, ...result } = user;
+    const { ...result } = user;
     return result;
   }
 
@@ -47,7 +49,7 @@ export class AuthService {
     }
 
     const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
+      loginDto.passwordHash,
       user.passwordHash,
     );
     if (!isPasswordValid) {

@@ -21,12 +21,13 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MeService } from './me.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetLeavesDto } from './dto/get-leaves.dto';
 import { CreateLeaveDto } from './dto/create-leave.dto';
 import { GetAttendanceDto } from './dto/get-attendance.dto';
 import { FieldPresenceDto } from './dto/field-presence.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { AuthRequest } from '../common/types/auth-request.interface';
 
 @ApiTags('Me - Employee Self-Service')
 @ApiBearerAuth()
@@ -41,15 +42,15 @@ export class MeController {
     status: 200,
     description: 'Dashboard data retrieved successfully',
   })
-  async getDashboard(@Request() req) {
-    return this.meService.getDashboard(req.user.employeeId);
+  async getDashboard(@Request() req: AuthRequest) {
+    return this.meService.getDashboard(req.user.employeeId as string);
   }
 
   @Get('profile')
   @ApiOperation({ summary: 'Get employee profile information' })
   @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
-  async getProfile(@Request() req) {
-    return this.meService.getProfile(req.user.employeeId);
+  async getProfile(@Request() req: AuthRequest) {
+    return this.meService.getProfile(req.user.employeeId as string);
   }
 
   @Patch('password')
@@ -59,7 +60,10 @@ export class MeController {
     status: 400,
     description: 'Invalid current password or passwords do not match',
   })
-  async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+  async changePassword(
+    @Request() req: AuthRequest,
+    @Body() dto: ChangePasswordDto,
+  ) {
     return this.meService.changePassword(req.user.uuid, dto);
   }
 
@@ -101,8 +105,11 @@ export class MeController {
     status: 200,
     description: 'Attendance records retrieved successfully',
   })
-  async getAttendance(@Request() req, @Query() query: GetAttendanceDto) {
-    return this.meService.getAttendance(req.user.employeeId, query);
+  async getAttendance(
+    @Request() req: AuthRequest,
+    @Query() query: GetAttendanceDto,
+  ) {
+    return this.meService.getAttendance(req.user.employeeId as string, query);
   }
 
   @Post('attendance/field-presence')
@@ -115,8 +122,11 @@ export class MeController {
     status: 422,
     description: 'Validation error - missing required fields',
   })
-  async fieldPresence(@Request() req, @Body() dto: FieldPresenceDto) {
-    return this.meService.fieldPresence(req.user.employeeId, dto);
+  async fieldPresence(
+    @Request() req: AuthRequest,
+    @Body() dto: FieldPresenceDto,
+  ) {
+    return this.meService.fieldPresence(req.user.employeeId as string, dto);
   }
 
   @Get('leaves/recent')
@@ -131,9 +141,12 @@ export class MeController {
     status: 200,
     description: 'Recent leaves retrieved successfully',
   })
-  async getRecentLeaves(@Request() req, @Query('limit') limit?: string) {
+  async getRecentLeaves(
+    @Request() req: AuthRequest,
+    @Query('limit') limit?: string,
+  ) {
     return this.meService.getRecentLeaves(
-      req.user.employeeId,
+      req.user.employeeId as string,
       limit ? parseInt(limit) : 5,
     );
   }
@@ -176,11 +189,14 @@ export class MeController {
     status: 200,
     description: 'Leave requests retrieved successfully',
   })
-  async getLeaves(@Request() req, @Query() query: GetLeavesDto) {
-    return this.meService.getLeaves(req.user.employeeId, query);
+  async getLeaves(@Request() req: AuthRequest, @Query() query: GetLeavesDto) {
+    return this.meService.getLeaves(req.user.employeeId as string, query);
   }
 
   @Post('leaves')
+  @ApiOperation({
+    summary: 'Submit a new leave request with optional justification file',
+  })
   @ApiOperation({
     summary: 'Submit a new leave request with optional justification file',
   })
@@ -211,13 +227,17 @@ export class MeController {
     status: 201,
     description: 'Leave request created successfully',
   })
+  @ApiResponse({
+    status: 201,
+    description: 'Leave request created successfully',
+  })
   @ApiResponse({ status: 422, description: 'Validation error' })
   @UseInterceptors(FileInterceptor('justificatif'))
   async createLeave(
-    @Request() req,
+    @Request() req: AuthRequest,
     @Body() dto: CreateLeaveDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.meService.createLeave(req.user.employeeId, dto, file);
+    return this.meService.createLeave(req.user.employeeId as string, dto, file);
   }
 }

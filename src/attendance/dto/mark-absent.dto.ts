@@ -1,13 +1,27 @@
-import { IsString, IsEnum, IsNotEmpty, IsDateString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsEnum,
+  IsNotEmpty,
+  IsDateString,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AttendanceUpdateInput } from 'generated/prisma/models';
 
 enum AttendanceStatus {
+  PRESENT = 'PRESENT',
   ABSENT = 'ABSENT',
-  ON_LEAVE = 'ON_LEAVE',
+  LATE = 'LATE',
   HALF_DAY = 'HALF_DAY',
+  ON_LEAVE = 'ON_LEAVE',
+  FIELD = 'FIELD',
 }
 
-export class MarkAbsentDto {
+export class MarkAbsentDto implements Omit<
+  AttendanceUpdateInput,
+  'id' | 'employee' | 'payroll' | 'createdAt' | 'updatedAt'
+> {
   @ApiProperty({
     description: 'Employee UUID',
     example: '550e8400-e29b-41d4-a716-446655440000',
@@ -24,11 +38,13 @@ export class MarkAbsentDto {
   @IsNotEmpty()
   date: string;
 
-  @ApiProperty({
-    description: 'Type of absence',
+  @ApiPropertyOptional({
     enum: AttendanceStatus,
-    example: 'ABSENT',
+    isArray: true,
+    example: ['PRESENT', 'FIELD'],
   })
-  @IsEnum(AttendanceStatus)
-  status: AttendanceStatus;
+  @IsOptional()
+  @IsArray()
+  @IsEnum(AttendanceStatus, { each: true })
+  status: AttendanceStatus[] = [AttendanceStatus.ABSENT];
 }

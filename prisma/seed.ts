@@ -1,4 +1,4 @@
-import { PrismaClient, Gender } from '@prisma/client';
+import { PrismaClient, Gender } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';

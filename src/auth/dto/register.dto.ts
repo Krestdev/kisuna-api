@@ -1,7 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { UserCreateInput } from 'generated/prisma/models';
 
-export class RegisterDto {
+export class RegisterDto implements Omit<
+  UserCreateInput,
+  'id' | 'role' | 'status' | 'createdAt' | 'updatedAt'
+> {
   @ApiProperty({
     example: 'user@example.com',
     description: 'User email address',
@@ -15,8 +19,13 @@ export class RegisterDto {
     description: 'User password (minimum 6 characters)',
     minLength: 6,
   })
+  @ApiProperty({
+    example: 'password123',
+    description: 'User password (minimum 6 characters)',
+    minLength: 6,
+  })
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
-  password!: string;
+  passwordHash!: string;
 }

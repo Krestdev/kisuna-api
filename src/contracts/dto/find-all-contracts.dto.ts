@@ -1,8 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-
+import { IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+import { ContractStatus } from 'generated/prisma/enums';
 export class FindAllContractsDto {
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    default: 1,
+  })
   @ApiPropertyOptional({
     description: 'Page number for pagination',
     default: 1,
@@ -32,8 +36,9 @@ export class FindAllContractsDto {
 
   @ApiPropertyOptional({
     description: 'Filter by Status (ACTIVE, EXPIRED, TERMINATED)',
+    enum: ContractStatus,
   })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(ContractStatus)
+  status?: ContractStatus;
 }

@@ -7,7 +7,9 @@ import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
 // Fix BigInt serialization
-BigInt.prototype['toJSON'] = function () {
+(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (
+  this: bigint,
+) {
   return this.toString();
 };
 
@@ -60,7 +62,21 @@ async function bootstrap() {
     .setDescription(
       'HR Management System API for Krest Holding - Manage employees, departments, and authentication',
     )
+    .setDescription(
+      'HR Management System API for Krest Holding - Manage employees, departments, and authentication',
+    )
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .addBearerAuth(
       {
         type: 'http',
@@ -83,4 +99,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3004, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
-bootstrap();
+void bootstrap();

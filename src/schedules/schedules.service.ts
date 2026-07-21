@@ -6,6 +6,7 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { EmployeeSchedule } from 'generated/prisma/client';
 
 @Injectable()
 export class SchedulesService {
@@ -35,33 +36,42 @@ export class SchedulesService {
       );
     }
 
-    // 4. Check no overlapping ACTIVE schedule exists
-    const overlap = await this.prisma.employeeSchedule.findFirst({
-      where: {
-        employeeId: dto.employeeId,
-        status: 'ACTIVE',
-        AND: [
-          { startDate: { lte: new Date(dto.endDate) } },
-          { endDate: { gte: new Date(dto.startDate) } },
-        ],
-      },
+    const newStartDate = new Date(dto.startDate);
+
+    // 4. Find any existing active schedule
+    const existing = await this.prisma.employeeSchedule.findFirst({
+      where: { employeeId: dto.employeeId, status: 'ACTIVE' },
     });
-    if (overlap) {
+
+    // Reject only genuinely ambiguous input: same startDate or new start falls inside a future-starting active schedule
+    if (existing && existing.startDate >= newStartDate) {
       throw new BadRequestException(
-        'Employee already has an active schedule overlapping this period',
+        'New schedule startDate must be after the existing active schedule startDate',
       );
     }
 
-    return this.prisma.employeeSchedule.create({
-      data: {
-        employeeId: dto.employeeId,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
-        shiftStart: dto.shiftStart,
-        shiftEnd: dto.shiftEnd,
-        workDays: days.join(','),
-      },
-      include: { employee: true },
+    return this.prisma.$transaction(async (prisma) => {
+      // Expire the existing active schedule, closing it the day before the new one starts
+      if (existing) {
+        const expireDate = new Date(newStartDate);
+        expireDate.setDate(expireDate.getDate() - 1);
+        await prisma.employeeSchedule.update({
+          where: { uuid: existing.uuid },
+          data: { endDate: expireDate, status: 'EXPIRED' },
+        });
+      }
+
+      return prisma.employeeSchedule.create({
+        data: {
+          employeeId: dto.employeeId,
+          startDate: newStartDate,
+          endDate: new Date(dto.endDate),
+          shiftStart: dto.shiftStart,
+          shiftEnd: dto.shiftEnd,
+          workDays: days.join(','),
+        },
+        include: { employee: true },
+      });
     });
   }
 
@@ -103,7 +113,17 @@ export class SchedulesService {
   async update(uuid: string, dto: UpdateScheduleDto) {
     await this.findOne(uuid);
 
-    const data: any = {};
+    const data: Partial<
+      Pick<
+        EmployeeSchedule,
+        | 'startDate'
+        | 'endDate'
+        | 'shiftStart'
+        | 'shiftEnd'
+        | 'workDays'
+        | 'status'
+      >
+    > = {};
     if (dto.startDate) data.startDate = new Date(dto.startDate);
     if (dto.endDate) data.endDate = new Date(dto.endDate);
     if (dto.shiftStart) data.shiftStart = dto.shiftStart;

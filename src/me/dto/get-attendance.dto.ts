@@ -8,7 +8,7 @@ export class GetAttendanceDto {
     example: 'PRESENT,LATE,FIELD',
   })
   @IsOptional()
-  @Transform(({ value }) => value?.split(','))
+  @Transform(({ value }: { value: string }) => value?.split(','))
   @IsString({ each: true })
   statuses?: string[];
 
