@@ -30,9 +30,15 @@ export class CompaniesService {
       orderBy: { name: 'asc' },
       include: {
         departments: true,
-        contracts: true,
+        // contracts: true,
         employees: {
           where: { isActive: true },
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+          },
         },
       },
     });
@@ -79,12 +85,7 @@ export class CompaniesService {
   }
 
   async remove(uuid: string) {
-    const company = await this.databaseService.company.findUnique({
-      where: { uuid },
-      include: { departments: true, contracts: true },
-    });
-    if (!company)
-      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    const company = await this.findOne(uuid);
     if (company.departments.length > 0)
       throw new BadRequestException(
         'Cannot delete company: active departments exist',
