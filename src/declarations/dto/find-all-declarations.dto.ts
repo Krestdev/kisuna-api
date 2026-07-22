@@ -1,8 +1,5 @@
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
-import {
-  DeclarationStatus,
-  DeclarationType,
-} from 'generated/prisma/client';
+import { DeclarationStatus, DeclarationType } from 'generated/prisma/client';
 
 export class FindAllDeclarationsDto {
   @IsOptional()

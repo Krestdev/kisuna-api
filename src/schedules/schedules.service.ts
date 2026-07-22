@@ -140,9 +140,8 @@ export class SchedulesService {
   }
 
   async remove(uuid: string) {
-    const result = this.prisma.employeeSchedule.delete({ where: { uuid } });
-    if (!result) throw new NotFoundException('Schedule not found');
-    return result;
+    await this.findOne(uuid);
+    return this.prisma.employeeSchedule.delete({ where: { uuid } });
   }
 
   // Called by cron job

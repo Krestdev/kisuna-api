@@ -85,7 +85,7 @@ export class ContractsService {
 
   async update(uuid: string, updateContractDto: UpdateContractDto) {
     const { startDate, endDate, ...rest } = updateContractDto;
-    const updatedContract = this.databaseService.contract.update({
+    return this.databaseService.contract.update({
       where: { uuid },
       data: {
         ...rest,
@@ -93,12 +93,17 @@ export class ContractsService {
         endDate,
       },
     });
-    if (!updatedContract) throw new NotFoundException('Contract not found');
-    return updatedContract;
   }
 
   async terminate(uuid: string, terminateDto: TerminateContractDto) {
-    const contract = await this.findOne(uuid);
+    const contract = await this.databaseService.contract.findUnique({
+      where: { uuid },
+      include: {
+        employee: true,
+        company: true,
+      },
+    });
+    if (!contract) throw new NotFoundException('Contract not found');
 
     if (contract.status !== ContractStatus.ACTIVE) {
       throw new BadRequestException('Only active contracts can be terminated');

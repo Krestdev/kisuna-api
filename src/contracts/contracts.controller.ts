@@ -8,7 +8,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-
 import {
   ApiTags,
   ApiOperation,
@@ -16,21 +15,12 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-
 import { ContractsService } from './contracts.service';
-
 import { UpdateContractDto } from './dto/update-contract.dto';
-
 import { TerminateContractDto } from './dto/terminate-contract.dto';
-
-import { FindAllContractsDto } from './dto/find-all-contracts.dto';
-
 import { CreateContractDto } from './dto/create-contract.dto';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Contracts')

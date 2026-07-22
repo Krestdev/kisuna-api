@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-
 import {
   ApiTags,
   ApiOperation,
@@ -17,19 +16,11 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-
 import { CompaniesService } from './companies.service';
-
 import { CreateCompanyDto } from './dto/create-company.dto';
-
 import { UpdateCompanyDto } from './dto/update-company.dto';
-
-import { FindAllCompaniesDto } from './dto/find-all-companies.dto';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Companies')
@@ -51,7 +42,7 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get all companies' })
   @ApiResponse({ status: 200, description: 'List of companies' })
   findAll(@Query() query: Record<string, unknown>) {
-    return this.companiesService.findAll(query as FindAllCompaniesDto);
+    return this.companiesService.findAll(query);
   }
 
   @Get(':id')
