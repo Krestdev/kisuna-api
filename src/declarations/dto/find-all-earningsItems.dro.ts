@@ -1,10 +1,6 @@
-import { EarningItem, EarningCategory } from 'generated/prisma/client';
 import { IsOptional, IsString, IsBoolean, IsNumber } from 'class-validator';
 
-export class findAllEarningItems implements Omit<
-  EarningItem,
-  'uuid' | 'createdAt' | 'updatedAt'
-> {
+export class findAllEarningItems {
   @IsOptional()
   @IsNumber()
   page?: number;
@@ -15,17 +11,17 @@ export class findAllEarningItems implements Omit<
 
   @IsOptional()
   @IsString()
-  companyId: string;
+  companyId?: string;
 
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  category: EarningCategory;
+  category?: any;
 
   @IsOptional()
   @IsBoolean()
-  isActive: boolean;
+  isActive?: boolean;
 }

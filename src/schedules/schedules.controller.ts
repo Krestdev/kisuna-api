@@ -37,12 +37,13 @@ export class SchedulesController {
     return this.schedulesService.create(dto);
   }
 
-  @Get()
-  @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'List all schedules' })
-  findAll() {
-    return this.schedulesService.findAll();
-  }
+  // not yet certain to be use
+  // @Get()
+  // @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
+  // @ApiOperation({ summary: 'List all schedules' })
+  // findAll() {
+  //   return this.schedulesService.findAll();
+  // }
 
   @Get(':id')
   @Roles(SystemRole.EMPLOYEE, SystemRole.ADMIN, SystemRole.SUPER_ADMIN)

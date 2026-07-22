@@ -211,29 +211,20 @@ export class EmployeesService {
     });
   }
 
-  async findAll(query: FindAllEmployeesDto, userCompanyId?: string) {
-    const {
-      page,
-
-      limit,
-
+  async findAll(
+    {
+      page = 1,
+      limit = 10,
       companyId,
-
       departmentId,
-
       status,
-
       search,
-
       includeInactive,
-
       includeSensitive,
-
       contractType,
-    } = query;
-
-    // For COMPANY_ADMIN, filter by their company
-
+    }: FindAllEmployeesDto,
+    userCompanyId?: string,
+  ) {
     const finalCompanyId = userCompanyId || companyId?.trim() || undefined;
 
     // Check if any valid params provided (ignore empty strings)

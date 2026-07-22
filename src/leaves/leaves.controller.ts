@@ -51,7 +51,7 @@ export class LeavesController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  async findAll(@Query() query: FindAllLeaveDto) {
+  async findAll(@Query() query: Record<string, unknown>) {
     return this.leavesService.findAll(query);
   }
 

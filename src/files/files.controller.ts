@@ -89,7 +89,7 @@ export class FilesController {
     type: Number,
   })
   @ApiResponse({ status: 200, description: 'List of files' })
-  findAll(@Query() query: FindAllFileDto) {
+  findAll(@Query() query: Record<string, unknown>) {
     return this.filesService.findAll(query);
   }
 

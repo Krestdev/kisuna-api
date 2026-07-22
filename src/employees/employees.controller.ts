@@ -104,7 +104,10 @@ export class EmployeesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all employees with pagination and filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of employees' })
-  findAll(@Query() query: FindAllEmployeesDto, @Request() req: ScopedRequest) {
+  findAll(
+    @Query() query: Record<string, unknown>,
+    @Request() req: ScopedRequest,
+  ) {
     return this.employeesService.findAll(query, req.userCompanyId);
   }
 
