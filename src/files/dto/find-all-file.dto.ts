@@ -1,26 +1,20 @@
 import { Optional } from '@nestjs/common';
-import { File, Employee, DocumentType } from 'generated/prisma/client';
+import { DocumentType } from 'generated/prisma/client';
 
-export class FindAllFileDto implements File {
+export class FindAllFileDto {
   @Optional()
-  uuid: string;
+  file_name?: string;
   @Optional()
-  file_name: string;
+  document_type?: DocumentType | null;
   @Optional()
-  document_type: DocumentType | null;
+  path?: string | null;
   @Optional()
-  path: string | null;
+  expired_date?: Date | null;
   @Optional()
-  expired_date: Date | null;
-  @Optional()
-  createAt: Date;
-  @Optional()
-  updatedAt: Date;
-  @Optional()
-  employeeId: string;
-  @Optional()
-  employee: Employee;
+  employeeId?: string;
 
-  page: number;
-  limit: number;
+  @Optional()
+  page?: number;
+  @Optional()
+  limit?: number;
 }

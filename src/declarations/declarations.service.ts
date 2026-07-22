@@ -38,8 +38,14 @@ export class DeclarationsService {
     });
   }
 
-  async findAllEarningItems(query: findAllEarningItems) {
-    const { page = 1, limit = 20, category, companyId, isActive, name } = query;
+  async findAllEarningItems({
+    page = 1,
+    limit = 20,
+    category,
+    companyId,
+    isActive,
+    name,
+  }: findAllEarningItems) {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.earningItem.findMany({

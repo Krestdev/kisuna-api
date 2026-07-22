@@ -75,12 +75,12 @@ export class SchedulesService {
     });
   }
 
-  async findAll() {
-    return this.prisma.employeeSchedule.findMany({
-      include: { employee: true },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
+  // async findAll() {
+  //   return this.prisma.employeeSchedule.findMany({
+  //     include: { employee: true },
+  //     orderBy: { createdAt: 'desc' },
+  //   });
+  // }
 
   async findOne(uuid: string) {
     const schedule = await this.prisma.employeeSchedule.findUnique({

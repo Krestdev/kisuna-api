@@ -13,26 +13,15 @@ import {
 } from '@nestjs/common';
 
 import { LeavesService } from './leaves.service';
-
 import { RequestLeaveDto } from './dto/request-leave.dto';
-
 import { RejectLeaveDto } from './dto/reject-leave.dto';
-
 import { CreateLeaveTypeDto } from './dto/create-leave-type.dto';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
 import { RolesGuard } from '../common/guards/roles.guard';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-
 import { AuthRequest } from '../common/types/auth-request.interface';
-
-import { FindAllLeaveDto } from './dto/find-all-leave.dto';
 
 @ApiTags('Leaves')
 @ApiBearerAuth('JWT-auth')
@@ -51,7 +40,7 @@ export class LeavesController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
-  async findAll(@Query() query: FindAllLeaveDto) {
+  async findAll(@Query() query: Record<string, unknown>) {
     return this.leavesService.findAll(query);
   }
 

@@ -39,7 +39,6 @@ import {
   EarningCategory,
   DeclarationStatus,
 } from '../../generated/prisma/client';
-import { findAllEarningItems } from './dto/find-all-earningsItems.dro';
 
 @ApiTags('Declarations')
 @ApiBearerAuth('JWT-auth')
@@ -101,18 +100,15 @@ export class DeclarationsController {
     required: false,
 
     enum: EarningCategory,
-
     description: 'Filter by earning category',
   })
   @ApiQuery({
     name: 'isActive',
-
     required: false,
-
     description: 'Filter by active status (true/false)',
   })
   @ApiResponse({ status: 200, description: 'List of earning items' })
-  findAllEarningItems(@Query() query: findAllEarningItems) {
+  findAllEarningItems(@Query() query: Record<string, unknown>) {
     return this.service.findAllEarningItems(query);
   }
 

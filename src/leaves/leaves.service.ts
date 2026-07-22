@@ -93,16 +93,14 @@ export class LeavesService {
     }
   }
 
-  async findAll(query: FindAllLeaveDto) {
-    const {
-      page = 1,
-      limit = 10,
-      employeeId,
-      status,
-      startDate,
-      endDate,
-    } = query;
-
+  async findAll({
+    page = 1,
+    limit = 10,
+    employeeId,
+    status,
+    startDate,
+    endDate,
+  }: FindAllLeaveDto) {
     const data = await this.prisma.leave.findMany({
       include: { employee: true },
       where: {

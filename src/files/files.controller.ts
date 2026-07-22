@@ -26,13 +26,9 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
-import { FindAllFileDto } from './dto/find-all-file.dto';
 
 @ApiTags('Files')
 @Controller('employees/:employeeId/files')
@@ -89,7 +85,7 @@ export class FilesController {
     type: Number,
   })
   @ApiResponse({ status: 200, description: 'List of files' })
-  findAll(@Query() query: FindAllFileDto) {
+  findAll(@Query() query: Record<string, unknown>) {
     return this.filesService.findAll(query);
   }
 

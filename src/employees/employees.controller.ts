@@ -28,7 +28,6 @@ import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { changeEmployeePassword } from './dto/change-employee-password.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
-import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
 import { SetRoleDto } from './dto/set-role.dto';
 import { SystemRole } from '../../generated/prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -104,7 +103,10 @@ export class EmployeesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all employees with pagination and filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of employees' })
-  findAll(@Query() query: FindAllEmployeesDto, @Request() req: ScopedRequest) {
+  findAll(
+    @Query() query: Record<string, unknown>,
+    @Request() req: ScopedRequest,
+  ) {
     return this.employeesService.findAll(query, req.userCompanyId);
   }
 
