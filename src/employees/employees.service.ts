@@ -37,7 +37,7 @@ export class EmployeesService {
     private readonly databaseService: DatabaseService,
 
     private readonly rustfs: RustfsService,
-  ) {}
+  ) { }
 
   // TODO: refine this function by avoiding unnecessary distruction and optimise data integrity controle block @
 
@@ -437,10 +437,10 @@ export class EmployeesService {
 
     const companyWhere = finalCompanyId
       ? {
-          ...(includeInactive === 'true' ? {} : { isActive: true }),
+        ...(includeInactive === 'true' ? {} : { isActive: true }),
 
-          companyId: finalCompanyId,
-        }
+        companyId: finalCompanyId,
+      }
       : null;
 
     const [data, total, totalInCompany] = await Promise.all([
@@ -629,16 +629,16 @@ export class EmployeesService {
         Array.isArray(contractData) ? contractData[0] : contractData
       ) as
         | {
-            startDate?: string;
+          startDate?: string;
 
-            endDate?: string;
+          endDate?: string;
 
-            contract_type?: ContractType;
+          contract_type?: ContractType;
 
-            baseSalary?: number;
+          baseSalary?: number;
 
-            currency?: string;
-          }
+          currency?: string;
+        }
         | undefined;
 
       if (
