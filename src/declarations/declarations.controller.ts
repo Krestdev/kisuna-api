@@ -39,7 +39,6 @@ import {
   EarningCategory,
   DeclarationStatus,
 } from '../../generated/prisma/client';
-import { findAllEarningItems } from './dto/find-all-earningsItems.dro';
 
 @ApiTags('Declarations')
 @ApiBearerAuth('JWT-auth')

@@ -1,5 +1,5 @@
 import { Optional } from '@nestjs/common';
-import { File, Employee, DocumentType } from 'generated/prisma/client';
+import { DocumentType } from 'generated/prisma/client';
 
 export class FindAllFileDto {
   @Optional()

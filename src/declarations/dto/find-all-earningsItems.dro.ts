@@ -1,3 +1,4 @@
+import { EarningCategory } from 'generated/prisma/client';
 import { IsOptional, IsString, IsBoolean, IsNumber } from 'class-validator';
 
 export class findAllEarningItems {
@@ -19,7 +20,7 @@ export class findAllEarningItems {
 
   @IsOptional()
   @IsString()
-  category?: any;
+  category?: EarningCategory;
 
   @IsOptional()
   @IsBoolean()

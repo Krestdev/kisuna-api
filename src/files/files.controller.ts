@@ -26,13 +26,9 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
-import { FindAllFileDto } from './dto/find-all-file.dto';
 
 @ApiTags('Files')
 @Controller('employees/:employeeId/files')

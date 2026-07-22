@@ -1,4 +1,4 @@
-import { Leave, LeaveStatus } from 'generated/prisma/client';
+import { LeaveStatus } from 'generated/prisma/client';
 import { IsOptional, IsEnum, IsDate, IsInt, IsString } from 'class-validator';
 
 export class FindAllLeaveDto {
