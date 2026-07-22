@@ -29,7 +29,6 @@ import { SystemRole } from '../../generated/prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 
 import { RolesGuard } from '../common/guards/roles.guard';
-import { FindAllCompaniesDto } from './dto/find-all-companies.dto';
 
 @ApiTags('Companies')
 @Controller('companies')
