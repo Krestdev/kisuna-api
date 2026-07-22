@@ -111,8 +111,6 @@ export class SchedulesService {
   }
 
   async update(uuid: string, dto: UpdateScheduleDto) {
-    await this.findOne(uuid);
-
     const data: Partial<
       Pick<
         EmployeeSchedule,

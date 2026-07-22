@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LeavesService } from './leaves.service';
 import { LeavesController } from './leaves.controller';
-import { LeaveCronService } from './leave-cron.service';
+import { LeaveCronService } from './cron/leave-cron.service';
 import { DatabaseModule } from '../database/database.module';
 import { SchedulesModule } from '../schedules/schedules.module';
 
