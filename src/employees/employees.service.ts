@@ -3,19 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { DatabaseService } from '../database/database.service';
-
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
-
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
-
 import * as bcrypt from 'bcrypt';
-
 import { RustfsService } from '../rustfs/rustfs.service';
-
 import {
   ContractType,
   DocumentType,
@@ -25,9 +18,7 @@ import {
 
 const DEFAULT_SCHEDULE = {
   shiftStart: '08:00',
-
   shiftEnd: '17:00',
-
   workDays: 'MON,TUE,WED,THU,FRI',
 };
 
@@ -37,7 +28,7 @@ export class EmployeesService {
     private readonly databaseService: DatabaseService,
 
     private readonly rustfs: RustfsService,
-  ) { }
+  ) {}
 
   // TODO: refine this function by avoiding unnecessary distruction and optimise data integrity controle block @
 
@@ -50,35 +41,20 @@ export class EmployeesService {
   ) {
     const {
       birthday,
-
       hireDate,
-
       companyId,
-
       contract,
-
       contracts,
-
       idDocumentIssueDate,
-
       idDocumentExpiryDate,
-
       email,
-
       departmentId,
-
       supervisorId,
-
       endDate,
-
       leaveDays,
-
       phoneNumber,
-
       EmergencyContactPhone,
-
       matrimonial_status,
-
       number_of_children,
 
       ...rest
@@ -96,51 +72,26 @@ export class EmployeesService {
       const employee = await prisma.employee.create({
         data: {
           ...rest,
-
           phoneNumber,
-
           EmergencyContactPhone,
-
           matrimonial_status,
-
           number_of_children,
-
           birthday: birthday ? new Date(birthday) : undefined,
-
           hireDate: hireDate ? new Date(hireDate) : undefined,
-
-          idDocumentIssueDate: idDocumentIssueDate
-            ? new Date(idDocumentIssueDate)
-            : undefined,
-
-          idDocumentExpiryDate: idDocumentExpiryDate
-            ? new Date(idDocumentExpiryDate)
-            : undefined,
-
+          idDocumentIssueDate,
+          idDocumentExpiryDate,
           ...(finalCompanyId
             ? { company: { connect: { uuid: finalCompanyId } } }
             : {}),
-
           ...(departmentId
             ? { department: { connect: { uuid: departmentId } } }
             : {}),
-
+          // finalCompanyId,
+          // departmentId,
+          // supervisorId,
           ...(supervisorId
             ? { supervisor: { connect: { uuid: supervisorId } } }
             : {}),
-
-          ...(finalCompanyId
-            ? { company: { connect: { uuid: finalCompanyId } } }
-            : {}),
-
-          ...(departmentId
-            ? { department: { connect: { uuid: departmentId } } }
-            : {}),
-
-          ...(supervisorId
-            ? { supervisor: { connect: { uuid: supervisorId } } }
-            : {}),
-
           endDate: endDate ? new Date(endDate) : undefined,
         },
       });
@@ -189,22 +140,7 @@ export class EmployeesService {
         },
       });
 
-      // Assign position if provided
-
-      // if (positionUuid) {
-
-      //   await prisma.position.update({
-
-      //     where: { uuid: positionUuid },
-
-      //     data: { employeeUuid: employee.uuid },
-
-      //   });
-
-      // }
-
       // Create contract if provided
-
       if (
         contractData &&
         finalCompanyId &&
@@ -216,17 +152,11 @@ export class EmployeesService {
         await prisma.contract.create({
           data: {
             employeeId: employee.uuid,
-
             companyId: finalCompanyId,
-
             startDate: new Date(contractData.startDate),
-
             endDate: new Date(contractData.endDate),
-
             contract_type: contractData.contract_type,
-
             baseSalary: contractData.baseSalary,
-
             currency: contractData.currency || 'XAF',
           },
         });
@@ -236,11 +166,8 @@ export class EmployeesService {
         await prisma.leaveBalance.create({
           data: {
             employeeId: employee.uuid,
-
             year: new Date().getFullYear(),
-
             totalDays: leaveDays,
-
             remainingDays: leaveDays,
 
             usedDays: 0,
@@ -437,10 +364,10 @@ export class EmployeesService {
 
     const companyWhere = finalCompanyId
       ? {
-        ...(includeInactive === 'true' ? {} : { isActive: true }),
+          ...(includeInactive === 'true' ? {} : { isActive: true }),
 
-        companyId: finalCompanyId,
-      }
+          companyId: finalCompanyId,
+        }
       : null;
 
     const [data, total, totalInCompany] = await Promise.all([
@@ -629,16 +556,16 @@ export class EmployeesService {
         Array.isArray(contractData) ? contractData[0] : contractData
       ) as
         | {
-          startDate?: string;
+            startDate?: string;
 
-          endDate?: string;
+            endDate?: string;
 
-          contract_type?: ContractType;
+            contract_type?: ContractType;
 
-          baseSalary?: number;
+            baseSalary?: number;
 
-          currency?: string;
-        }
+            currency?: string;
+          }
         | undefined;
 
       if (
@@ -666,17 +593,11 @@ export class EmployeesService {
         await prisma.contract.create({
           data: {
             employeeId: updatedEmployee.uuid,
-
             companyId: updatedEmployee.companyId,
-
             startDate,
-
             endDate,
-
             contract_type: singleContract.contract_type,
-
             baseSalary: singleContract.baseSalary,
-
             currency: singleContract.currency || 'XAF',
 
             status: 'ACTIVE',
@@ -711,20 +632,9 @@ export class EmployeesService {
       },
     });
 
-    console.log(employee?.user?.passwordHash);
-
     if (!employee) throw new BadRequestException('Employee not not found');
 
     if (!employee?.user?.passwordHash) return;
-
-    // const isPasswordValid = await bcrypt.compare(newPassword, employee?.user?.passwordHash);
-
-    // if (!isPasswordValid) {
-
-    //   throw new BadRequestException('Mot de passe actuel incorrect');
-
-    // }
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await this.databaseService.user.update({
@@ -798,11 +708,8 @@ export class EmployeesService {
 
       select: {
         uuid: true,
-
         email: true,
-
         role: true,
-
         employeeId: true,
       },
     });

@@ -43,7 +43,7 @@ export class ContractsController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Get all contracts with pagination and filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of contracts' })
-  findAll(@Query() query: FindAllContractsDto) {
+  findAll(@Query() query: Record<string, unknown>) {
     return this.contractsService.findAll(query);
   }
 
@@ -54,7 +54,6 @@ export class ContractsController {
   @ApiOperation({ summary: 'Get contract by ID' })
   @ApiParam({ name: 'id', description: 'Contract UUID' })
   @ApiResponse({ status: 200, description: 'Contract details' })
-  @ApiResponse({ status: 404, description: 'Contract not found' })
   findOne(@Param('id') id: string) {
     return this.contractsService.findOne(id);
   }
@@ -66,7 +65,6 @@ export class ContractsController {
   @ApiOperation({ summary: 'Update contract terms' })
   @ApiParam({ name: 'id', description: 'Contract UUID' })
   @ApiResponse({ status: 200, description: 'Contract updated successfully' })
-  @ApiResponse({ status: 404, description: 'Contract not found' })
   update(
     @Param('id') id: string,
 
@@ -82,7 +80,6 @@ export class ContractsController {
   @ApiOperation({ summary: 'Terminate a contract' })
   @ApiParam({ name: 'id', description: 'Contract UUID' })
   @ApiResponse({ status: 200, description: 'Contract terminated successfully' })
-  @ApiResponse({ status: 404, description: 'Contract not found' })
   terminate(
     @Param('id') id: string,
 
@@ -98,7 +95,6 @@ export class ContractsController {
   @ApiOperation({ summary: 'Renew a contract (expires old, creates new)' })
   @ApiParam({ name: 'id', description: 'Old Contract UUID' })
   @ApiResponse({ status: 201, description: 'Contract renewed successfully' })
-  @ApiResponse({ status: 404, description: 'Contract not found' })
   renew(@Param('id') id: string, @Body() createContractDto: CreateContractDto) {
     return this.contractsService.renew(id, createContractDto);
   }

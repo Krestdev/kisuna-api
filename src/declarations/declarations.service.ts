@@ -69,23 +69,21 @@ export class DeclarationsService {
   }
 
   async updateEarningItem(uuid: string, dto: UpdateEarningItemDto) {
-    await this.findOneEarningItem(uuid);
-
-    return this.databaseService.earningItem.update({
+    const updateEarning = await this.databaseService.earningItem.update({
       where: { uuid },
-
       data: dto,
     });
+    if (!updateEarning) throw new NotFoundException('Earning item not found');
+    return updateEarning;
   }
 
   async deleteEarningItem(uuid: string) {
-    await this.findOneEarningItem(uuid);
-
-    return this.databaseService.earningItem.update({
+    const deleteEarning = await this.databaseService.earningItem.update({
       where: { uuid },
-
       data: { isActive: false },
     });
+    if (!deleteEarning) throw new NotFoundException('Earning item not found');
+    return deleteEarning;
   }
 
   // Declaration methods

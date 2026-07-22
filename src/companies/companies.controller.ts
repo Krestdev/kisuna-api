@@ -24,6 +24,8 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
+import { FindAllCompaniesDto } from './dto/find-all-companies.dto';
+
 import { SystemRole } from '../../generated/prisma/client';
 
 import { Roles } from '../common/decorators/roles.decorator';
@@ -41,9 +43,6 @@ export class CompaniesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new company' })
   @ApiResponse({ status: 201, description: 'Company created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Super Admin only' })
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
@@ -52,7 +51,7 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get all companies' })
   @ApiResponse({ status: 200, description: 'List of companies' })
   findAll(@Query() query: Record<string, unknown>) {
-    return this.companiesService.findAll(query);
+    return this.companiesService.findAll(query as FindAllCompaniesDto);
   }
 
   @Get(':id')
@@ -71,7 +70,6 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Update company' })
   @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company updated successfully' })
-  @ApiResponse({ status: 404, description: 'Company not found' })
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
     return this.companiesService.update(id, updateCompanyDto);
   }

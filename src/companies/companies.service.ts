@@ -66,27 +66,33 @@ export class CompaniesService {
   }
 
   async update(uuid: string, updateCompanyDto: UpdateCompanyDto) {
-    await this.findOne(uuid); // TODO: #4
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: updateCompanyDto,
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async activate(uuid: string) {
-    await this.findOne(uuid); // TODO: #4 Remove unnecessary code @FNMALIC
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: { isActive: true },
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async deactivate(uuid: string) {
-    await this.findOne(uuid); // TODO: #4
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: { isActive: false },
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async remove(uuid: string) {

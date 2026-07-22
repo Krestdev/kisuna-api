@@ -35,8 +35,13 @@ export class ContractsService {
     });
   }
 
-  async findAll(query: FindAllContractsDto) {
-    const { page = 1, limit = 10, companyId, employeeId, status } = query;
+  async findAll({
+    page = 1,
+    limit = 10,
+    companyId,
+    employeeId,
+    status,
+  }: FindAllContractsDto) {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.contract.findMany({
@@ -79,9 +84,8 @@ export class ContractsService {
   }
 
   async update(uuid: string, updateContractDto: UpdateContractDto) {
-    await this.findOne(uuid);
     const { startDate, endDate, ...rest } = updateContractDto;
-    return this.databaseService.contract.update({
+    const updatedContract = this.databaseService.contract.update({
       where: { uuid },
       data: {
         ...rest,
@@ -89,6 +93,8 @@ export class ContractsService {
         endDate,
       },
     });
+    if (!updatedContract) throw new NotFoundException('Contract not found');
+    return updatedContract;
   }
 
   async terminate(uuid: string, terminateDto: TerminateContractDto) {

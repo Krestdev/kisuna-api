@@ -111,8 +111,6 @@ export class SchedulesService {
   }
 
   async update(uuid: string, dto: UpdateScheduleDto) {
-    await this.findOne(uuid);
-
     const data: Partial<
       Pick<
         EmployeeSchedule,
@@ -142,8 +140,9 @@ export class SchedulesService {
   }
 
   async remove(uuid: string) {
-    await this.findOne(uuid);
-    return this.prisma.employeeSchedule.delete({ where: { uuid } });
+    const result = this.prisma.employeeSchedule.delete({ where: { uuid } });
+    if (!result) throw new NotFoundException('Schedule not found');
+    return result;
   }
 
   // Called by cron job
