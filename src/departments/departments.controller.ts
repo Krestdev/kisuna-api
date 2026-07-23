@@ -20,15 +20,10 @@ import {
 } from '@nestjs/swagger';
 
 import { DepartmentsService } from './departments.service';
-
 import { CreateDepartmentDto } from './dto/create-department.dto';
-
 import { UpdateDepartmentDto } from './dto/update-department.dto';
-
 import { SystemRole } from '../../generated/prisma/client';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Departments')
@@ -42,8 +37,6 @@ export class DepartmentsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new department' })
   @ApiResponse({ status: 201, description: 'Department created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createDepartmentDto: CreateDepartmentDto) {
     return this.departmentsService.create(createDepartmentDto);
   }
@@ -90,13 +83,11 @@ export class DepartmentsController {
   @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiParam({
     name: 'employeeId',
-
     description: 'Employee UUID to assign as manager',
   })
   @ApiResponse({ status: 200, description: 'Manager assigned successfully' })
   assignManager(
     @Param('id') id: string,
-
     @Param('employeeId') employeeId: string,
   ) {
     return this.departmentsService.assignManager(id, employeeId);
@@ -110,7 +101,6 @@ export class DepartmentsController {
   @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({
     status: 200,
-
     description: 'Department deactivated successfully',
   })
   remove(@Param('id') id: string) {

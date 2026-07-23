@@ -16,10 +16,13 @@ import {
   ApiConsumes,
   ApiBody,
   ApiBearerAuth,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { CandidacyService } from './candidacy.service';
 import { CreateCandidacyDto } from '../dto/create-candidacy.dto';
 import { UpdateCandidacyStatusDto } from '../dto/update-candidacy-status.dto';
+import { SystemRole } from 'generated/prisma/enums';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('Candidacy')
 @Controller('recruitment/candidacy')
@@ -83,6 +86,8 @@ export class CandidacyController {
   @Get('recruitment/:recruitmentUuid')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'List candidacies for a recruitment post' })
+  @ApiResponse({ status: 200, description: 'recruitment found' })
+  @Roles(SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   findByRecruitment(@Param('recruitmentUuid') recruitmentUuid: string) {
     return this.candidacyService.findByRecruitment(recruitmentUuid);
   }
@@ -90,6 +95,8 @@ export class CandidacyController {
   @Get(':uuid')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get a candidacy' })
+  @ApiResponse({ status: 200, description: 'recruitment found' })
+  @Roles(SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   findOne(@Param('uuid') uuid: string) {
     return this.candidacyService.findOne(uuid);
   }
@@ -97,6 +104,7 @@ export class CandidacyController {
   @Patch(':uuid/status')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update candidacy status' })
+  @ApiResponse({ status: 200, description: 'recruitment found' })
   updateStatus(
     @Param('uuid') uuid: string,
     @Body() dto: UpdateCandidacyStatusDto,
@@ -107,6 +115,7 @@ export class CandidacyController {
   @Delete(':uuid')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a candidacy' })
+  @ApiResponse({ status: 200, description: 'recruitment found' })
   remove(@Param('uuid') uuid: string) {
     return this.candidacyService.remove(uuid);
   }

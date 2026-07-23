@@ -37,26 +37,21 @@ export class RecruitmentService {
   findAll(companyId?: string) {
     return this.db.recruitment.findMany({
       where: companyId ? { companyId } : undefined,
-
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findOne(uuid: string) {
     const record = await this.db.recruitment.findUnique({ where: { uuid } });
-
     if (!record) throw new NotFoundException('Recruitment not found');
-
     return record;
   }
 
   async update(uuid: string, dto: UpdateRecruitmentDto) {
     const updated = await this.db.recruitment.update({
       where: { uuid },
-
       data: {
         ...dto,
-
         deadline: dto.deadline ? new Date(dto.deadline) : undefined,
       },
     });
@@ -73,7 +68,6 @@ export class RecruitmentService {
   async updateStatus(uuid: string, dto: { status: RecruitmentStatus }) {
     const updated = await this.db.recruitment.update({
       where: { uuid },
-
       data: { status: dto.status },
     });
     if (!updated) throw new NotFoundException('Recruitment not found');
@@ -83,7 +77,6 @@ export class RecruitmentService {
   async updateTags(uuid: string, dto: { tags: string[] }) {
     const updated = await this.db.recruitment.update({
       where: { uuid },
-
       data: { tags: dto.tags },
     });
     if (!updated) throw new NotFoundException('Recruitment not found');

@@ -1,22 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
   Body,
+  Controller,
+  Delete,
+  Get,
   Param,
+  Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 
 import {
-  ApiTags,
+  ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBearerAuth,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';

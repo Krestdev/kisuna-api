@@ -33,7 +33,6 @@ export class LeavesController {
   @Post()
   async requestLeave(@Request() request: any, @Body() dto: RequestLeaveDto) {
     const req = request as AuthRequest;
-
     return this.leavesService.requestLeave(req.user.employeeId as string, dto);
   }
 
@@ -66,14 +65,11 @@ export class LeavesController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async approve(
     @Param('id', ParseIntPipe) id: number,
-
     @Request() req: AuthRequest,
   ) {
     return this.leavesService.approve(
       id,
-
       req.user.employeeId as string,
-
       req.user.role,
     );
   }
@@ -83,20 +79,16 @@ export class LeavesController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   async reject(
     @Param('id', ParseIntPipe) id: number,
-
     @Request() request: any,
-
     @Body() dto: RejectLeaveDto,
   ) {
     const req = request as AuthRequest;
-
     return this.leavesService.reject(id, req.user.employeeId as string, dto);
   }
 
   @Patch(':id/cancel')
   async cancel(
     @Param('id', ParseIntPipe) id: number,
-
     @Request() req: AuthRequest,
   ) {
     return this.leavesService.cancel(id, req.user.employeeId as string);
@@ -105,7 +97,6 @@ export class LeavesController {
   @Patch(':id/cancel-approved')
   async cancelApproved(
     @Param('id', ParseIntPipe) id: number,
-
     @Request() req: AuthRequest,
   ) {
     return this.leavesService.cancelApproved(id, req.user.employeeId as string);
@@ -130,7 +121,6 @@ export class LeavesController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   updateLeaveType(
     @Param('uuid') uuid: string,
-
     @Body() dto: Partial<CreateLeaveTypeDto>,
   ) {
     return this.leavesService.updateLeaveType(uuid, dto);
