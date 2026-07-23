@@ -1,21 +1,21 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
   ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
 import { CompaniesService } from './companies.service';
@@ -29,7 +29,6 @@ import { SystemRole } from '../../generated/prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 
 import { RolesGuard } from '../common/guards/roles.guard';
-import { FindAllCompaniesDto } from './dto/find-all-companies.dto';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -41,7 +40,7 @@ export class CompaniesController {
   @Roles(SystemRole.SUPER_ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new company' })
-  @ApiResponse({ status: 201, description: 'Company created successfully' })
+  @ApiResponse({ status: 201, description: 'Company created successfully' }) // TODO: #7 a single Api response definition is sufficient @FNMALIC
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Super Admin only' })
