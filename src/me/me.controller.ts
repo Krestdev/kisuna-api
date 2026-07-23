@@ -84,12 +84,6 @@ export class MeController {
     example: '2025-11-01',
   })
   @ApiQuery({
-    name: 'endDate',
-    required: false,
-    description: 'End date filter',
-    example: '2025-11-30',
-  })
-  @ApiQuery({
     name: 'page',
     required: false,
     description: 'Page number',
@@ -197,9 +191,6 @@ export class MeController {
   @ApiOperation({
     summary: 'Submit a new leave request with optional justification file',
   })
-  @ApiOperation({
-    summary: 'Submit a new leave request with optional justification file',
-  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -222,10 +213,6 @@ export class MeController {
         },
       },
     },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Leave request created successfully',
   })
   @ApiResponse({
     status: 201,

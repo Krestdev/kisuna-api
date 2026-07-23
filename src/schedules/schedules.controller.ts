@@ -8,19 +8,17 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
-
 import { SchedulesService } from './schedules.service';
-
 import { CreateScheduleDto } from './dto/create-schedule.dto';
-
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
-
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { SystemRole } from '../../generated/prisma/client';
 
 @ApiTags('Schedules')
@@ -33,21 +31,15 @@ export class SchedulesController {
   @Post()
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create a schedule for an employee' })
+  @ApiResponse({ status: 201, description: 'schedule created' })
   create(@Body() dto: CreateScheduleDto) {
     return this.schedulesService.create(dto);
   }
 
-  // not yet certain to be use
-  // @Get()
-  // @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
-  // @ApiOperation({ summary: 'List all schedules' })
-  // findAll() {
-  //   return this.schedulesService.findAll();
-  // }
-
   @Get(':id')
   @Roles(SystemRole.EMPLOYEE, SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get one schedule' })
+  @ApiResponse({ status: 200, description: 'schedule created' })
   findOne(@Param('id') id: string) {
     return this.schedulesService.findOne(id);
   }
@@ -55,6 +47,7 @@ export class SchedulesController {
   @Patch(':id')
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Update a schedule' })
+  @ApiResponse({ status: 201, description: 'schedule updated' })
   update(@Param('id') id: string, @Body() dto: UpdateScheduleDto) {
     return this.schedulesService.update(id, dto);
   }
@@ -62,6 +55,7 @@ export class SchedulesController {
   @Delete(':id')
   @Roles(SystemRole.ADMIN, SystemRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Delete a schedule' })
+  @ApiResponse({ status: 200, description: 'schedule removed' })
   remove(@Param('id') id: string) {
     return this.schedulesService.remove(id);
   }
