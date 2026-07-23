@@ -227,7 +227,6 @@ export class DeclarationsService {
 
     return this.databaseService.declaration.update({
       where: { uuid },
-
       data: {
         ...dto,
         ...(dto.status === DeclarationStatus.SUBMITTED &&
@@ -250,7 +249,6 @@ export class DeclarationsService {
 
   async createDeclarationLines(
     declarationId: string,
-
     dto: BulkCreateDeclarationLinesDto,
   ): Promise<DeclarationLine[]> {
     await this.findOneDeclaration(declarationId);
@@ -335,12 +333,9 @@ export class DeclarationsService {
 
     return this.databaseService.declarationLine.findMany({
       where: { declarationId },
-
       include: {
         employee: true,
-
         contract: true,
-
         earnings: { include: { earningItem: true } },
       },
     });
@@ -349,12 +344,9 @@ export class DeclarationsService {
   async findOneDeclarationLine(lineId: string): Promise<DeclarationLine> {
     const line = await this.databaseService.declarationLine.findUnique({
       where: { uuid: lineId },
-
       include: {
         employee: true,
-
         contract: true,
-
         earnings: { include: { earningItem: true } },
       },
     });
@@ -366,9 +358,7 @@ export class DeclarationsService {
 
   async updateDeclarationLine(
     declarationId: string,
-
     lineId: string,
-
     dto: CreateDeclarationLineDto,
   ): Promise<DeclarationLine> {
     await this.findOneDeclarationLine(lineId);
@@ -384,22 +374,15 @@ export class DeclarationsService {
 
       return tx.declarationLine.update({
         where: { uuid: lineId },
-
         data: {
           baseSalary: dto.baseSalary,
-
           baseSalaryTaxable: dto.baseSalaryTaxable,
-
           baseSalaryCotisable: dto.baseSalaryCotisable,
-
           earnings: {
             create: dto.earnings.map((earning) => ({
               earningItemId: earning.earningItemId,
-
               amount: earning.amount,
-
               taxable: earning.taxable,
-
               cotisable: earning.cotisable,
             })),
           },
@@ -407,9 +390,7 @@ export class DeclarationsService {
 
         include: {
           employee: true,
-
           contract: true,
-
           earnings: { include: { earningItem: true } },
         },
       });
