@@ -1,22 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
   Body,
+  Controller,
+  Delete,
+  Get,
   Param,
+  Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 
 import {
-  ApiTags,
+  ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBearerAuth,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
 import { AttendanceService } from './attendance.service';
@@ -25,12 +25,11 @@ import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { MarkAbsentDto } from './dto/mark-absent.dto';
 
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
-import { FindAllAttendanceDto } from './dto/find-all-attendance.dto';
 
-import { BatchAttendanceItemDto } from './dto/batch-attendance.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { SystemRole, AttendanceStatus } from '../../generated/prisma/client';
+import { AttendanceStatus, SystemRole } from '../../generated/prisma/client';
 import { CompanyScope } from '../common/decorators/company-scope.decorator';
+import { BatchAttendanceItemDto } from './dto/batch-attendance.dto';
 
 import { AuthGuard } from '@nestjs/passport';
 
