@@ -77,7 +77,6 @@ export class DeclarationsService {
   async updateEarningItem(uuid: string, dto: UpdateEarningItemDto) {
     const updateEarning = await this.databaseService.earningItem.update({
       where: { uuid },
-
       data: dto,
     });
     if (!updateEarning) throw new NotFoundException('Earning item not found');
@@ -87,7 +86,6 @@ export class DeclarationsService {
   async deleteEarningItem(uuid: string) {
     const deleteEarning = await this.databaseService.earningItem.update({
       where: { uuid },
-
       data: { isActive: false },
     });
     if (!deleteEarning) throw new NotFoundException('Earning item not found');
@@ -100,12 +98,9 @@ export class DeclarationsService {
     return this.databaseService.declaration.create({
       data: {
         ...dto,
-
         periodStart: new Date(dto.periodStart),
-
         periodEnd: new Date(dto.periodEnd),
       },
-
       include: { company: true },
     });
   }
@@ -168,16 +163,12 @@ export class DeclarationsService {
   async findOneDeclaration(uuid: string) {
     const declaration = await this.databaseService.declaration.findUnique({
       where: { uuid },
-
       include: {
         company: true,
-
         lines: {
           include: {
             employee: true,
-
             contract: true,
-
             earnings: { include: { earningItem: true } },
           },
         },
@@ -205,7 +196,6 @@ export class DeclarationsService {
 
       data: {
         ...dto,
-
         ...(dto.status === DeclarationStatus.SUBMITTED &&
           !declaration.submittedAt && { submittedAt: new Date() }),
       },
@@ -280,35 +270,23 @@ export class DeclarationsService {
         this.databaseService.declarationLine.create({
           data: {
             declarationId,
-
             employeeId: line.employeeId,
-
             contractId: line.contractId!,
-
             baseSalary: line.baseSalary,
-
             baseSalaryTaxable: line.baseSalaryTaxable,
-
             baseSalaryCotisable: line.baseSalaryCotisable,
-
             earnings: {
               create: line.earnings.map((earning) => ({
                 earningItemId: earning.earningItemId,
-
                 amount: earning.amount,
-
                 taxable: earning.taxable,
-
                 cotisable: earning.cotisable,
               })),
             },
           },
-
           include: {
             employee: true,
-
             contract: true,
-
             earnings: { include: { earningItem: true } },
           },
         }),

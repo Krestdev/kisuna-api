@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -17,15 +16,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-
 import { CompaniesService } from './companies.service';
-
 import { CreateCompanyDto } from './dto/create-company.dto';
-
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { SystemRole } from '../../generated/prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
-
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Companies')

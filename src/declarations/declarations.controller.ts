@@ -100,14 +100,11 @@ export class DeclarationsController {
     required: false,
 
     enum: EarningCategory,
-
     description: 'Filter by earning category',
   })
   @ApiQuery({
     name: 'isActive',
-
     required: false,
-
     description: 'Filter by active status (true/false)',
   })
   @ApiQuery({
@@ -239,20 +236,8 @@ export class DeclarationsController {
   @ApiQuery({ name: 'type', required: false, description: 'Declaration type' })
   @ApiQuery({
     name: 'status',
-
     required: false,
-
     enum: DeclarationStatus,
-
-    description: 'Declaration status',
-  })
-  @ApiQuery({
-    name: 'status',
-
-    required: false,
-
-    enum: DeclarationStatus,
-
     description: 'Declaration status',
   })
   @ApiQuery({
@@ -338,17 +323,10 @@ export class DeclarationsController {
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
   @ApiResponse({
     status: 201,
-
-    description: 'Declaration lines created successfully',
-  })
-  @ApiResponse({
-    status: 201,
-
     description: 'Declaration lines created successfully',
   })
   createDeclarationLines(
     @Param('declarationId') declarationId: string,
-
     @Body() dto: BulkCreateDeclarationLinesDto,
   ) {
     return this.service.createDeclarationLines(declarationId, dto);

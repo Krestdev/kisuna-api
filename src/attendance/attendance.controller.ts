@@ -18,21 +18,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-
 import { AttendanceService } from './attendance.service';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
-
 import { MarkAbsentDto } from './dto/mark-absent.dto';
-
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
-
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { AttendanceStatus, SystemRole } from '../../generated/prisma/client';
-import { CompanyScope } from '../common/decorators/company-scope.decorator';
 import { BatchAttendanceItemDto } from './dto/batch-attendance.dto';
-
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { SystemRole, AttendanceStatus } from '../../generated/prisma/client';
+import { CompanyScope } from '../common/decorators/company-scope.decorator';
 import { AuthGuard } from '@nestjs/passport';
-
 import { CompanyScopeGuard } from 'src/common/guards/company-scope.guard';
 @ApiTags('Attendance')
 @Controller('attendance')
@@ -50,20 +44,15 @@ export class AttendanceController {
   createMany(@Body() body: BatchAttendanceItemDto[]) {
     const records: CreateAttendanceDto[] = body.map((item) => {
       const dateBase = item.date.split('T')[0];
-
       const checkIn = item.checkIn
         ? new Date(`${dateBase}T${item.checkIn}`).toISOString()
         : new Date(item.date).toISOString();
-
       const checkOut = item.checkOut
         ? new Date(`${dateBase}T${item.checkOut}`).toISOString()
         : undefined;
-
       return {
         employeeId: item.userId,
-
         checkIn,
-
         checkOut,
         status: (item.statut as unknown as AttendanceStatus[]) ?? [
           AttendanceStatus.PRESENT,
@@ -72,7 +61,6 @@ export class AttendanceController {
         longitude: item.longitude,
       };
     });
-
     return this.attendanceService.createMany(records);
   }
 
@@ -92,53 +80,37 @@ export class AttendanceController {
   @ApiBearerAuth('JWT-auth')
   @Roles(
     SystemRole.SUPER_ADMIN,
-
     SystemRole.COMPANY_ADMIN,
-
     SystemRole.ADMIN,
-
     SystemRole.EMPLOYEE,
   )
   @ApiOperation({
     summary: 'List all attendance records',
-
     description:
       'Get all attendance records with optional filtering by month and year.',
   })
   @ApiQuery({
     name: 'month',
-
     required: false,
-
     description: 'Month (1-12)',
-
     example: 6,
   })
   @ApiQuery({
     name: 'year',
-
     required: false,
-
     description: 'Year',
-
     example: 2026,
   })
   @ApiQuery({
     name: 'page',
-
     required: false,
-
     description: 'Page number',
-
     example: 1,
   })
   @ApiQuery({
     name: 'limit',
-
     required: false,
-
     description: 'Items per page',
-
     example: 20,
   })
   @ApiResponse({ status: 200, description: 'Paginated attendance records' })
@@ -150,11 +122,8 @@ export class AttendanceController {
   @ApiBearerAuth('JWT-auth')
   @Roles(
     SystemRole.SUPER_ADMIN,
-
     SystemRole.COMPANY_ADMIN,
-
     SystemRole.ADMIN,
-
     SystemRole.EMPLOYEE,
   )
   @ApiOperation({ summary: 'Get attendance record by ID' })
@@ -211,35 +180,25 @@ export class AttendanceController {
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
   @ApiQuery({
     name: 'month',
-
     required: false,
-
     description: 'Month (1-12)',
-
     example: 6,
   })
   @ApiQuery({
     name: 'year',
-
     required: false,
-
     description: 'Year',
-
     example: 2026,
   })
   @ApiResponse({ status: 200, description: 'Employee attendance records' })
   findByEmployee(
     @Param('employeeId') employeeId: string,
-
     @Query('month') month?: string,
-
     @Query('year') year?: string,
   ) {
     return this.attendanceService.findByEmployee(
       employeeId,
-
       month ? parseInt(month) : undefined,
-
       year ? parseInt(year) : undefined,
     );
   }
@@ -247,27 +206,20 @@ export class AttendanceController {
   @Get('employee/:employeeId/summary')
   @ApiOperation({
     summary: 'Get monthly attendance summary',
-
     description:
       'Aggregated statistics for payroll: total days, present/late/absent counts, total hours worked, and overtime. Required for payroll calculations.',
   })
   @ApiParam({ name: 'employeeId', description: 'Employee UUID' })
   @ApiQuery({
     name: 'month',
-
     required: true,
-
     description: 'Month (1-12)',
-
     example: 6,
   })
   @ApiQuery({
     name: 'year',
-
     required: true,
-
     description: 'Year',
-
     example: 2026,
   })
   getMonthlySummary(

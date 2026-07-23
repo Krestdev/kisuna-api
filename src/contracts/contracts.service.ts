@@ -16,7 +16,6 @@ export class ContractsService {
 
   async create(employeeId: string, createContractDto: CreateContractDto) {
     // 1. One Active Contract Rule
-
     const existingActive = await this.databaseService.contract.findFirst({
       where: { employeeId, status: ContractStatus.ACTIVE },
     });
@@ -28,13 +27,9 @@ export class ContractsService {
     return this.databaseService.contract.create({
       data: {
         ...rest,
-
         startDate: new Date(startDate),
-
         endDate: new Date(endDate),
-
         employee: { connect: { uuid: employeeId } },
-
         company: { connect: { uuid: companyId } },
       },
     });
@@ -78,14 +73,11 @@ export class ContractsService {
   async findOne(uuid: string) {
     const contract = await this.databaseService.contract.findUnique({
       where: { uuid },
-
       include: {
         employee: true,
-
         company: true,
       },
     });
-
     if (!contract) throw new NotFoundException('Contract not found');
 
     return contract;
@@ -95,7 +87,6 @@ export class ContractsService {
     const { startDate, endDate, ...rest } = updateContractDto;
     return this.databaseService.contract.update({
       where: { uuid },
-
       data: {
         ...rest,
         startDate,
@@ -112,7 +103,6 @@ export class ContractsService {
         company: true,
       },
     });
-
     if (!contract) throw new NotFoundException('Contract not found');
 
     if (contract.status !== ContractStatus.ACTIVE) {
@@ -122,10 +112,8 @@ export class ContractsService {
     return this.databaseService.$transaction(async (prisma) => {
       const updatedContract = await prisma.contract.update({
         where: { uuid },
-
         data: {
           status: ContractStatus.TERMINATED,
-
           terminationReason: terminateDto.terminationReason,
         },
       });
@@ -134,7 +122,6 @@ export class ContractsService {
 
       await prisma.employee.update({
         where: { uuid: contract.employeeId },
-
         data: { status: 'TERMINATED', isActive: false },
       });
 
@@ -148,22 +135,16 @@ export class ContractsService {
     return this.databaseService.$transaction(async (prisma) => {
       await prisma.contract.update({
         where: { uuid },
-
         data: { status: ContractStatus.EXPIRED },
       });
 
       const { startDate, endDate, companyId, ...rest } = createContractDto;
-
       const newContract = await prisma.contract.create({
         data: {
           ...rest,
-
           startDate: new Date(startDate),
-
           endDate: new Date(endDate),
-
           employee: { connect: { uuid: oldContract.employeeId } },
-
           company: { connect: { uuid: companyId } },
         },
       });

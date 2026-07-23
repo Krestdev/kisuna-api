@@ -3,17 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { DatabaseService } from '../database/database.service';
-
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
-
 import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
-
 import * as bcrypt from 'bcrypt';
-
 import { RustfsService } from '../rustfs/rustfs.service';
 import {
   ContractType,
@@ -90,15 +84,6 @@ export class EmployeesService {
           // finalCompanyId,
           // departmentId,
           // supervisorId,
-          ...(supervisorId
-            ? { supervisor: { connect: { uuid: supervisorId } } }
-            : {}),
-          ...(finalCompanyId
-            ? { company: { connect: { uuid: finalCompanyId } } }
-            : {}),
-          ...(departmentId
-            ? { department: { connect: { uuid: departmentId } } }
-            : {}),
           ...(supervisorId
             ? { supervisor: { connect: { uuid: supervisorId } } }
             : {}),
@@ -540,17 +525,11 @@ export class EmployeesService {
         await prisma.contract.create({
           data: {
             employeeId: updatedEmployee.uuid,
-
             companyId: updatedEmployee.companyId,
-
             startDate,
-
             endDate,
-
             contract_type: singleContract.contract_type,
-
             baseSalary: singleContract.baseSalary,
-
             currency: singleContract.currency || 'XAF',
 
             status: 'ACTIVE',
@@ -661,11 +640,8 @@ export class EmployeesService {
 
       select: {
         uuid: true,
-
         email: true,
-
         role: true,
-
         employeeId: true,
       },
     });

@@ -77,7 +77,6 @@ export class DepartmentsController {
   @ApiResponse({ status: 200, description: 'Department updated successfully' })
   update(
     @Param('id') id: string,
-
     @Body() updateDepartmentDto: UpdateDepartmentDto,
   ) {
     return this.departmentsService.update(id, updateDepartmentDto);

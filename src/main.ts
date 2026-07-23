@@ -34,21 +34,7 @@ async function bootstrap() {
     .setDescription(
       'HR Management System API for Krest Holding - Manage employees, departments, and authentication',
     )
-    .setDescription(
-      'HR Management System API for Krest Holding - Manage employees, departments, and authentication',
-    )
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
     .addBearerAuth(
       {
         type: 'http',
