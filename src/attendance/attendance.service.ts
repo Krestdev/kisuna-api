@@ -40,14 +40,50 @@ export class AttendanceService {
     private readonly schedulesService: SchedulesService,
   ) {}
 
-  async createMany(dtos: CreateAttendanceDto[]) {
-    return Promise.all(dtos.map((dto) => this.create(dto)));
+  private buildAttendanceData(dto: CreateAttendanceDto) {
+    const checkIn = new Date(dto.checkIn);
+    if (isNaN(checkIn.getTime())) {
+      throw new BadRequestException(
+        `Invalid checkIn date for employee ${dto.employeeId}`,
+      );
+    }
+
+    const checkOut = dto.checkOut ? new Date(dto.checkOut) : undefined;
+    if (checkOut && isNaN(checkOut.getTime())) {
+      throw new BadRequestException(
+        `Invalid checkOut date for employee ${dto.employeeId}`,
+      );
+    }
+
+    if (!dto.status?.length) {
+      throw new BadRequestException(
+        `status is required for employee ${dto.employeeId}`,
+      );
+    }
+
+    const workedHour = checkOut
+      ? this.calculateHours(checkIn, checkOut)
+      : undefined;
+    const overtimes =
+      workedHour != null ? Math.max(0, workedHour - STANDARD_HOURS) : undefined;
+
+    return {
+      employeeId: dto.employeeId,
+      checkIn,
+      checkOut,
+      status: dto.status,
+      latitude: dto.latitude ?? 0,
+      longitude: dto.longitude ?? 0,
+      workedHour,
+      overtimes,
+    };
   }
 
-  async create(dto: CreateAttendanceDto) {
+  async create(dto: CreateAttendanceDto): Promise<Attendance> {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });
+
     if (!employee) throw new NotFoundException('Employee not found');
 
     const checkIn = new Date(dto.checkIn);
@@ -80,6 +116,34 @@ export class AttendanceService {
       },
       include: { employee: { select: EMPLOYEE_SELECT } },
     });
+  }
+
+  async createMany(dtos: CreateAttendanceDto[]): Promise<Attendance[]> {
+    const employeeIds = [...new Set(dtos.map((d) => d.employeeId))];
+
+    const employees = await this.databaseService.employee.findMany({
+      where: { uuid: { in: employeeIds } },
+      select: { uuid: true },
+    });
+
+    const foundIds = new Set(employees.map((e) => e.uuid));
+    const missing = employeeIds.filter((id) => !foundIds.has(id));
+    if (missing.length) {
+      throw new NotFoundException(
+        `Employee(s) not found: ${missing.join(', ')}`,
+      );
+    }
+
+    const records = dtos.map((dto) => this.buildAttendanceData(dto));
+
+    return this.databaseService.$transaction(
+      records.map((data) =>
+        this.databaseService.attendance.create({
+          data,
+          include: { employee: { select: EMPLOYEE_SELECT } },
+        }),
+      ),
+    );
   }
 
   // async checkIn(dto: CheckInDto) {
@@ -170,7 +234,10 @@ export class AttendanceService {
     status,
     month,
     year,
-  }: FindAllAttendanceDto) {
+  }: FindAllAttendanceDto): Promise<{
+    data: Attendance[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.attendance.findMany({
@@ -214,9 +281,18 @@ export class AttendanceService {
 
   async findByEmployee(
     employeeId: string,
-    month?: number,
-    year?: number,
-  ): Promise<Attendance[]> {
+    {
+      month,
+      year,
+      page = 1,
+      limit = 20,
+    }: {
+      month?: number;
+      year?: number;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<{ data: Attendance[]; total: number }> {
     const where: { employeeId: string; checkIn?: { gte: Date; lte: Date } } = {
       employeeId,
     };
@@ -224,18 +300,49 @@ export class AttendanceService {
       const date = new Date(year, month - 1);
       where.checkIn = { gte: startOfMonth(date), lte: endOfMonth(date) };
     }
-    return this.databaseService.attendance.findMany({
+
+    const data = await this.databaseService.attendance.findMany({
       where,
       orderBy: { checkIn: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { employee: { select: EMPLOYEE_SELECT } },
     });
+
+    return { data, total: data.length };
   }
 
-  async getMonthlySummary(employeeId: string, month: number, year: number) {
+  async getMonthlySummary(
+    employeeId: string,
+    month: number,
+    year: number,
+  ): Promise<{
+    totalDays: number;
+    presentDays: number;
+    lateDays: number;
+    absentDays: number;
+    halfDays: number;
+    onLeaveDays: number;
+    totalHours: number;
+    totalOvertime: number;
+  }> {
+    const employee = await this.databaseService.employee.findUnique({
+      where: { uuid: employeeId },
+      select: { uuid: true },
+    });
+
+    if (!employee) throw new NotFoundException('Employee not found');
+
     const date = new Date(year, month - 1);
     const records = await this.databaseService.attendance.findMany({
       where: {
         employeeId,
         checkIn: { gte: startOfMonth(date), lte: endOfMonth(date) },
+      },
+      select: {
+        status: true,
+        workedHour: true,
+        overtimes: true,
       },
     });
 
@@ -266,7 +373,10 @@ export class AttendanceService {
   }
 
   async update(uuid: string, dto: UpdateAttendanceDto) {
-    const existing = await this.findOne(uuid);
+    const existing = await this.databaseService.attendance.findUnique({
+      where: { uuid },
+    });
+    if (!existing) throw new NotFoundException('Attendance record not found');
     const data: Prisma.AttendanceUpdateInput = {};
 
     if (dto.checkIn) data.checkIn = new Date(dto.checkIn);
@@ -276,9 +386,12 @@ export class AttendanceService {
     const checkIn = (data.checkIn as Date | undefined) ?? existing.checkIn;
     const checkOut = (data.checkOut as Date | undefined) ?? existing.checkOut;
 
-    if (checkOut) {
-      data.workedHour = this.calculateHours(checkIn, checkOut);
-      data.overtimes = Math.max(0, data.workedHour - STANDARD_HOURS);
+    // TODO: find way to calculate working hours using the schedule of employees in database not the constant STANDARD_HOURS
+    let workedHour: number | undefined;
+    if (checkOut && (dto.checkIn || dto.checkOut)) {
+      workedHour = this.calculateHours(checkIn, checkOut);
+      data.workedHour = workedHour;
+      data.overtimes = Math.max(0, workedHour - STANDARD_HOURS);
     }
 
     if (data.checkIn && !dto.status) {
@@ -311,7 +424,7 @@ export class AttendanceService {
     });
   }
 
-  async markAbsent(dto: MarkAbsentDto) {
+  async markAbsent(dto: MarkAbsentDto): Promise<Attendance> {
     const employee = await this.databaseService.employee.findUnique({
       where: { uuid: dto.employeeId },
     });

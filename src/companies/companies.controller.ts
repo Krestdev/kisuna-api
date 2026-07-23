@@ -49,7 +49,6 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get company by ID' })
   @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company details' })
-  @ApiResponse({ status: 404, description: 'Company not found' })
   findOne(@Param('id') id: string) {
     return this.companiesService.findOne(id);
   }
@@ -94,11 +93,6 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Delete company' })
   @ApiParam({ name: 'id', description: 'Company UUID' })
   @ApiResponse({ status: 200, description: 'Company deleted successfully' })
-  @ApiResponse({
-    status: 400,
-
-    description: 'Cannot delete: active departments or contracts exist',
-  })
   remove(@Param('id') id: string) {
     return this.companiesService.remove(id);
   }

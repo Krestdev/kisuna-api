@@ -8,13 +8,16 @@ import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { TerminateContractDto } from './dto/terminate-contract.dto';
 import { FindAllContractsDto } from './dto/find-all-contracts.dto';
-import { ContractStatus } from '../../generated/prisma/client';
+import { Contract, ContractStatus } from '../../generated/prisma/client';
 
 @Injectable()
 export class ContractsService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(employeeId: string, createContractDto: CreateContractDto) {
+  async create(
+    employeeId: string,
+    createContractDto: CreateContractDto,
+  ): Promise<Contract> {
     // 1. One Active Contract Rule
     const existingActive = await this.databaseService.contract.findFirst({
       where: { employeeId, status: ContractStatus.ACTIVE },
@@ -41,7 +44,15 @@ export class ContractsService {
     companyId,
     employeeId,
     status,
-  }: FindAllContractsDto) {
+  }: FindAllContractsDto): Promise<{
+    data: Contract[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.contract.findMany({
@@ -70,7 +81,7 @@ export class ContractsService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(uuid: string): Promise<Contract> {
     const contract = await this.databaseService.contract.findUnique({
       where: { uuid },
       include: {
@@ -83,7 +94,18 @@ export class ContractsService {
     return contract;
   }
 
-  async update(uuid: string, updateContractDto: UpdateContractDto) {
+  async update(
+    uuid: string,
+    updateContractDto: UpdateContractDto,
+  ): Promise<Contract> {
+    const contract = await this.databaseService.contract.findUnique({
+      where: { uuid },
+    });
+    if (!contract) throw new NotFoundException('Contract not found');
+
+    if (contract.status !== ContractStatus.ACTIVE) {
+      throw new BadRequestException('Only active contracts can be updated');
+    }
     const { startDate, endDate, ...rest } = updateContractDto;
     return this.databaseService.contract.update({
       where: { uuid },
@@ -95,7 +117,10 @@ export class ContractsService {
     });
   }
 
-  async terminate(uuid: string, terminateDto: TerminateContractDto) {
+  async terminate(
+    uuid: string,
+    terminateDto: TerminateContractDto,
+  ): Promise<Contract> {
     const contract = await this.databaseService.contract.findUnique({
       where: { uuid },
       include: {
@@ -118,8 +143,6 @@ export class ContractsService {
         },
       });
 
-      // Employee Status Sync
-
       await prisma.employee.update({
         where: { uuid: contract.employeeId },
         data: { status: 'TERMINATED', isActive: false },
@@ -129,7 +152,10 @@ export class ContractsService {
     });
   }
 
-  async renew(uuid: string, createContractDto: CreateContractDto) {
+  async renew(
+    uuid: string,
+    createContractDto: CreateContractDto,
+  ): Promise<Contract> {
     const oldContract = await this.findOne(uuid);
 
     return this.databaseService.$transaction(async (prisma) => {

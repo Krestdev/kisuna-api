@@ -58,13 +58,11 @@ export class DeclarationsController {
   @Get('earning-items')
   @ApiOperation({
     summary: 'Get all earning items',
-
     description:
       'Retrieve earning items filtered by company, category, or active status',
   })
   @ApiOperation({
     summary: 'Get all earning items',
-
     description:
       'Retrieve earning items filtered by company, category, or active status',
   })
@@ -77,16 +75,12 @@ export class DeclarationsController {
   })
   @ApiQuery({
     name: 'isActive',
-
     required: false,
-
     description: 'Filter by active status (true/false)',
   })
   @ApiQuery({
     name: 'category',
-
     required: false,
-
     enum: EarningCategory,
     description: 'Filter by earning category',
   })
@@ -97,18 +91,13 @@ export class DeclarationsController {
   })
   @ApiQuery({
     name: 'category',
-
     required: false,
-
     enum: EarningCategory,
-
     description: 'Filter by earning category',
   })
   @ApiQuery({
     name: 'isActive',
-
     required: false,
-
     description: 'Filter by active status (true/false)',
   })
   @ApiResponse({ status: 200, description: 'List of earning items' })
