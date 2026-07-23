@@ -25,7 +25,6 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
-    // UsersModule,
     AuthModule,
     DepartmentsModule,
     EmployeesModule,
