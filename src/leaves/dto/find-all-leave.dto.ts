@@ -1,30 +1,27 @@
-import { Leave, LeaveStatus } from 'generated/prisma/client';
+import { LeaveStatus } from 'generated/prisma/client';
 import { IsOptional, IsEnum, IsDate, IsInt, IsString } from 'class-validator';
 
-export class FindAllLeaveDto implements Pick<
-  Leave,
-  'employeeId' | 'approvedBy' | 'startDate' | 'endDate' | 'status'
-> {
+export class FindAllLeaveDto {
   @IsOptional()
   @IsString()
-  employeeId: string;
+  employeeId?: string;
 
   @IsOptional()
   @IsString()
-  approvedBy: string;
+  approvedBy?: string;
 
   @IsDate()
   @IsOptional()
-  startDate: Date;
+  startDate?: Date;
 
   @IsDate()
   @IsDate()
   @IsOptional()
-  endDate: Date;
+  endDate?: Date;
 
   @IsEnum(LeaveStatus)
   @IsOptional()
-  status: LeaveStatus;
+  status?: LeaveStatus;
 
   @IsInt()
   @IsOptional()

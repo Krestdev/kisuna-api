@@ -15,7 +15,6 @@ import { FindAllEmployeesDto } from './dto/find-all-employees.dto';
 import * as bcrypt from 'bcrypt';
 
 import { RustfsService } from '../rustfs/rustfs.service';
-
 import {
   ContractType,
   DocumentType,
@@ -25,9 +24,7 @@ import {
 
 const DEFAULT_SCHEDULE = {
   shiftStart: '08:00',
-
   shiftEnd: '17:00',
-
   workDays: 'MON,TUE,WED,THU,FRI',
 };
 
@@ -43,168 +40,101 @@ export class EmployeesService {
 
   async create(
     createEmployeeDto: CreateEmployeeDto,
-
     userCompanyId?: string,
-
     document?: Express.Multer.File,
   ) {
     const {
       birthday,
-
       hireDate,
-
       companyId,
-
       contract,
-
       contracts,
-
       idDocumentIssueDate,
-
       idDocumentExpiryDate,
-
       email,
-
       departmentId,
-
       supervisorId,
-
       endDate,
-
       leaveDays,
-
       phoneNumber,
-
       EmergencyContactPhone,
-
       matrimonial_status,
-
       number_of_children,
-
       ...rest
     } = createEmployeeDto;
 
     // For COMPANY_ADMIN, force their company ID
-
     const finalCompanyId = userCompanyId || companyId;
 
     // Use contracts if provided, otherwise fall back to contract
-
     const contractData = contracts || contract;
 
     return this.databaseService.$transaction(async (prisma) => {
       const employee = await prisma.employee.create({
         data: {
           ...rest,
-
           phoneNumber,
-
           EmergencyContactPhone,
-
           matrimonial_status,
-
           number_of_children,
-
           birthday: birthday ? new Date(birthday) : undefined,
-
           hireDate: hireDate ? new Date(hireDate) : undefined,
-
-          idDocumentIssueDate: idDocumentIssueDate
-            ? new Date(idDocumentIssueDate)
-            : undefined,
-
-          idDocumentExpiryDate: idDocumentExpiryDate
-            ? new Date(idDocumentExpiryDate)
-            : undefined,
-
+          idDocumentIssueDate,
+          idDocumentExpiryDate,
           ...(finalCompanyId
             ? { company: { connect: { uuid: finalCompanyId } } }
             : {}),
-
           ...(departmentId
             ? { department: { connect: { uuid: departmentId } } }
             : {}),
-
+          // finalCompanyId,
+          // departmentId,
+          // supervisorId,
           ...(supervisorId
             ? { supervisor: { connect: { uuid: supervisorId } } }
             : {}),
-
           ...(finalCompanyId
             ? { company: { connect: { uuid: finalCompanyId } } }
             : {}),
-
           ...(departmentId
             ? { department: { connect: { uuid: departmentId } } }
             : {}),
-
           ...(supervisorId
             ? { supervisor: { connect: { uuid: supervisorId } } }
             : {}),
-
           endDate: endDate ? new Date(endDate) : undefined,
         },
       });
 
       // Auto-create user account with default password
-
       const defaultPassword = 'Employee@123';
-
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
       await prisma.user.create({
         data: {
           email,
-
           passwordHash: hashedPassword,
-
           employeeId: employee.uuid,
-
           role: 'EMPLOYEE',
         },
       });
 
       // Create default schedule so employee can check in from day one
-
       const scheduleStart = hireDate ? new Date(hireDate) : new Date();
-
       const scheduleEnd = new Date(scheduleStart);
-
       scheduleEnd.setFullYear(scheduleEnd.getFullYear() + 100);
-
       await prisma.employeeSchedule.create({
         data: {
           employeeId: employee.uuid,
-
           startDate: scheduleStart,
-
           endDate: scheduleEnd,
-
           shiftStart: DEFAULT_SCHEDULE.shiftStart,
-
           shiftEnd: DEFAULT_SCHEDULE.shiftEnd,
-
           workDays: DEFAULT_SCHEDULE.workDays,
-
           status: 'ACTIVE',
         },
       });
 
-      // Assign position if provided
-
-      // if (positionUuid) {
-
-      //   await prisma.position.update({
-
-      //     where: { uuid: positionUuid },
-
-      //     data: { employeeUuid: employee.uuid },
-
-      //   });
-
-      // }
-
       // Create contract if provided
-
       if (
         contractData &&
         finalCompanyId &&
@@ -216,17 +146,11 @@ export class EmployeesService {
         await prisma.contract.create({
           data: {
             employeeId: employee.uuid,
-
             companyId: finalCompanyId,
-
             startDate: new Date(contractData.startDate),
-
             endDate: new Date(contractData.endDate),
-
             contract_type: contractData.contract_type,
-
             baseSalary: contractData.baseSalary,
-
             currency: contractData.currency || 'XAF',
           },
         });
@@ -236,13 +160,9 @@ export class EmployeesService {
         await prisma.leaveBalance.create({
           data: {
             employeeId: employee.uuid,
-
             year: new Date().getFullYear(),
-
             totalDays: leaveDays,
-
             remainingDays: leaveDays,
-
             usedDays: 0,
           },
         });
@@ -251,28 +171,22 @@ export class EmployeesService {
       if (document) {
         const path = await this.rustfs.uploadFile(
           document,
-
           `employees/${employee.uuid}`,
         );
 
         await prisma.employee.update({
           where: { uuid: employee.uuid },
-
           data: { idDocumentFileUrl: path },
         });
 
         await prisma.file.create({
           data: {
             file_name: document.originalname,
-
             document_type: (rest.idDocumentType as DocumentType) ?? 'CNI',
-
             path,
-
             expired_date: createEmployeeDto.idDocumentExpiryDate
               ? new Date(createEmployeeDto.idDocumentExpiryDate)
               : null,
-
             employeeId: employee.uuid,
           },
         });
@@ -284,29 +198,20 @@ export class EmployeesService {
     });
   }
 
-  async findAll(query: FindAllEmployeesDto, userCompanyId?: string) {
-    const {
-      page,
-
-      limit,
-
+  async findAll(
+    {
+      page = 1,
+      limit = 10,
       companyId,
-
       departmentId,
-
       status,
-
       search,
-
       includeInactive,
-
       includeSensitive,
-
       contractType,
-    } = query;
-
-    // For COMPANY_ADMIN, filter by their company
-
+    }: FindAllEmployeesDto,
+    userCompanyId?: string,
+  ) {
     const finalCompanyId = userCompanyId || companyId?.trim() || undefined;
 
     // Check if any valid params provided (ignore empty strings)
@@ -322,18 +227,12 @@ export class EmployeesService {
     );
 
     const returnAll = userCompanyId && !hasParams;
-
     const actualPage = page || 1;
-
     const actualLimit = returnAll ? undefined : limit || 10;
-
     const skip = returnAll ? undefined : (actualPage - 1) * (actualLimit || 10);
-
     const where: Prisma.EmployeeWhereInput = {
       ...(includeInactive === 'true' ? {} : { isActive: true }),
-
       ...(finalCompanyId && { companyId: finalCompanyId }),
-
       ...(status?.trim() && { status }),
     };
 
@@ -341,7 +240,6 @@ export class EmployeesService {
       where.contracts = {
         some: {
           contract_type: contractType as Prisma.EnumContractTypeFilter,
-
           status: 'ACTIVE',
         },
       };
@@ -350,7 +248,6 @@ export class EmployeesService {
     if (search?.trim()) {
       where.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
-
         { lastName: { contains: search, mode: 'insensitive' } },
       ];
     }
@@ -359,9 +256,7 @@ export class EmployeesService {
 
     const queryOptions: Prisma.EmployeeFindManyArgs = {
       where,
-
       ...(skip !== undefined && { skip }),
-
       ...(actualLimit !== undefined && { take: actualLimit }),
     };
 
@@ -372,13 +267,9 @@ export class EmployeesService {
         contracts: {
           select: {
             baseSalary: true,
-
             currency: true,
-
             contract_type: true,
-
             startDate: true,
-
             endDate: true,
           },
         },
@@ -388,33 +279,20 @@ export class EmployeesService {
     } else {
       queryOptions.select = {
         uuid: true,
-
         firstName: true,
-
         lastName: true,
-
         gender: true,
-
         hireDate: true,
-
         status: true,
-
         isActive: true,
-
         companyId: true,
-
         managedDepartments: true,
-
         contracts: {
           select: {
             uuid: true,
-
             contract_type: true,
-
             startDate: true,
-
             endDate: true,
-
             status: true,
           },
         },
@@ -422,13 +300,9 @@ export class EmployeesService {
         user: {
           select: {
             uuid: true,
-
             email: true,
-
             role: true,
-
             createdAt: true,
-
             updatedAt: true,
           },
         },
@@ -711,20 +585,9 @@ export class EmployeesService {
       },
     });
 
-    console.log(employee?.user?.passwordHash);
-
     if (!employee) throw new BadRequestException('Employee not not found');
 
     if (!employee?.user?.passwordHash) return;
-
-    // const isPasswordValid = await bcrypt.compare(newPassword, employee?.user?.passwordHash);
-
-    // if (!isPasswordValid) {
-
-    //   throw new BadRequestException('Mot de passe actuel incorrect');
-
-    // }
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await this.databaseService.user.update({

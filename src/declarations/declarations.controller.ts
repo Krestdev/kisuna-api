@@ -39,8 +39,6 @@ import {
   EarningCategory,
   DeclarationStatus,
 } from '../../generated/prisma/client';
-import { FindAllDeclarationsDto } from './dto/find-all-declarations.dto';
-import { findAllEarningItems } from './dto/find-all-earningsItems.dro';
 
 @ApiTags('Declarations')
 @ApiBearerAuth('JWT-auth')
@@ -62,17 +60,6 @@ export class DeclarationsController {
 
     description: 'Earning item created successfully',
   })
-  @ApiOperation({
-    summary: 'Create earning item',
-
-    description: 'Create a new earning item (salary component) for a company',
-  })
-  @ApiResponse({
-    status: 201,
-
-    description: 'Earning item created successfully',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
   createEarningItem(@Body() dto: CreateEarningItemDto) {
     return this.service.createEarningItem(dto);
   }
@@ -123,8 +110,24 @@ export class DeclarationsController {
 
     description: 'Filter by active status (true/false)',
   })
+  @ApiQuery({
+    name: 'category',
+
+    required: false,
+
+    enum: EarningCategory,
+
+    description: 'Filter by earning category',
+  })
+  @ApiQuery({
+    name: 'isActive',
+
+    required: false,
+
+    description: 'Filter by active status (true/false)',
+  })
   @ApiResponse({ status: 200, description: 'List of earning items' })
-  findAllEarningItems(@Query() query: findAllEarningItems) {
+  findAllEarningItems(@Query() query: Record<string, unknown>) {
     return this.service.findAllEarningItems(query);
   }
 
@@ -199,7 +202,6 @@ export class DeclarationsController {
 
     description: 'Earning item deleted successfully',
   })
-  @ApiResponse({ status: 404, description: 'Earning item not found' })
   deleteEarningItem(@Param('uuid') uuid: string) {
     return this.service.deleteEarningItem(uuid);
   }
@@ -218,7 +220,6 @@ export class DeclarationsController {
     description: 'Create a new payroll declaration for a period',
   })
   @ApiResponse({ status: 201, description: 'Declaration created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
   createDeclaration(@Body() dto: CreateDeclarationDto) {
     return this.service.createDeclaration(dto);
   }
@@ -254,15 +255,14 @@ export class DeclarationsController {
 
     description: 'Declaration status',
   })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: DeclarationStatus,
+    description: 'Declaration status',
+  })
   @ApiResponse({ status: 200, description: 'List of declarations' })
-  findAllDeclarations(
-    // @Query('companyId') companyId?: string,
-
-    // @Query('type') type?: string,
-
-    // @Query('status') status?: DeclarationStatus,
-    @Query() query: FindAllDeclarationsDto,
-  ) {
+  findAllDeclarations(@Query() query: Record<string, unknown>) {
     return this.service.findAllDeclarations(query);
   }
 
@@ -279,7 +279,6 @@ export class DeclarationsController {
   })
   @ApiParam({ name: 'uuid', description: 'Declaration UUID' })
   @ApiResponse({ status: 200, description: 'Declaration details' })
-  @ApiResponse({ status: 404, description: 'Declaration not found' })
   findOneDeclaration(@Param('uuid') uuid: string) {
     return this.service.findOneDeclaration(uuid);
   }
@@ -334,7 +333,6 @@ export class DeclarationsController {
   })
   @ApiOperation({
     summary: 'Create declaration lines',
-
     description: 'Bulk create declaration lines for employees',
   })
   @ApiParam({ name: 'declarationId', description: 'Declaration UUID' })
@@ -348,7 +346,6 @@ export class DeclarationsController {
 
     description: 'Declaration lines created successfully',
   })
-  @ApiResponse({ status: 404, description: 'Declaration not found' })
   createDeclarationLines(
     @Param('declarationId') declarationId: string,
 

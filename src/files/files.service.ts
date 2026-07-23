@@ -31,16 +31,14 @@ export class FilesService {
     });
   }
 
-  async findAll(query: FindAllFileDto) {
-    const {
-      employeeId,
-      document_type,
-      file_name,
-      expired_date,
-      page = 1,
-      limit = 20,
-    } = query;
-
+  async findAll({
+    employeeId,
+    document_type,
+    file_name,
+    expired_date,
+    page = 1,
+    limit = 20,
+  }: FindAllFileDto) {
     const skip = (page - 1) * limit;
     const data = await this.databaseService.file.findMany({
       where: {

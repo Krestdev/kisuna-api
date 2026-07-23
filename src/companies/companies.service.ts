@@ -35,9 +35,15 @@ export class CompaniesService {
       orderBy: { name: 'asc' },
       include: {
         departments: true,
-        contracts: true,
+        // contracts: true,
         employees: {
           where: { isActive: true },
+          select: {
+            uuid: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+          },
         },
       },
     });
@@ -60,36 +66,37 @@ export class CompaniesService {
   }
 
   async update(uuid: string, updateCompanyDto: UpdateCompanyDto) {
-    await this.findOne(uuid); // TODO: #4
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: updateCompanyDto,
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async activate(uuid: string) {
-    await this.findOne(uuid); // TODO: #4 Remove unnecessary code @FNMALIC
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: { isActive: true },
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async deactivate(uuid: string) {
-    await this.findOne(uuid); // TODO: #4
-    return this.databaseService.company.update({
+    const updatedCompany = await this.databaseService.company.update({
       where: { uuid },
       data: { isActive: false },
     });
+    if (!updatedCompany)
+      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    return updatedCompany;
   }
 
   async remove(uuid: string) {
-    const company = await this.databaseService.company.findUnique({
-      where: { uuid },
-      include: { departments: true, contracts: true },
-    });
-    if (!company)
-      throw new NotFoundException(`Company with ID ${uuid} not found`);
+    const company = await this.findOne(uuid);
     if (company.departments.length > 0)
       throw new BadRequestException(
         'Cannot delete company: active departments exist',

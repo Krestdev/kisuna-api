@@ -163,37 +163,43 @@ export class AttendanceService {
   //   });
   // }
 
-  async findAll(query: FindAllAttendanceDto) {
-    const { page = 1, limit = 20, employeeId, status, month, year } = query;
+  async findAll({
+    page = 1,
+    limit = 20,
+    employeeId,
+    status,
+    month,
+    year,
+  }: FindAllAttendanceDto) {
     const skip = (page - 1) * limit;
 
-    const where: Prisma.AttendanceWhereInput = {
-      employeeId,
-      ...(status ? { status: { has: status } } : {}),
-      ...(month && year
-        ? {
-            checkIn: {
-              gte: startOfMonth(new Date(year, month - 1)),
-              lte: endOfMonth(new Date(year, month - 1)),
-            },
-          }
-        : {}),
-    };
-
-    const [data, total] = await Promise.all([
-      this.databaseService.attendance.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { checkIn: 'desc' },
-        include: { employee: { select: EMPLOYEE_SELECT } },
-      }),
-      this.databaseService.attendance.count({ where }),
-    ]);
+    const data = await this.databaseService.attendance.findMany({
+      where: {
+        employeeId,
+        status: { has: status },
+        ...(month && year
+          ? {
+              checkIn: {
+                gte: startOfMonth(new Date(year, month - 1)),
+                lte: endOfMonth(new Date(year, month - 1)),
+              },
+            }
+          : {}),
+      },
+      skip,
+      take: limit,
+      orderBy: { checkIn: 'desc' },
+      include: { employee: { select: EMPLOYEE_SELECT } },
+    });
 
     return {
       data,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      meta: {
+        total: data.length,
+        page,
+        limit,
+        totalPages: Math.ceil(data.length / limit),
+      },
     };
   }
 

@@ -1,29 +1,18 @@
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
-import {
-  Declaration,
-  DeclarationStatus,
-  DeclarationType,
-} from 'generated/prisma/client';
+import { DeclarationStatus, DeclarationType } from 'generated/prisma/client';
 
-export class FindAllDeclarationsDto implements Omit<
-  Declaration,
-  'uuid' | 'createdAt' | 'updatedAt' | 'notes' | 'submittedAt'
-> {
+export class FindAllDeclarationsDto {
   @IsOptional()
   @IsString()
-  search?: string;
+  companyId?: string;
 
   @IsOptional()
   @IsString()
-  companyId: string;
+  type?: DeclarationType;
 
   @IsOptional()
   @IsString()
-  type: DeclarationType;
-
-  @IsOptional()
-  @IsString()
-  status: DeclarationStatus;
+  status?: DeclarationStatus;
 
   @IsOptional()
   @IsNumber()
@@ -43,13 +32,13 @@ export class FindAllDeclarationsDto implements Omit<
 
   @IsOptional()
   @IsDate()
-  periodStart: Date;
+  periodStart?: Date;
 
   @IsOptional()
   @IsDate()
-  periodEnd: Date;
+  periodEnd?: Date;
 
   @IsOptional()
   @IsString()
-  submittedBy: string;
+  submittedBy?: string;
 }

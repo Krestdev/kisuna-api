@@ -64,7 +64,6 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Get department by ID' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({ status: 200, description: 'Department details' })
-  @ApiResponse({ status: 404, description: 'Department not found' })
   findOne(@Param('id') id: string) {
     return this.departmentsService.findOne(id);
   }
@@ -76,7 +75,6 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Update department' })
   @ApiParam({ name: 'id', description: 'Department UUID' })
   @ApiResponse({ status: 200, description: 'Department updated successfully' })
-  @ApiResponse({ status: 404, description: 'Department not found' })
   update(
     @Param('id') id: string,
 
@@ -115,11 +113,6 @@ export class DepartmentsController {
     status: 200,
 
     description: 'Department deactivated successfully',
-  })
-  @ApiResponse({
-    status: 400,
-
-    description: 'Cannot delete: active positions exist',
   })
   remove(@Param('id') id: string) {
     return this.departmentsService.remove(id);
