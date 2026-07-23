@@ -100,6 +100,22 @@ export class DeclarationsController {
     required: false,
     description: 'Filter by active status (true/false)',
   })
+  @ApiQuery({
+    name: 'category',
+
+    required: false,
+
+    enum: EarningCategory,
+
+    description: 'Filter by earning category',
+  })
+  @ApiQuery({
+    name: 'isActive',
+
+    required: false,
+
+    description: 'Filter by active status (true/false)',
+  })
   @ApiResponse({ status: 200, description: 'List of earning items' })
   findAllEarningItems(@Query() query: Record<string, unknown>) {
     return this.service.findAllEarningItems(query);
