@@ -69,7 +69,6 @@ export class AttendanceController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.COMPANY_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: 'Manually create an attendance record (admin)' })
   @ApiResponse({ status: 201, description: 'Attendance record created' })
-  @ApiResponse({ status: 404, description: 'Employee not found' })
   create(@Body() dto: CreateAttendanceDto) {
     return this.attendanceService.create(dto);
   }
@@ -136,7 +135,6 @@ export class AttendanceController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Update attendance record',
-
     description:
       'Manual correction of attendance data. Admin only. Recalculates worked hours if both check-in and check-out are updated.',
   })
@@ -149,7 +147,6 @@ export class AttendanceController {
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete attendance record',
-
     description: 'Admin only. Permanently removes attendance record.',
   })
   @ApiParam({ name: 'id', description: 'Attendance UUID' })
@@ -161,7 +158,6 @@ export class AttendanceController {
   @Post('absent')
   @ApiOperation({
     summary: 'Mark employee absent',
-
     description:
       'Admin only. Manually create an absence record for a specific date. GPS coordinates set to 0,0.',
   })
@@ -193,14 +189,11 @@ export class AttendanceController {
   @ApiResponse({ status: 200, description: 'Employee attendance records' })
   findByEmployee(
     @Param('employeeId') employeeId: string,
-    @Query('month') month?: string,
-    @Query('year') year?: string,
+    // @Query('month') month?: string,
+    // @Query('year') year?: string,
+    @Query() query: Record<string, unknown>,
   ) {
-    return this.attendanceService.findByEmployee(
-      employeeId,
-      month ? parseInt(month) : undefined,
-      year ? parseInt(year) : undefined,
-    );
+    return this.attendanceService.findByEmployee(employeeId, query);
   }
 
   @Get('employee/:employeeId/summary')
@@ -224,16 +217,12 @@ export class AttendanceController {
   })
   getMonthlySummary(
     @Param('employeeId') employeeId: string,
-
     @Query('month') month: string,
-
     @Query('year') year: string,
   ) {
     return this.attendanceService.getMonthlySummary(
       employeeId,
-
       parseInt(month),
-
       parseInt(year),
     );
   }

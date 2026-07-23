@@ -57,7 +57,6 @@ export class ContractsController {
   @ApiResponse({ status: 200, description: 'Contract updated successfully' })
   update(
     @Param('id') id: string,
-
     @Body() updateContractDto: UpdateContractDto,
   ) {
     return this.contractsService.update(id, updateContractDto);
@@ -72,7 +71,6 @@ export class ContractsController {
   @ApiResponse({ status: 200, description: 'Contract terminated successfully' })
   terminate(
     @Param('id') id: string,
-
     @Body() terminateDto: TerminateContractDto,
   ) {
     return this.contractsService.terminate(id, terminateDto);

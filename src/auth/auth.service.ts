@@ -17,7 +17,18 @@ export class AuthService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto): Promise<{
+    uuid: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    middleName?: string;
+    phoneNumber?: string;
+    avatarUrl?: string;
+    isActive?: boolean;
+    createdAt: Date;
+    employeeId: string | null;
+  }> {
     const existingUser = await this.databaseService.user.findFirst({
       where: { email: registerDto.email },
     });
@@ -38,7 +49,15 @@ export class AuthService {
     return result;
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<{
+    access_token: string;
+    user: {
+      uuid: string;
+      email: string;
+      role: string;
+      employeeId: string | null;
+    };
+  }> {
     const user = await this.databaseService.user.findFirst({
       where: { email: loginDto.email },
     });

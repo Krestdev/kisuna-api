@@ -207,6 +207,9 @@ model Attendance {
 
   payrollUuid String?
   payroll     Payroll? @relation(fields: [payrollUuid], references: [uuid])
+
+  @@index([employeeId, checkIn])
+  @@index([payrollUuid])
 }
 
 enum DocumentType {

@@ -10,7 +10,12 @@ import {
   CreateDeclarationLineDto,
 } from './dto/declaration-line.dto';
 
-import { DeclarationStatus } from '../../generated/prisma/client';
+import {
+  Declaration,
+  DeclarationLine,
+  DeclarationStatus,
+  EarningItem,
+} from '../../generated/prisma/client';
 
 import {
   CreateEarningItemDto,
@@ -30,12 +35,20 @@ export class DeclarationsService {
 
   // EarningItem methods
 
-  async createEarningItem(dto: CreateEarningItemDto) {
-    return this.databaseService.earningItem.create({
-      data: dto,
-
-      include: { company: true },
-    });
+  async createEarningItem(dto: CreateEarningItemDto): Promise<EarningItem> {
+    try {
+      return this.databaseService.earningItem.create({
+        data: {
+          name: dto.name,
+          category: dto.category,
+          isActive: false,
+          companyId: dto.companyId,
+        },
+        include: { company: true },
+      });
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async findAllEarningItems({
@@ -45,7 +58,10 @@ export class DeclarationsService {
     companyId,
     isActive,
     name,
-  }: findAllEarningItems) {
+  }: findAllEarningItems): Promise<{
+    data: EarningItem[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.earningItem.findMany({
@@ -61,10 +77,18 @@ export class DeclarationsService {
       include: { company: true },
     });
 
-    return data;
+    return {
+      data,
+      meta: {
+        total: data.length,
+        page,
+        limit,
+        totalPages: Math.ceil(data.length / limit),
+      },
+    };
   }
 
-  async findOneEarningItem(uuid: string) {
+  async findOneEarningItem(uuid: string): Promise<EarningItem> {
     const item = await this.databaseService.earningItem.findUnique({
       where: { uuid },
     });
@@ -74,12 +98,17 @@ export class DeclarationsService {
     return item;
   }
 
-  async updateEarningItem(uuid: string, dto: UpdateEarningItemDto) {
+  async updateEarningItem(
+    uuid: string,
+    dto: UpdateEarningItemDto,
+  ): Promise<EarningItem> {
     const updateEarning = await this.databaseService.earningItem.update({
       where: { uuid },
       data: dto,
     });
+
     if (!updateEarning) throw new NotFoundException('Earning item not found');
+
     return updateEarning;
   }
 
@@ -105,19 +134,21 @@ export class DeclarationsService {
     });
   }
 
-  async findAllDeclarations(query: FindAllDeclarationsDto) {
-    const {
-      page = 1,
-      limit = 20,
-      companyId,
-      type,
-      status,
-      periodStart,
-      periodEnd,
-      submittedBy,
-      month,
-      year,
-    } = query;
+  async findAllDeclarations({
+    page = 1,
+    limit = 10,
+    companyId,
+    type,
+    status,
+    periodStart,
+    periodEnd,
+    submittedBy,
+    month,
+    year,
+  }: FindAllDeclarationsDto): Promise<{
+    data: Declaration[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
     const skip = (page - 1) * limit;
 
     const data = await this.databaseService.declaration.findMany({
@@ -180,7 +211,10 @@ export class DeclarationsService {
     return declaration;
   }
 
-  async updateDeclaration(uuid: string, dto: UpdateDeclarationDto) {
+  async updateDeclaration(
+    uuid: string,
+    dto: UpdateDeclarationDto,
+  ): Promise<Declaration> {
     const declaration = await this.findOneDeclaration(uuid);
 
     if (
@@ -193,7 +227,6 @@ export class DeclarationsService {
 
     return this.databaseService.declaration.update({
       where: { uuid },
-
       data: {
         ...dto,
         ...(dto.status === DeclarationStatus.SUBMITTED &&
@@ -202,7 +235,7 @@ export class DeclarationsService {
     });
   }
 
-  async deleteDeclaration(uuid: string) {
+  async deleteDeclaration(uuid: string): Promise<Declaration> {
     const declaration = await this.findOneDeclaration(uuid);
 
     if (declaration.status !== DeclarationStatus.DRAFT) {
@@ -216,9 +249,8 @@ export class DeclarationsService {
 
   async createDeclarationLines(
     declarationId: string,
-
     dto: BulkCreateDeclarationLinesDto,
-  ) {
+  ): Promise<DeclarationLine[]> {
     await this.findOneDeclaration(declarationId);
 
     // Validate all employees exist
@@ -294,31 +326,27 @@ export class DeclarationsService {
     );
   }
 
-  async findDeclarationLines(declarationId: string) {
+  async findDeclarationLines(
+    declarationId: string,
+  ): Promise<DeclarationLine[]> {
     await this.findOneDeclaration(declarationId);
 
     return this.databaseService.declarationLine.findMany({
       where: { declarationId },
-
       include: {
         employee: true,
-
         contract: true,
-
         earnings: { include: { earningItem: true } },
       },
     });
   }
 
-  async findOneDeclarationLine(lineId: string) {
+  async findOneDeclarationLine(lineId: string): Promise<DeclarationLine> {
     const line = await this.databaseService.declarationLine.findUnique({
       where: { uuid: lineId },
-
       include: {
         employee: true,
-
         contract: true,
-
         earnings: { include: { earningItem: true } },
       },
     });
@@ -330,11 +358,9 @@ export class DeclarationsService {
 
   async updateDeclarationLine(
     declarationId: string,
-
     lineId: string,
-
     dto: CreateDeclarationLineDto,
-  ) {
+  ): Promise<DeclarationLine> {
     await this.findOneDeclarationLine(lineId);
 
     return this.databaseService.$transaction(async (tx) => {
@@ -348,22 +374,15 @@ export class DeclarationsService {
 
       return tx.declarationLine.update({
         where: { uuid: lineId },
-
         data: {
           baseSalary: dto.baseSalary,
-
           baseSalaryTaxable: dto.baseSalaryTaxable,
-
           baseSalaryCotisable: dto.baseSalaryCotisable,
-
           earnings: {
             create: dto.earnings.map((earning) => ({
               earningItemId: earning.earningItemId,
-
               amount: earning.amount,
-
               taxable: earning.taxable,
-
               cotisable: earning.cotisable,
             })),
           },
@@ -371,9 +390,7 @@ export class DeclarationsService {
 
         include: {
           employee: true,
-
           contract: true,
-
           earnings: { include: { earningItem: true } },
         },
       });
