@@ -1,14 +1,14 @@
 import {
-  Controller,
-  Post,
-  Param,
-  UploadedFile,
-  UseInterceptors,
-  Get,
   Body,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Post,
   Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -18,13 +18,13 @@ import { FilesService } from './files.service';
 import { CreateFileDto } from './dto/create-file.dto';
 
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiConsumes,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { SystemRole } from '../../generated/prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
